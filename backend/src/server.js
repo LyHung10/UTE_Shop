@@ -1,25 +1,44 @@
-import express from "express"; // nạp express
-import bodyParser from "body-parser"; // nạp body-parser lấy tham số từ client /user?id=7
-import viewEngine from "./config/viewEngine"; // nạp viewEngine
-import initWebRoutes from "./route/web"; // nạp file web từ Route
-import connectDB from "./config/configdb";
-require('dotenv').config(); // gọi hàm config của dotenv để chạy lệnh process.env.PORT
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
+require("dotenv").config();
+const { sequelize } = require("./config/configdb");
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 
-let app = express();
+const { errorHandler } = require("./middleware/errorHandler");
 
-// config app
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
 
-viewEngine(app);
-initWebRoutes(app);
-connectDB();
+// Rate limit
+const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+app.use("/api/auth/register", otpLimiter);
+app.use("/api/auth/forgot", otpLimiter);
+app.use("/api/auth/login", loginLimiter);
 
-let port = process.env.PORT || 6969; // tạo tham số port lấy từ .env
-// Port === undefined => port = 6969
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
-// chạy server
-app.listen(port, () => {
-    // callback
-    console.log("Backend Nodejs is running on the port : " + port);
-});
+// Error handler
+app.use(errorHandler);
+
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("✅ Database connected!");
+    await sequelize.sync();
+    app.listen(process.env.PORT || 5000, () =>
+      console.log(`🚀 Server running at http://localhost:${process.env.PORT || 5000}`)
+    );
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+  }
+})();
+
+module.exports = app;
