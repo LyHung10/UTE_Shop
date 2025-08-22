@@ -4,6 +4,7 @@ import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
-router.put("/update", updateUser);
+// router.put("/update", updateUser);
+router.put("/update", authenticateToken, updateUser);
 
 export default router;
