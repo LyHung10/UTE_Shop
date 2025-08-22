@@ -1,12 +1,9 @@
-// routes/user.routes.js
-import express from 'express';
-import * as userController from '../controllers/user.controller.js';
-import { auth } from '../middleware/auth.js'; // chỉnh lại tên import + thêm .js
+import express from "express";
+import { updateUser } from "../controllers/user.controller";
+import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
-// Lấy thông tin profile
-router.get('/profile', auth(), userController.getMe);
-router.put('/profile', auth(), userController.updateMe);
+router.put("/update", updateUser);
 
 export default router;
