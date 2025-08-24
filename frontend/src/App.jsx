@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Layout from "./components/Layout.jsx";
+import {Route, Routes} from "react-router-dom";
+import HomePage from "./components/Home/HomePage.jsx";
+import Login from "./components/Auth/Login.jsx";
+import 'react-toastify/dist/ReactToastify.css';
+import {Bounce, ToastContainer} from "react-toastify";
+import SignUp from "./components/Auth/SignUp.jsx";
+import AuthOtp from "./components/Auth/AuthOtp.jsx";
+import ForgotPassword from "./components/Auth/ForgotPassword.jsx";
+import ResetPassword from "./components/Auth/ResetPassword.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+        <Routes>
+            <Route path="/" element={<Layout/>}>
+                <Route index element={<HomePage/>}/>
+            </Route>
+            <Route path="/login" element={<Login/>}/>
+            <Route path="/signup" element={<SignUp/>}/>
+            <Route path="/otp" element={<AuthOtp/>}/>
+            <Route path="/forgotpassword" element={<ForgotPassword/>}/>
+            <Route path="/resetpassword" element={<ResetPassword/>}/>
+        </Routes>
+        <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick={false}
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            transition={Bounce}
+        />
     </>
-  )
+  );
 }
 
 export default App
