@@ -16,14 +16,7 @@ export async function registerUser({ email, password, first_name, last_name }) {
 
   if (!user) {
     const hashed = await bcrypt.hash(password, 10);
-    // Log trước khi tạo user
-    console.log('Creating user with:', {
-      email,
-      password: hashed,
-      first_name: firstName ?? null,
-      last_name: lastName ?? null
-    });
-
+   
     user = await User.create({
       email,
       password: hashed,
