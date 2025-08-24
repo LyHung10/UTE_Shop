@@ -1,23 +1,23 @@
-const jwt = require('jsonwebtoken');
-const dayjs = require('dayjs');
-// const RefreshToken = require('../models/RefreshToken');
-const db = require("../models");
-const RefreshToken = db.RefreshToken;
+// services/tokenService.js
+import jwt from 'jsonwebtoken';
+import dayjs from 'dayjs';
+import db from '../models/index.js';
 
-require('dotenv').config();
+const { RefreshToken } = db;
 
-
-function signAccessToken(payload) {
-return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn: process.env.JWT_ACCESS_EXPIRES });
+export function signAccessToken(payload) {
+  return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: process.env.JWT_ACCESS_EXPIRES,
+  });
 }
 
-
-function signRefreshToken(payload) {
-return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES });
+export function signRefreshToken(payload) {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES,
+  });
 }
 
-
-async function persistRefreshToken(user_id, token) {
+export async function persistRefreshToken(user_id, token) {
   const decoded = jwt.decode(token);
   const expiresAt = dayjs.unix(decoded.exp).toDate();
 
@@ -28,9 +28,6 @@ async function persistRefreshToken(user_id, token) {
   });
 }
 
-async function rotateRefreshToken(oldToken) {
-// Optional: revoke old, create new
+export async function rotateRefreshToken(oldToken) {
+  // Optional: revoke old token, create new token
 }
-
-
-module.exports = { signAccessToken, signRefreshToken, persistRefreshToken };

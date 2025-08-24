@@ -1,10 +1,11 @@
-const express = require('express');
+import express from "express";
+import { updateUser, getProfile } from "../controllers/user.controller";
+import { authenticateToken } from "../middleware/auth";
+
 const router = express.Router();
-const userController = require('../controllers/user.controller');
-const { auth } = require('../middleware/auth'); // Sửa lại tên import
 
-// Lấy thông tin profile
-router.get('/profile', auth(), userController.getMe); // Sửa lại thành auth()
-router.put('/profile', auth(), userController.updateMe);
+// router.put("/update", updateUser);
+router.put("/update", authenticateToken, updateUser);
+router.get("/profile", authenticateToken, getProfile);
 
-module.exports = router;
+export default router;

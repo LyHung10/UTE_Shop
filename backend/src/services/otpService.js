@@ -1,13 +1,15 @@
-const db = require('../models');
-const OtpCode = db.OtpCode;
-const dayjs = require('dayjs');
-const bcrypt = require('bcryptjs');
+
+import db from '../models/index.js';
+import dayjs from 'dayjs';
+import bcrypt from 'bcryptjs';
+
+const { OtpCode } = db;
 
 function generateOtp() {
   return (Math.floor(100000 + Math.random() * 900000)).toString();
 }
 
-async function createOtp(userId) {
+export async function createOtp(userId) {
   const code = generateOtp();
   const code_hash = await bcrypt.hash(code, 10);
   const expired_at = dayjs().add(+process.env.OTP_EXPIRES_MIN, 'minute').toDate();
@@ -17,7 +19,7 @@ async function createOtp(userId) {
   return code;
 }
 
-async function verifyOtp(userId, code) {
+export async function verifyOtp(userId, code) {
   const record = await OtpCode.findOne({
     where: { user_id: userId },
     order: [['created_at', 'DESC']],
@@ -32,5 +34,3 @@ async function verifyOtp(userId, code) {
   await record.save();
   return true;
 }
-
-module.exports = { createOtp, verifyOtp };

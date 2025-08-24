@@ -5,24 +5,24 @@ module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       // 1 user có thể có nhiều otpCode
-      User.hasMany(models.OtpCode, { foreignKey: 'userId' });
+      User.hasMany(models.OtpCode, { foreignKey: 'user_id' });
       // 1 user có thể có nhiều refreshToken
-      User.hasMany(models.RefreshToken, { foreignKey: 'userId' });
+      User.hasMany(models.RefreshToken, { foreignKey: 'user_id' });
     }
   }
   User.init(
     {
       email: DataTypes.STRING,
       password: DataTypes.STRING,
-      firstName: DataTypes.STRING,
-      lastName: DataTypes.STRING,
+      first_name: DataTypes.STRING,
+      last_name: DataTypes.STRING,
       address: DataTypes.STRING,
-      phoneNumber: DataTypes.STRING,
+      phone_number: DataTypes.STRING,
       gender: DataTypes.BOOLEAN,
       image: DataTypes.STRING,
       is_verified: DataTypes.BOOLEAN,
-      roleId: DataTypes.STRING,
-      positionId: DataTypes.STRING
+      role_id: DataTypes.STRING,
+      position_id: DataTypes.STRING
     },
     {
       sequelize,

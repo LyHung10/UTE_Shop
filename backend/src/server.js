@@ -1,15 +1,21 @@
-const express = require("express");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
-require("dotenv").config();
-const { sequelize } = require("./config/configdb");
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
+// src/server.js
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import dotenv from 'dotenv';
 
-const { errorHandler } = require("./middleware/errorHandler");
+import { sequelize } from './config/configdb.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import { errorHandler } from './middleware/errorHandler.js';
+
+
+dotenv.config();
 
 const app = express();
+
+// Middleware chung
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -17,28 +23,29 @@ app.use(cookieParser());
 // Rate limit
 const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
-app.use("/api/auth/register", otpLimiter);
-app.use("/api/auth/forgot", otpLimiter);
-app.use("/api/auth/login", loginLimiter);
+
+app.use('/api/auth/register', otpLimiter);
+app.use('/api/auth/forgot-password', otpLimiter); // chỉnh lại đúng route
+app.use('/api/auth/login', loginLimiter);
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Error handler
 app.use(errorHandler);
 
+// Start server
 (async () => {
   try {
     await sequelize.authenticate();
-    console.log("✅ Database connected!");
+    console.log('✅ Database connected!');
     await sequelize.sync();
-    app.listen(process.env.PORT || 5000, () =>
-      console.log(`🚀 Server running at http://localhost:${process.env.PORT || 5000}`)
-    );
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
   } catch (err) {
-    console.error("❌ Failed to start server:", err);
+    console.error('❌ Failed to start server:', err);
   }
 })();
 
-module.exports = app;
+export default app;
