@@ -16,6 +16,7 @@ export async function registerUser({ email, password, first_name, last_name }) {
 
   if (!user) {
     const hashed = await bcrypt.hash(password, 10);
+
     user = await User.create({
       email,
       password: hashed,
