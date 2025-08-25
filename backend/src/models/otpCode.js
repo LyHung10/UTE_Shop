@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       expired_at: {
         type: DataTypes.DATE,
         allowNull: false
+      },
+      type: {
+        type: DataTypes.ENUM('REGISTER', 'FORGOT_PASSWORD'),
+        allowNull: false
       }
     },
     {

@@ -1,5 +1,7 @@
 'use strict';
 
+const { de } = require("@faker-js/faker");
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('otp_codes', {
@@ -26,6 +28,11 @@ module.exports = {
       expired_at: {
         type: Sequelize.DATE,
         allowNull: false,
+      },
+      type: {
+        type: Sequelize.ENUM('REGISTER', 'FORGOT_PASSWORD'),
+        allowNull: false,
+        defaultValue: 'REGISTER',
       },
       created_at: {
         allowNull: false,

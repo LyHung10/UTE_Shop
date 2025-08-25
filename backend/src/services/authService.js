@@ -4,6 +4,7 @@ import db from '../models/index.js';
 import { createOtp, verifyOtp } from './otpService';
 import { sendOtpMail } from './emailService';
 import { signAccessToken, signRefreshToken, persistRefreshToken } from './tokenService';
+import OTP_TYPES from '../enums/otpType';
 
 const { User, ResetToken } = db;
 
@@ -26,7 +27,7 @@ export async function registerUser({ email, password, first_name, last_name }) {
     });
   }
 
-  const code = await createOtp(user.id);
+  const code = await createOtp(user.id, 'REGISTER');
   await sendOtpMail(email, code);
 
   return { message: 'Đã gửi OTP tới email' };
@@ -36,7 +37,7 @@ export async function verifyUserOtp({ email, otp }) {
   const user = await User.findOne({ where: { email } });
   if (!user) throw { status: 400, message: 'User không tồn tại' };
 
-  const ok = await verifyOtp(user.id, otp);
+  const ok = await verifyOtp(user.id, otp, OTP_TYPES.REGISTER);
   if (!ok) throw { status: 400, message: 'OTP không hợp lệ/đã hết hạn' };
 
   user.is_verified = true;
@@ -65,7 +66,7 @@ export async function forgotPassword({ email }) {
   const user = await User.findOne({ where: { email } });
   if (!user) throw { status: 404, message: 'User không tồn tại' };
 
-  const code = await createOtp(user.id, 'reset_password');
+  const code = await createOtp(user.id, 'FORGOT_PASSWORD');
   await sendOtpMail(email, code);
 
   return { message: 'OTP đã được gửi' };
@@ -75,7 +76,7 @@ export async function resetPassword({ email, otp, newPassword }) {
   const user = await User.findOne({ where: { email } });
   if (!user) throw { status: 404, message: 'User không tồn tại' };
 
-  const validOtp = await verifyOtp(user.id, otp, 'reset_password');
+  const validOtp = await verifyOtp(user.id, otp, OTP_TYPES.FORGOT_PASSWORD);
   if (!validOtp) throw { status: 400, message: 'OTP không hợp lệ/đã hết hạn' };
 
   const hashed = await bcrypt.hash(newPassword, 10);
