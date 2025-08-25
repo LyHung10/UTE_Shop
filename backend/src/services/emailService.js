@@ -15,16 +15,16 @@ const transporter = nodemailer.createTransport({
  * Gửi OTP qua email (có template HTML đẹp)
  * @param {string} to - email người nhận
  * @param {string} code - mã OTP
- * @param {string} purpose - mục đích (Register, Reset password...)
+ * @param {string} type - loại OTP (REGISTER, FORGOT_PASSWORD...)
  */
-export async function sendOtpMail(to, code, purpose) {
+export async function sendOtpMail(to, code, type) {
   // render template với data
-  const htmlContent = renderTemplate("otp", { code, purpose });
+  const htmlContent = renderTemplate("otp", { code, type });
 
   await transporter.sendMail({
     from: `"UTE Shop" <${process.env.MAIL_USER}>`,
     to,
-    subject: `Mã OTP cho ${purpose}`,
+    subject: `Mã OTP cho ${type}`,
     html: htmlContent, // ⚡ dùng html thay vì text
   });
 

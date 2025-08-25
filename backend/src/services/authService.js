@@ -27,8 +27,8 @@ export async function registerUser({ email, password, first_name, last_name }) {
     });
   }
 
-  const code = await createOtp(user.id, 'REGISTER');
-  await sendOtpMail(email, code);
+  const code = await createOtp(user.id, OTP_TYPES.REGISTER);
+  await sendOtpMail(email, code, OTP_TYPES.REGISTER);
 
   return { message: 'Đã gửi OTP tới email' };
 }
@@ -66,8 +66,8 @@ export async function forgotPassword({ email }) {
   const user = await User.findOne({ where: { email } });
   if (!user) throw { status: 404, message: 'User không tồn tại' };
 
-  const code = await createOtp(user.id, 'FORGOT_PASSWORD');
-  await sendOtpMail(email, code);
+  const code = await createOtp(user.id, OTP_TYPES.FORGOT_PASSWORD);
+  await sendOtpMail(email, code, OTP_TYPES.FORGOT_PASSWORD);
 
   return { message: 'OTP đã được gửi' };
 }
