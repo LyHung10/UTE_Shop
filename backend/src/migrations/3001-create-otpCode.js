@@ -34,6 +34,10 @@ module.exports = {
         allowNull: false,
         defaultValue: 'REGISTER',
       },
+      consumed_at: {
+        type: Sequelize.DATE,
+        defaultValue: null,
+      },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,

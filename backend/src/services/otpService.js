@@ -37,6 +37,7 @@ export async function verifyOtp(userId, code, type) {
   });
 
   if (!record) return false;
+  if (record.consumed_at) return false; // đã dùng
   if (dayjs(record.expired_at).isBefore(dayjs())) return false;
 
   const ok = await bcrypt.compare(code, record.code_hash);

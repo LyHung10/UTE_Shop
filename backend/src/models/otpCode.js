@@ -25,7 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       type: {
         type: DataTypes.ENUM('REGISTER', 'FORGOT_PASSWORD'),
         allowNull: false
+      },
+
+      consumed_at: {
+        type: DataTypes.DATE,
+        defaultValue: null,
       }
+
     },
     {
       sequelize,
