@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     return queryInterface.bulkInsert('users', [
       {
         email: 'a@example.com',
@@ -18,25 +18,25 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date()
       },
-      {
-        email: 'b@example.com',
-        password: '123456',
-        first_name: 'Trần',
-        last_name: 'Thị B',
-        address: 'Đà Nẵng',
-        phone_number: '0987654321',
-        gender: false,
-        image: null,
-        is_verified: false,
-        role_id: 'user',
-        position_id: 'staff',
-        created_at: new Date(),
-        updated_at: new Date()
-      }
+      // {
+      //   email: 'b@example.com',
+      //   password: '123456',
+      //   first_name: 'Trần',
+      //   last_name: 'Thị B',
+      //   address: 'Đà Nẵng',
+      //   phone_number: '0987654321',
+      //   gender: false,
+      //   image: null,
+      //   is_verified: false,
+      //   role_id: 'user',
+      //   position_id: 'staff',
+      //   created_at: new Date(),
+      //   updated_at: new Date()
+      // }
     ], {});
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     return queryInterface.bulkDelete('users', null, {});
   }
 };

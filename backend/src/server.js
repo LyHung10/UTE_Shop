@@ -8,8 +8,8 @@ import dotenv from 'dotenv';
 import { sequelize } from './config/configdb.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
+import productRoutes from './routes/productRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
-
 
 dotenv.config();
 
@@ -31,6 +31,7 @@ app.use('/api/auth/login', loginLimiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
 
 // Error handler
 app.use(errorHandler);

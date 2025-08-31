@@ -57,9 +57,20 @@ export async function loginUser({ email, password }, req) {
 
   const accessToken = signAccessToken({ sub: user.id, email: user.email });
   const refreshToken = signRefreshToken({ sub: user.id });
-  await persistRefreshToken(user.id, refreshToken, { userAgent: req.headers['user-agent'], ip: req.ip });
+  await persistRefreshToken(user.id, refreshToken, {
+    userAgent: req.headers['user-agent'],
+    ip: req.ip
+  });
 
-  return { accessToken, refreshToken };
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name
+    }
+  };
 }
 
 export async function forgotPassword({ email }) {
