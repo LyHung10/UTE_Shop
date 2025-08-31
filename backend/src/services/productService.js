@@ -1,5 +1,4 @@
-
-const { Product } = require("../models");
+import { Product, ProductImage } from "../models/index.js";
 
 class ProductService {
     // 1. Lấy 8 sản phẩm có view_count cao nhất
@@ -7,6 +6,14 @@ class ProductService {
         return await Product.findAll({
             order: [["view_count", "DESC"]],
             limit,
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
         });
     }
 
@@ -15,6 +22,14 @@ class ProductService {
         return await Product.findAll({
             order: [["discount_percent", "DESC"]],
             limit,
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
         });
     }
 
@@ -25,6 +40,14 @@ class ProductService {
             offset,
             limit: size,
             order: [["createdAt", "DESC"]],
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
         });
 
         return {
@@ -37,7 +60,16 @@ class ProductService {
 
     // 4. Khi xem chi tiết sản phẩm + tăng view_count
     async getProductById(id) {
-        const product = await Product.findByPk(id);
+        const product = await Product.findByPk(id, {
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
+        });
         if (!product) return null;
 
         // Tăng view_count
