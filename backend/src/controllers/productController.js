@@ -44,6 +44,25 @@ class ProductController {
       next(err);
     }
   }
+
+  async getNewestProducts(req, res, next) {
+    try {
+      const products = await productService.getNewestProducts();
+      res.json(products);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 6. Lấy 6 sản phẩm bán chạy nhất
+  async getBestSellingProducts(req, res, next) {
+    try {
+      const products = await productService.getBestSellingProducts();
+      res.json(products);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new ProductController();
