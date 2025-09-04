@@ -3,16 +3,14 @@ import { Card, CardContent } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
 import { Star, ShoppingCart, Search, User, Menu } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
-import Header_new from "@/features/home/components/Header_new.jsx";
+import background from "../../../assets/non.jpg"
+import TopNewArrivals from "@/features/home/components/TopNewArrivals.jsx";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <Header_new></Header_new>
-      {/* Hero Section */}
-      <section className="bg-gray-100 py-16">
-        <div className="container mx-auto px-4 flex flex-col lg:flex-row items-center">
+      <section className="bg-gray-100 py-16 ">
+        <div className="container mx-auto px-24 flex flex-col lg:flex-row items-center ">
           <div className="lg:w-1/2 mb-8 lg:mb-0">
             <h2 className="text-4xl lg:text-6xl font-bold mb-6 text-black">
               FIND CLOTHES
@@ -44,8 +42,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="lg:w-1/2 relative">
-            <img src="/images/hero-couple.png" alt="Stylish couple" className="w-full h-auto rounded-lg" />
+          <div className="lg:w-1/2 relative border-4">
+            <img src={background} alt="Stylish couple" className="w-full h-auto rounded-lg" />
             {/* Decorative stars */}
             <div className="absolute top-20 right-10 text-black text-4xl">✦</div>
             <div className="absolute bottom-20 left-10 text-black text-2xl">✦</div>
@@ -54,7 +52,7 @@ export default function HomePage() {
       </section>
 
       {/* Brand Bar */}
-      <section className="bg-black py-8">
+      <section className="bg-black py-6">
         <div className="container mx-auto px-4">
           <div className="flex justify-center items-center gap-12 flex-wrap">
             <div className="text-white text-2xl font-bold">VERSACE</div>
@@ -66,114 +64,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* New Arrivals */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h3 className="text-3xl font-bold text-center mb-12 text-black">NEW ARRIVALS</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-none">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 rounded-lg p-8 mb-4">
-                  <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center">
-                    <div className="text-gray-500">T-shirt with Tape Details</div>
-                  </div>
-                </div>
-                <h4 className="font-semibold mb-2">T-shirt with Tape Details</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(4)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                    <Star className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm text-gray-600">4.5/5</span>
-                </div>
-                <div className="font-bold text-lg">$120</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-none">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 rounded-lg p-8 mb-4">
-                  <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center">
-                    <div className="text-gray-500">Skinny Fit Jeans</div>
-                  </div>
-                </div>
-                <h4 className="font-semibold mb-2">Skinny Fit Jeans</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(3)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                    <Star className="w-4 h-4" />
-                    <Star className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm text-gray-600">3.5/5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg">$240</span>
-                  <span className="text-gray-500 line-through">$260</span>
-                  <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">-20%</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-none">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 rounded-lg p-8 mb-4">
-                  <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center">
-                    <div className="text-gray-500">Checkered Shirt</div>
-                  </div>
-                </div>
-                <h4 className="font-semibold mb-2">Checkered Shirt</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(4)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                    <Star className="w-4 h-4 fill-current" />
-                  </div>
-                  <span className="text-sm text-gray-600">4.5/5</span>
-                </div>
-                <div className="font-bold text-lg">$180</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-none">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 rounded-lg p-8 mb-4">
-                  <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center">
-                    <div className="text-gray-500">Sleeve Striped T-shirt</div>
-                  </div>
-                </div>
-                <h4 className="font-semibold mb-2">Sleeve Striped T-shirt</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(4)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                    <Star className="w-4 h-4 fill-current" />
-                  </div>
-                  <span className="text-sm text-gray-600">4.5/5</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg">$130</span>
-                  <span className="text-gray-500 line-through">$160</span>
-                  <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">-30%</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="text-center">
-            <Button variant="outline" className="px-8 py-3 rounded-full bg-transparent">
-              View All
-            </Button>
-          </div>
-        </div>
-      </section>
-
+      {/* Top New Arrivals */}
+      <TopNewArrivals/>
       {/* Divider */}
       <div className="border-t border-gray-200"></div>
 

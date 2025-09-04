@@ -1,5 +1,5 @@
-import Header from "./features/home/components/Header.jsx"
 import {Outlet} from "react-router-dom";
+import Header from "@/features/home/components/Header.jsx";
 const Layout =() => {
     return(
         <div>
