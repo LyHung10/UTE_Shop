@@ -1,5 +1,4 @@
-// controllers/product.controller.js
-const productService = require("../services/productService");
+import productService from "../services/productService";
 
 class ProductController {
   async getMostViewed(req, res, next) {
@@ -45,6 +44,30 @@ class ProductController {
     }
   }
 
+  async addProduct(req, res) {
+    try {
+      const productData = {
+        name: req.body.name,
+        slug: req.body.slug,
+        short_description: req.body.short_description,
+        description: req.body.description,
+        price: req.body.price,
+        original_price: req.body.original_price,
+        discount_percent: req.body.discount_percent,
+        is_active: req.body.is_active,
+        featured: req.body.featured,
+        category_id: req.body.category_id,
+      };
+
+      const product = await productService.createProductWithImages(productData, req.files);
+
+      res.status(201).json(product);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Thêm sản phẩm thất bại', error: error.message });
+    }
+  };
+
   async getNewestProducts(req, res, next) {
     try {
       const products = await productService.getNewestProducts();
@@ -65,4 +88,4 @@ class ProductController {
   }
 }
 
-module.exports = new ProductController();
+export default new ProductController();

@@ -23,11 +23,11 @@ const postForgotPassword = (email) => {
         email: email
     });
 }
-const postResetPassword = (email,otp,newPassword) => {
+const postResetPassword = (email, otp, newPassword) => {
     return axios.post("api/auth/reset-password", {
         email: email,
-        otp:otp,
-        newPassword:newPassword
+        otp: otp,
+        newPassword: newPassword
     });
 }
 const getUser = (token) => {
@@ -37,7 +37,8 @@ const getUser = (token) => {
         }
     });
 }
-export {getUser, postLogin, postSignup, postAuthOtp, postForgotPassword, postResetPassword}
+
+export { getUser, postLogin, postSignup, postAuthOtp, postForgotPassword, postResetPassword }
 // const postCreateNewUser = (email, username, password, role, image) => {
 //     const data = new FormData();
 //     data.append('email', email);

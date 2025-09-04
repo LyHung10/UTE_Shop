@@ -108,6 +108,27 @@ class ProductService {
             ],
         });
     }
+    // 5. Thêm sản phẩm + ảnh cloud
+    async createProductWithImages(productData, files = []) {
+        // 1. Tạo product
+        const product = await Product.create(productData);
+
+        // 2. Lưu hình ảnh (nếu có)
+        if (files.length) {
+            const images = files.map((file, index) => ({
+                product_id: product.id,
+                url: file.path, // multer-cloudinary trả về path là URL Cloudinary
+                alt: file.originalname,
+                sort_order: index + 1,
+            }));
+            await ProductImage.bulkCreate(images);
+        }
+
+        // 3. Trả về product kèm images
+        return await Product.findByPk(product.id, {
+            include: [{ model: ProductImage, as: "images" }],
+        });
+    }
 }
 
-module.exports = new ProductService();
+export default new ProductService();

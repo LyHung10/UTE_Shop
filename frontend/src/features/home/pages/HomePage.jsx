@@ -5,10 +5,11 @@ import { Star, ShoppingCart, Search, User, Menu } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
 import background from "../../../assets/non.jpg"
 import TopNewArrivals from "@/features/home/components/TopNewArrivals.jsx";
-
+import TopDiscounts from "@/features/home/components/TopDiscounts.jsx";
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
+
       <section className="bg-gray-100 py-16 ">
         <div className="container mx-auto px-24 flex flex-col lg:flex-row items-center ">
           <div className="lg:w-1/2 mb-8 lg:mb-0">
@@ -66,6 +67,8 @@ export default function HomePage() {
 
       {/* Top New Arrivals */}
       <TopNewArrivals/>
+
+      <TopDiscounts/>
       {/* Divider */}
       <div className="border-t border-gray-200"></div>
 
