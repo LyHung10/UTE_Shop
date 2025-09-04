@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Star, ShoppingCart, Search, User, Menu } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
+import TopDiscounts from "./TopDiscounts"
 
 export default function HomePage() {
   return (
@@ -104,7 +105,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <h3 className="text-3xl font-bold text-center mb-12 text-black">NEW ARRIVALS</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="border-0 shadow-none">
               <CardContent className="p-0">
                 <div className="bg-gray-100 rounded-lg p-8 mb-4">
@@ -197,7 +198,8 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
+          <TopDiscounts />
 
           <div className="text-center">
             <Button variant="outline" className="px-8 py-3 rounded-full bg-transparent">
