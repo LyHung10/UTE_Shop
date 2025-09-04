@@ -1,9 +1,9 @@
 import {useNavigate} from "react-router-dom";
 import {useState} from "react";
 import {toast} from "react-toastify";
-import {postSignup} from "../../services/apiService.jsx";
+import {postSignup} from "../../../services/apiService.jsx";
 import {useDispatch} from "react-redux";
-import {authOTP} from "../../redux/action/authOtpAction.jsx";
+import {authOTP} from "../../../redux/action/authOtpAction.jsx";
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -79,7 +79,7 @@ const SignUp = () => {
                                     Create an account
                                 </button>
                                 <p className="text-sm font-light text-gray-500">
-                                    Already have an account? <a href="/login"
+                                    Already have an account? <a href="/pages/Login"
                                                                 className="font-medium text-primary-600 hover:underline">Login
                                     here</a>
                                 </p>

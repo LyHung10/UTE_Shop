@@ -1,9 +1,9 @@
 import {useEffect, useState} from 'react';
-import {postAuthOtp} from "../../services/apiService.jsx";
+import {postAuthOtp} from "../../../services/apiService.jsx";
 import {useDispatch, useSelector} from "react-redux";
 import {toast} from "react-toastify";
 import {useNavigate} from "react-router-dom";
-import {authOTP} from "../../redux/action/authOtpAction.jsx";
+import {authOTP} from "../../../redux/action/authOtpAction.jsx";
 
 const AuthOtp = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);

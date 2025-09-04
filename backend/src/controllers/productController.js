@@ -67,6 +67,25 @@ class ProductController {
       res.status(500).json({ message: 'Thêm sản phẩm thất bại', error: error.message });
     }
   };
+
+  async getNewestProducts(req, res, next) {
+    try {
+      const products = await productService.getNewestProducts();
+      res.json(products);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 6. Lấy 6 sản phẩm bán chạy nhất
+  async getBestSellingProducts(req, res, next) {
+    try {
+      const products = await productService.getBestSellingProducts();
+      res.json(products);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export default new ProductController();

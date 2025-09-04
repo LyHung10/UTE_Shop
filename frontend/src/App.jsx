@@ -1,14 +1,14 @@
-import Layout from "./components/Layout.jsx";
+import Layout from "./Layout.jsx";
 import { Route, Routes } from "react-router-dom";
-import HomePage from "./components/Home/HomePage.jsx";
-import Login from "./components/Auth/Login.jsx";
+import HomePage from "./features/home/pages/HomePage.jsx";
+import Login from "./features/auth/pages/Login.jsx";
 import 'react-toastify/dist/ReactToastify.css';
 import { Bounce, ToastContainer } from "react-toastify";
-import SignUp from "./components/Auth/SignUp.jsx";
-import AuthOtp from "./components/Auth/AuthOtp.jsx";
-import ForgotPassword from "./components/Auth/ForgotPassword.jsx";
-import ResetPassword from "./components/Auth/ResetPassword.jsx";
-import TopDiscounts from "./components/Home/TopDiscounts";
+import SignUp from "./features/auth/pages/SignUp.jsx";
+import AuthOtp from "./features/auth/components/AuthOtp.jsx";
+import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
+import ResetPassword from "./features/auth/components/ResetPassword.jsx";
+import TopDiscounts from "./features/home/components/TopDiscounts.jsx";
 
 function App() {
   return (

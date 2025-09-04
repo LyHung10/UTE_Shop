@@ -79,6 +79,35 @@ class ProductService {
         return product;
     }
 
+    async getNewestProducts(limit = 8) {
+        return await Product.findAll({
+            order: [["created_at", "DESC"]],
+            limit,
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
+        });
+    }
+
+    async getBestSellingProducts(limit = 6) {
+        return await Product.findAll({
+            order: [["sale_count", "DESC"]],
+            limit,
+            include: [
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+            ],
+        });
+    }
     // 5. Thêm sản phẩm + ảnh cloud
     async createProductWithImages(productData, files = []) {
         // 1. Tạo product

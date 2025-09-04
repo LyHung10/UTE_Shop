@@ -1,9 +1,9 @@
 import {useNavigate} from "react-router-dom";
 import {useState} from "react";
 import {toast} from "react-toastify";
-import {postForgotPassword} from "../../services/apiService.jsx";
+import {postForgotPassword} from "../../../services/apiService.jsx";
 import {useDispatch, useSelector} from "react-redux";
-import {authOTP} from "../../redux/action/authOtpAction.jsx";
+import {authOTP} from "../../../redux/action/authOtpAction.jsx";
 
 const ForgotPassword = () => {
 

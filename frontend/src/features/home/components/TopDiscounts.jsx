@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { getTopDiscount } from "../../services/productService";
 import { Star } from "lucide-react"; // giả sử bạn dùng lucide-react
+import { getTopDiscount } from "../../../services/productService.jsx";
+
 export default function TopDiscounts() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
