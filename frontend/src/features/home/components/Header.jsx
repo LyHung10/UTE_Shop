@@ -8,9 +8,9 @@ const Header = () =>
     const isAuthenticated = useSelector(state => state.user.isAuthenticated);
     const user = useSelector(state => state.user.account);
     return (
-        <header className="bg-black text-white">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white">
             {/* Top banner */}
-            <div className="bg-white text-black text-center py-2 text-sm">
+            <div className="bg-white text-black text-center py-1 text-sm">
                 Sign up and get 20% off to your first order. <button className="underline">Sign Up Now</button>
             </div>
 

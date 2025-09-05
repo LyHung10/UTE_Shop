@@ -1,17 +1,36 @@
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
-import { Star, ShoppingCart, Search, User, Menu } from "lucide-react"
+import { Star } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
 import background from "../../../assets/non.jpg"
-import TopNewArrivals from "@/features/home/components/TopNewArrivals.jsx";
-import TopDiscounts from "@/features/home/components/TopDiscounts.jsx";
+import ProductSlider from "@/features/home/components/ProductSlider.jsx";
+import {getNewestProducts, getTopDiscountProducts} from "@/services/productService.jsx";
+import {useEffect, useState} from "react";
+
 export default function HomePage() {
+  const [listTopNewestProducts, setListTopNewestProducts] = useState([]);
+  const [listTopDiscountProducts, setListTopDiscountProducts] = useState([]);
+  const fetchListTopDiscountProducts = async () => {
+    let data = await getTopDiscountProducts();
+    console.log("API data:", data);
+    setListTopDiscountProducts(data);
+  };
+  const fetchListTopNewestProducts = async () => {
+    let data = await getNewestProducts();
+    console.log("API data:", data);
+    setListTopNewestProducts(data);
+  };
+
+  useEffect(() => {
+    fetchListTopNewestProducts();
+    fetchListTopDiscountProducts();
+  }, []);
   return (
-    <div className="min-h-screen bg-white">
+    <div className="mt-30 min-h-screen bg-white">
 
       <section className="bg-gray-100 py-16 ">
-        <div className="container mx-auto px-24 flex flex-col lg:flex-row items-center ">
+        <div className="container mx-auto px-35 flex flex-col lg:flex-row items-center ">
           <div className="lg:w-1/2 mb-8 lg:mb-0">
             <h2 className="text-4xl lg:text-6xl font-bold mb-6 text-black">
               FIND CLOTHES
@@ -43,7 +62,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="lg:w-1/2 relative border-4">
+          <div className="lg:w-1/2 relative">
             <img src={background} alt="Stylish couple" className="w-full h-auto rounded-lg" />
             {/* Decorative stars */}
             <div className="absolute top-20 right-10 text-black text-4xl">✦</div>
@@ -51,7 +70,19 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <div className="border-t border-gray-200"></div>
+      <ProductSlider
+          listTopNewestProducts = {listTopNewestProducts}
+          nameTop = {"NEW ARRIVALS"}
+      />
+      <div className="border-t border-gray-200"></div>
+      <ProductSlider
+          listTopNewestProducts = {listTopDiscountProducts}
+          nameTop = "TOP SELLING"
+      />
+      {/*<TopDiscounts/>*/}
+      {/* Divider */}
+      <div className="border-t border-gray-200"></div>
       {/* Brand Bar */}
       <section className="bg-black py-6">
         <div className="container mx-auto px-4">
@@ -64,14 +95,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Top New Arrivals */}
-      <TopNewArrivals/>
-
-      <TopDiscounts/>
-      {/* Divider */}
-      <div className="border-t border-gray-200"></div>
-
       {/* Top Selling */}
       <section className="py-16">
         <div className="container mx-auto px-4">

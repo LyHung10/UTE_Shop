@@ -1,0 +1,50 @@
+/* Style chung cho cả 2 nút */
+.swiper-button-next,
+.swiper-button-prev {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; /* làm tròn */
+    background: white; /* nền trắng */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* đổ bóng nhẹ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000 !important; /* icon màu đen */
+    fill: black !important;
+    stroke: black !important;
+}
+
+/* Ẩn icon mặc định của Swiper */
+.swiper-button-next::after,
+.swiper-button-prev::after {
+    font-size: 0; /* ẩn text arrow mặc định */
+}
+
+/* Tạo icon mũi tên tùy chỉnh */
+.swiper-button-next::before,
+.swiper-button-prev::before {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid black;
+    border-right: 2px solid black;
+}
+
+/* Xoay icon theo hướng */
+.swiper-button-next::before {
+    transform: rotate(45deg); /* mũi tên sang phải */
+}
+
+.swiper-button-prev::before {
+    transform: rotate(-135deg); /* mũi tên sang trái */
+}
+
+.swiper-button-prev {
+    left: -2px; /* ra ngoài thêm 20px */
+}
+
+.swiper-button-next {
+    right: -2px; /* ra ngoài thêm 20px */
+}
+
