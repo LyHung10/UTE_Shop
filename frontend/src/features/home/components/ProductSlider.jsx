@@ -11,7 +11,7 @@ import '../../../styles/TopProduct.css'
 import 'swiper/css/effect-fade';
 
 const ProductSlider = (props) => {
-    const {listTopNewestProducts, nameTop} = props;
+    const {listProducts, nameTop} = props;
     return (
         <section className="py-8">
             <div className="container mx-auto px-30">
@@ -58,8 +58,8 @@ const ProductSlider = (props) => {
                             1024: { slidesPerView: 4 },
                         }}
                         className="flex-1">
-                        {listTopNewestProducts && listTopNewestProducts.length > 0 ? (
-                            listTopNewestProducts.map((item) => (
+                        {listProducts && listProducts.length > 0 ? (
+                            listProducts.map((item) => (
                                 <SwiperSlide key={item.id}>
                                     <Card className="border-0 shadow-md hover:shadow-xl my-4 hover:-translate-y-1 transform transition-all duration-100 rounded-xl">
                                         <CardContent className="!p-2">
@@ -90,7 +90,7 @@ const ProductSlider = (props) => {
 
                                             <div className="flex items-center gap-2">
                                                 {
-                                                    nameTop === "TOP SELLING" ? (
+                                                    nameTop === "BEST DEALS" ? (
                                                         <>
                                                             <span className="font-bold text-lg">
                                                                 {new Intl.NumberFormat("vi-VN", {
@@ -146,7 +146,7 @@ const ProductSlider = (props) => {
                 </div>
 
 
-                <div className="text-center">
+                <div className="text-center mt-4">
                     <Button className="px-8 py-3 rounded-full bg-black text-white hover:bg-gray-800">
                         View All
                     </Button>

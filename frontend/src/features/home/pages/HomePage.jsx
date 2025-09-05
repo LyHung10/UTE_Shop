@@ -3,33 +3,48 @@ import { Card, CardContent } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
 import { Star } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
-import background from "../../../assets/non.jpg"
+import banner from "../../../assets/coming_soon.jpg"
+import banner2 from "../../../assets/ao_khoa_chinh_tri_luat.jpg"
 import ProductSlider from "@/features/home/components/ProductSlider.jsx";
-import {getNewestProducts, getTopDiscountProducts} from "@/services/productService.jsx";
+import {
+  getBestSellingProducts,
+  getMostViewedProducts,
+  getNewestProducts,
+  getTopDiscountProducts
+} from "@/services/productService.jsx";
 import {useEffect, useState} from "react";
 
 export default function HomePage() {
   const [listTopNewestProducts, setListTopNewestProducts] = useState([]);
   const [listTopDiscountProducts, setListTopDiscountProducts] = useState([]);
+  const [listTopMostViewedProducts, setListTopMostViewedProducts] = useState([]);
+  const [listBestSellingProducts, setListBestSellingProducts] = useState([]);
   const fetchListTopDiscountProducts = async () => {
     let data = await getTopDiscountProducts();
-    console.log("API data:", data);
     setListTopDiscountProducts(data);
+  };
+  const fetchListBestSellingProducts = async () => {
+    let data = await getBestSellingProducts();
+    setListBestSellingProducts(data);
   };
   const fetchListTopNewestProducts = async () => {
     let data = await getNewestProducts();
-    console.log("API data:", data);
     setListTopNewestProducts(data);
   };
-
+  const fetchTopMostViewedProducts = async () => {
+    let data = await getMostViewedProducts();
+    setListTopMostViewedProducts(data);
+  };
   useEffect(() => {
     fetchListTopNewestProducts();
     fetchListTopDiscountProducts();
+    fetchTopMostViewedProducts();
+    fetchListBestSellingProducts();
   }, []);
   return (
     <div className="mt-30 min-h-screen bg-white">
 
-      <section className="bg-gray-100 py-16 ">
+      <section className="bg-white">
         <div className="container mx-auto px-35 flex flex-col lg:flex-row items-center ">
           <div className="lg:w-1/2 mb-8 lg:mb-0">
             <h2 className="text-4xl lg:text-6xl font-bold mb-6 text-black">
@@ -63,7 +78,7 @@ export default function HomePage() {
           </div>
 
           <div className="lg:w-1/2 relative">
-            <img src={background} alt="Stylish couple" className="w-full h-auto rounded-lg" />
+            <img src={banner} alt="Stylish couple" className="p-20 w-full h-full object-fill rounded-lg" />
             {/* Decorative stars */}
             <div className="absolute top-20 right-10 text-black text-4xl">✦</div>
             <div className="absolute bottom-20 left-10 text-black text-2xl">✦</div>
@@ -72,30 +87,25 @@ export default function HomePage() {
       </section>
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listTopNewestProducts = {listTopNewestProducts}
+          listProducts = {listTopNewestProducts}
           nameTop = {"NEW ARRIVALS"}
       />
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listTopNewestProducts = {listTopDiscountProducts}
-          nameTop = "TOP SELLING"
+          listProducts = {listTopDiscountProducts}
+          nameTop = "BEST DEALS"
       />
-      {/*<TopDiscounts/>*/}
-      {/* Divider */}
       <div className="border-t border-gray-200"></div>
-      {/* Brand Bar */}
-      <section className="bg-black py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center gap-12 flex-wrap">
-            <div className="text-white text-2xl font-bold">VERSACE</div>
-            <div className="text-white text-2xl font-bold">ZARA</div>
-            <div className="text-white text-2xl font-bold">GUCCI</div>
-            <div className="text-white text-2xl font-bold">PRADA</div>
-            <div className="text-white text-2xl font-bold">Calvin Klein</div>
-          </div>
-        </div>
-      </section>
-      {/* Top Selling */}
+      <ProductSlider
+          listProducts = {listTopMostViewedProducts}
+          nameTop = "MOST VIEWED"
+      />
+      <div className="border-t border-gray-200"></div>
+      <ProductSlider
+          listProducts = {listBestSellingProducts}
+          nameTop = "BEST SELLERS"
+      />
+      <div className="border-t border-gray-200"></div>
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h3 className="text-3xl font-bold text-center mb-12 text-black">TOP SELLING</h3>
@@ -194,6 +204,19 @@ export default function HomePage() {
             <Button variant="outline" className="px-8 py-3 rounded-full bg-transparent">
               View All
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Brand Bar */}
+      <section className="bg-black py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center gap-12 flex-wrap">
+            <div className="text-white text-2xl font-bold">VERSACE</div>
+            <div className="text-white text-2xl font-bold">ZARA</div>
+            <div className="text-white text-2xl font-bold">GUCCI</div>
+            <div className="text-white text-2xl font-bold">PRADA</div>
+            <div className="text-white text-2xl font-bold">Calvin Klein</div>
           </div>
         </div>
       </section>

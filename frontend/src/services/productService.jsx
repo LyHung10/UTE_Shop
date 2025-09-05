@@ -10,4 +10,11 @@ const getNewestProducts = () => {
 const getTopDiscountProducts = () => {
     return axios.get("api/products/newest");
 }
-export {getNewestProducts,getTopDiscountProducts}
+const getMostViewedProducts = () => {
+    return axios.get("api/products/most-viewed");
+}
+const getBestSellingProducts = () => {
+    return axios.get("api/products/best-selling");
+}
+
+export {getNewestProducts,getTopDiscountProducts,getMostViewedProducts,getBestSellingProducts}

@@ -102,8 +102,8 @@ const Login = () => {
 
                 <p className="mt-10 text-center text-sm text-gray-600">
                     Not a member?{" "}
-                    <a href="/public"
-                        className="font-semibold text-indigo-600 hover:text-indigo-500">Go home
+                    <a href="/signup"
+                        className="font-semibold text-indigo-600 hover:text-indigo-500">Sign up
                     </a>
                 </p>
             </div>

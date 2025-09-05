@@ -61,27 +61,25 @@ const Header = () =>
                                         )}
                                     </Menu.Item>
 
-                                    <Menu.Item as="a" href="#">
-                                        {({ active }) => (
-                                            <span
-                                                className={`block px-4 py-2 text-sm ${
-                                                    active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                }`}
-                                            >
-                                                Account settings
-                                              </span>
-                                        )}
+                                    <Menu.Item as="button"
+                                               onClick={()=>(navigate("/profile"))}
+                                               className={({ active }) =>
+                                                   `block w-full text-left px-4 py-2 text-sm ${
+                                                       active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                                   }`
+                                               }
+                                    >
+                                        Account settings
                                     </Menu.Item>
 
-                                    <Menu.Item as="button">
-                                        {({ active }) => (
-                                            <button
-                                                className={`block w-full text-left px-4 py-2 text-sm ${
-                                                    active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                }`}
-                                            >Log out
-                                            </button>
-                                        )}
+                                    <Menu.Item as="button"
+                                               className={({ active }) =>
+                                                   `block w-full text-left px-4 py-2 text-sm ${
+                                                       active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                                   }`
+                                               }
+                                    >
+                                        Log out
                                     </Menu.Item>
                                 </div>
                             </Menu.Items>

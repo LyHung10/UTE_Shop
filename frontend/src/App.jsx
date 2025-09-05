@@ -8,21 +8,23 @@ import SignUp from "./features/auth/pages/SignUp.jsx";
 import AuthOtp from "./features/auth/components/AuthOtp.jsx";
 import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
-import TopDiscounts from "./features/home/components/TopDiscounts.jsx";
+import UserProfile from "@/features/user/UserProfile.jsx";
+import ProductDetail from "@/features/product/ProductDetail.jsx";
 
 function App() {
   return (
     <>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
+            <Route index element={<HomePage />} />
+            <Route path="profile" element={<UserProfile/>} />
+            <Route path="product" element={<ProductDetail/>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<AuthOtp />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
-        <Route path="/top-discounts" element={<TopDiscounts />} />
       </Routes>
       <ToastContainer
         position="top-right"
