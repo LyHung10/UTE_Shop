@@ -14,7 +14,7 @@ const ProductSlider = (props) => {
     const {listProducts, nameTop} = props;
     return (
         <section className="py-8">
-            <div className="container mx-auto px-30">
+            <div className="container mx-auto px-35">
                 <h3 className="text-3xl font-bold text-center mb-3 text-black">
                     {nameTop}
                 </h3>
@@ -62,7 +62,7 @@ const ProductSlider = (props) => {
                             listProducts.map((item) => (
                                 <SwiperSlide key={item.id}>
                                     <Card className="border-0 shadow-md hover:shadow-xl my-4 hover:-translate-y-1 transform transition-all duration-100 rounded-xl">
-                                        <CardContent className="!p-2">
+                                        <CardContent className="!p-3">
                                             <div className="h-65 bg-white rounded-lg mb-4">
                                                 <div className="size-full rounded flex items-center justify-center">
                                                     {item.images && item.images.length > 0 ? (
@@ -77,7 +77,7 @@ const ProductSlider = (props) => {
                                                 </div>
                                             </div>
 
-                                            <h4 className="font-semibold mb-2">{item.name}</h4>
+                                            <h4 className="font-semibold mb-2 text-lg">{item.name}</h4>
 
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="flex text-yellow-400">
@@ -88,7 +88,7 @@ const ProductSlider = (props) => {
                                                 <span className="text-sm text-gray-600">5.0/5</span>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2" style={{ fontFamily: "Poppins, sans-serif" }}>
                                                 {
                                                     nameTop === "BEST DEALS" ? (
                                                         <>

@@ -1,7 +1,6 @@
 import { FaFacebookF, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { LuPen } from "react-icons/lu";
 import { RxCross2 } from "react-icons/rx";
-import {useNavigate} from "react-router-dom";
 import {useSelector} from "react-redux";
 
 export default function ProfilePage() {

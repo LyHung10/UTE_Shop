@@ -30,12 +30,8 @@ const postResetPassword = (email, otp, newPassword) => {
         newPassword: newPassword
     });
 }
-const getUser = (token) => {
-    return axios.get("/api/users/profile", {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    });
+const getUser = () => {
+    return axios.get("/api/users/profile");
 }
 
 export { getUser, postLogin, postSignup, postAuthOtp, postForgotPassword, postResetPassword }

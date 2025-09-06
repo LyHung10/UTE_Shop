@@ -1,4 +1,9 @@
+import {useParams} from "react-router-dom";
+
 const ProductDetail = () => {
+    const params = useParams();
+    const quizId = params.id;
+    console.log(quizId);
     return(
         <div className="bg-white mt-30">
             <div className="pt-6">

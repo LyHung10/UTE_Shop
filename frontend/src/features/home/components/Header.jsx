@@ -1,12 +1,18 @@
 import {useNavigate} from "react-router-dom";
-import {useSelector} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import { Search, ShoppingCart, User, Menu as MenuIcon } from "lucide-react";
 import { Menu } from "@headlessui/react";
+import {doLogout} from "@/redux/action/userAction.jsx";
 const Header = () =>
 {
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const isAuthenticated = useSelector(state => state.user.isAuthenticated);
     const user = useSelector(state => state.user.account);
+    const handleLogOut = () =>{
+        dispatch(doLogout());
+        navigate("/");
+    }
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white">
             {/* Top banner */}
@@ -73,6 +79,7 @@ const Header = () =>
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
+                                               onClick={()=>(handleLogOut())}
                                                className={({ active }) =>
                                                    `block w-full text-left px-4 py-2 text-sm ${
                                                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"

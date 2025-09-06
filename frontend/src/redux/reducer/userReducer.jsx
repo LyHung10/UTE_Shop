@@ -1,4 +1,4 @@
-import {FETCH_USER_LOGIN_SUCCESS} from "../action/userAction.jsx";
+import {FETCH_USER_LOGIN_SUCCESS, USER_LOGOUT_SUCCESS} from "../action/userAction.jsx";
 
 
 const INITIAL_STATE = {
@@ -31,6 +31,21 @@ const userReducer = (state = INITIAL_STATE, action) => {
                     image: action?.payload?.image,
                 },
                 isAuthenticated: true
+            };
+        case USER_LOGOUT_SUCCESS:
+            return {//...state copy state tr đó rồi ghi đè state mới lên
+                ...state, account: {
+                    accessToken: '',
+                    refreshToken: '',
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    address: '',
+                    phone_number: '',
+                    gender: '',
+                    image: '',
+                },
+                isAuthenticated: false
             };
         default:
             return state;
