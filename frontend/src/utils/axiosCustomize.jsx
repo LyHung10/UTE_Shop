@@ -15,6 +15,9 @@ const instance = axios.create({
 instance.interceptors.request.use(function (config) {
     NProgress.start();
     // Do something before request is sent
+    // log đường dẫn thực sự mà axios sẽ gọi
+    console.log(">>> Request URL:", config.baseURL + config.url);
+
     return config;
 }, function (error) {
     // Do something with request error

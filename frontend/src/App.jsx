@@ -10,15 +10,16 @@ import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
 import UserProfile from "@/features/user/UserProfile.jsx";
 import ProductDetail from "@/features/product/ProductDetail.jsx";
-
+import ScrollToTop from "./utils/ScrollToTop.jsx";
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="profile" element={<UserProfile/>} />
-            <Route path="product" element={<ProductDetail/>} />
+          <Route index element={<HomePage />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="product/:id" element={<ProductDetail />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />

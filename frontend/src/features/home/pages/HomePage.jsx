@@ -12,7 +12,7 @@ import {
   getNewestProducts,
   getTopDiscountProducts
 } from "@/services/productService.jsx";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
   const [listTopNewestProducts, setListTopNewestProducts] = useState([]);
@@ -42,7 +42,7 @@ export default function HomePage() {
     fetchListBestSellingProducts();
   }, []);
   return (
-    <div className="mt-30 min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
 
       <section className="bg-white">
         <div className="container mx-auto px-35 flex flex-col lg:flex-row items-center ">
@@ -87,23 +87,23 @@ export default function HomePage() {
       </section>
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listProducts = {listTopNewestProducts}
-          nameTop = {"NEW ARRIVALS"}
+        listProducts={listTopNewestProducts}
+        nameTop={"NEW ARRIVALS"}
       />
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listProducts = {listTopDiscountProducts}
-          nameTop = "BEST DEALS"
+        listProducts={listTopDiscountProducts}
+        nameTop="BEST DEALS"
       />
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listProducts = {listTopMostViewedProducts}
-          nameTop = "MOST VIEWED"
+        listProducts={listTopMostViewedProducts}
+        nameTop="MOST VIEWED"
       />
       <div className="border-t border-gray-200"></div>
       <ProductSlider
-          listProducts = {listBestSellingProducts}
-          nameTop = "BEST SELLERS"
+        listProducts={listBestSellingProducts}
+        nameTop="BEST SELLERS"
       />
       <div className="border-t border-gray-200"></div>
       <section className="py-16">
