@@ -63,7 +63,7 @@ const ProductDetail = () => {
                                             key={img.id}
                                             src={img.url}
                                             alt={img.alt}
-                                            onClick={() => setSelectedImage(img)} // 👉 click để đổi ảnh
+                                            onClick={() => setSelectedImage(img)} // ?? click d? d?i ?nh
                                             className={`w-20 h-20 object-cover rounded-lg border cursor-pointer ${selectedImage?.id === img.id
                                                 ? "border-2 border-black"
                                                 : "border-gray-200"
@@ -75,7 +75,7 @@ const ProductDetail = () => {
                                 {/* Main Image */}
                                 <div className="flex-1">
                                     <img
-                                        src={selectedImage?.url || product.images[0]?.url} // 👉 lấy ảnh được chọn, nếu chưa chọn thì mặc định ảnh đầu
+                                        src={selectedImage?.url || product.images[0]?.url} // ?? l?y ?nh du?c ch?n, n?u chua ch?n th� m?c d?nh ?nh d?u
                                         alt={selectedImage?.alt || product.images[0]?.alt}
                                         className="w-full h-96 object-cover rounded-lg"
                                     />
@@ -102,11 +102,16 @@ const ProductDetail = () => {
                             </div>
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="text-3xl font-bold text-black">
-                                    {Number(product?.price).toLocaleString("vi-VN")}₫
+                                    {product?.price
+                                        ? Number(product.price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+                                        : ""}
                                 </span>
                                 <span className="text-xl text-gray-400 line-through">
-                                    {Number(product?.original_price).toLocaleString("vi-VN")}₫
+                                    {product?.original_price
+                                        ? Number(product.original_price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+                                        : ""}
                                 </span>
+
                                 {product?.discount_percent > 0 && (
                                     <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-medium">
                                         -{product.discount_percent}%
@@ -117,7 +122,7 @@ const ProductDetail = () => {
                             <p className="text-gray-600 leading-relaxed">{product?.short_description}</p>
                             <p className="text-gray-600 leading-relaxed mt-2">{product?.description}</p>
                             <p className="text-sm text-gray-500">
-                                Còn lại: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
+                                C�n l?i: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
                             </p>
 
                         </div>
@@ -357,7 +362,7 @@ const ProductDetail = () => {
                     </div>
 
                     <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-sm text-gray-600">Shop.co © 2000-2023, All Rights Reserved</p>
+                        <p className="text-sm text-gray-600">Shop.co � 2000-2023, All Rights Reserved</p>
                         <div className="flex gap-2 mt-4 md:mt-0">
                             <img src="/visa-logo-generic.png" alt="Visa" className="h-6" />
                             <img src="/mastercard-logo.png" alt="Mastercard" className="h-6" />

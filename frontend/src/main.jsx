@@ -4,14 +4,17 @@ import "./index.css"
 import "nprogress/nprogress.css";
 import App from "./App.jsx";
 import {BrowserRouter} from "react-router-dom";
-import store from "./redux/store.jsx";
+import {store, persistor} from "./redux/store.jsx";
 import {Provider} from "react-redux";
+import {PersistGate} from "redux-persist/integration/react";
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
-        <StrictMode>
-            <BrowserRouter>
-                <App />
-            </BrowserRouter>
-        </StrictMode>
+        <PersistGate loading={null} persistor={persistor}>
+            <StrictMode>
+                <BrowserRouter>
+                    <App />
+                </BrowserRouter>
+            </StrictMode>
+        </PersistGate>
     </Provider>
 )

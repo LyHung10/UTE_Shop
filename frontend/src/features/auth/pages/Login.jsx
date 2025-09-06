@@ -17,7 +17,7 @@ const Login = () => {
             dispatch(doLogin(data));
             toast.success("Đăng nhập thành công");
             // await props.fetchListUsers();)
-            let user = await getUser(data.accessToken);
+            let user = await getUser();
             dispatch(doLogin(user));
             console.log(user);
             navigate("/")
