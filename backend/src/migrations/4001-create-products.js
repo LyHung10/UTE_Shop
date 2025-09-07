@@ -1,5 +1,7 @@
 'use strict';
 
+const { col } = require("sequelize");
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('products', {
@@ -16,6 +18,8 @@ module.exports = {
       sale_count: { type: Sequelize.INTEGER, defaultValue: 0 },
       is_active: { type: Sequelize.BOOLEAN, defaultValue: true },
       featured: { type: Sequelize.BOOLEAN, defaultValue: false },
+      colors: { type: Sequelize.JSON, allowNull: true, defaultValue: [] },
+      sizes: { type: Sequelize.JSON, allowNull: true, defaultValue: [] },
       created_at: { allowNull: false, type: Sequelize.DATE },
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });

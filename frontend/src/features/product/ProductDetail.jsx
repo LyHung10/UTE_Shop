@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Star, ChevronDown, Plus, Minus } from "lucide-react"
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
+import ProductSlider from "@/features/home/components/ProductSlider.jsx";
+import { getBestSellingProducts } from "../../services/productService.jsx";
 import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/navigation";
@@ -14,8 +16,11 @@ const ProductDetail = () => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
 
-    const [colors] = useState([{ class: "bg-red-500" }, { class: "bg-blue-500" }]);
-    const [sizes] = useState(["S", "M", "L"]);
+    const [listBestSellingProducts, setListBestSellingProducts] = useState([]);
+    const fetchListBestSellingProducts = async () => {
+        let data = await getBestSellingProducts();
+        setListBestSellingProducts(data);
+    };
     const [reviews] = useState([]);
     const [relatedProducts] = useState([]);
     const [activeTab, setActiveTab] = useState("details");
@@ -30,6 +35,7 @@ const ProductDetail = () => {
             setProduct(res);
         };
         fetchData();
+        fetchListBestSellingProducts();
     }, [id]);
 
     return (
@@ -122,7 +128,7 @@ const ProductDetail = () => {
                             <p className="text-gray-600 leading-relaxed">{product?.short_description}</p>
                             <p className="text-gray-600 leading-relaxed mt-2">{product?.description}</p>
                             <p className="text-sm text-gray-500">
-                                C�n l?i: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
+                                Còn lại: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
                             </p>
 
                         </div>
@@ -133,12 +139,11 @@ const ProductDetail = () => {
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-900 mb-3">Select Colors</h3>
                                     <div className="flex gap-3">
-                                        {colors.map((color, index) => (
+                                        {product?.colors?.map((color, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => setSelectedColor(index)}
-                                                className={`w-8 h-8 rounded-full ${color.class} ${selectedColor === index ? "ring-2 ring-offset-2 ring-black" : ""
-                                                    }`}
+                                                className={`w-8 h-8 rounded-full ${color.class || color} ${selectedColor === index ? "ring-2 ring-offset-2 ring-black" : ""}`}
                                             />
                                         ))}
                                     </div>
@@ -148,7 +153,7 @@ const ProductDetail = () => {
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-900 mb-3">Choose Size</h3>
                                     <div className="flex gap-2">
-                                        {sizes.map((size) => (
+                                        {product?.sizes?.map((size) => (
                                             <button
                                                 key={size}
                                                 onClick={() => setSelectedSize(size)}
@@ -162,6 +167,7 @@ const ProductDetail = () => {
                                         ))}
                                     </div>
                                 </div>
+
 
                                 {/* Quantity and Add to Cart */}
                                 <div className="flex gap-4">
@@ -246,9 +252,16 @@ const ProductDetail = () => {
                 </div>
 
                 {/* You Might Also Like */}
-                <div className="mt-16">
-                    <h2 className="text-3xl font-bold text-center mb-12">YOU MIGHT ALSO LIKE</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="mt-0">
+                    <h2 className="text-3xl font-bold text-center">YOU MIGHT ALSO LIKE</h2>
+                    <div>
+                        <ProductSlider
+                            listProducts={listBestSellingProducts}
+                        // nameTop="BEST SELLERS"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {relatedProducts.map((product, index) => (
                             <div key={index} className="group">
                                 <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">

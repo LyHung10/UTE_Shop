@@ -16,6 +16,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Red', class: 'bg-red-500' },
+          { name: 'Blue', class: 'bg-blue-500' }
+        ]),
+        sizes: JSON.stringify(['S', 'M', 'L']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -32,6 +37,10 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Blue', class: 'bg-blue-500' }
+        ]),
+        sizes: JSON.stringify(['S', 'M', 'L']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -48,6 +57,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Black', class: 'bg-black' },
+          { name: 'Gray', class: 'bg-gray-500' }
+        ]),
+        sizes: JSON.stringify(['One Size']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -64,6 +78,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Blue', class: 'bg-blue-500' },
+          { name: 'Black', class: 'bg-black' }
+        ]),
+        sizes: JSON.stringify(['One Size']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -80,6 +99,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Red', class: 'bg-red-500' },
+          { name: 'Black', class: 'bg-black' }
+        ]),
+        sizes: JSON.stringify(['S', 'M']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -96,6 +120,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Blue', class: 'bg-blue-500' },
+          { name: 'Red', class: 'bg-red-500' }
+        ]),
+        sizes: JSON.stringify(['One Size']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -112,6 +141,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Blue', class: 'bg-blue-500' },
+          { name: 'Red', class: 'bg-red-500' }
+        ]),
+        sizes: JSON.stringify(['One Size']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -128,6 +162,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Brown', class: 'bg-yellow-700' },
+          { name: 'White', class: 'bg-white' }
+        ]),
+        sizes: JSON.stringify(['Small', 'Medium', 'Large']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -144,6 +183,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Black', class: 'bg-black' },
+          { name: 'Gray', class: 'bg-gray-500' }
+        ]),
+        sizes: JSON.stringify(['Large']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -160,6 +204,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Silver', class: 'bg-gray-300' },
+          { name: 'Gold', class: 'bg-yellow-400' }
+        ]),
+        sizes: JSON.stringify(['One Size']),
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -176,6 +225,11 @@ module.exports = {
         sale_count: 0,
         is_active: true,
         featured: true,
+        colors: JSON.stringify([
+          { name: 'Brown', class: 'bg-yellow-700' },
+          { name: 'Black', class: 'bg-black' }
+        ]),
+        sizes: JSON.stringify(['S', 'M', 'L']),
         created_at: new Date(),
         updated_at: new Date()
       }

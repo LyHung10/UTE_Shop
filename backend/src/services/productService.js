@@ -61,6 +61,9 @@ class ProductService {
     // 4. Khi xem chi tiết sản phẩm + tăng view_count
     async getProductById(id) {
         const product = await Product.findByPk(id, {
+            attributes: {
+                include: ['colors', 'sizes'] // đảm bảo Sequelize lấy 2 cột này
+            },
             include: [
                 {
                     model: ProductImage,

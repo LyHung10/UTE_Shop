@@ -22,7 +22,17 @@ module.exports = (sequelize, DataTypes) => {
             view_count: DataTypes.INTEGER,
             sale_count: DataTypes.INTEGER,
             is_active: DataTypes.BOOLEAN,
-            featured: DataTypes.BOOLEAN
+            featured: DataTypes.BOOLEAN,
+            colors: {
+                type: DataTypes.JSON,
+                allowNull: true, // sản phẩm không bắt buộc có màu
+                defaultValue: [], // default empty array
+            },
+            sizes: {
+                type: DataTypes.JSON,
+                allowNull: true, // sản phẩm không bắt buộc có size
+                defaultValue: [], // default empty array
+            },
         },
         {
             sequelize,
