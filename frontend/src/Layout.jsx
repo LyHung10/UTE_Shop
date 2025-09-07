@@ -4,7 +4,7 @@ const Layout = () => {
   return (
     <div>
       <Header />
-      <main className="pt-[120px]"> {/* 120px = chiều cao header */}
+      <main className="mt-[120px]">
         <Outlet />
       </main>
     </div>
