@@ -1,4 +1,4 @@
-import { Product, ProductImage, Inventory } from "../models/index.js";
+import { Product, ProductImage, Inventory, Review } from "../models/index.js";
 
 class ProductService {
     // 1. Lấy 8 sản phẩm có view_count cao nhất
@@ -75,6 +75,11 @@ class ProductService {
                     model: Inventory,
                     as: "inventory",
                     attributes: ["stock", "reserved"],
+                },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: ["id", "user_name", "rating", "text"],
                 },
             ],
         });

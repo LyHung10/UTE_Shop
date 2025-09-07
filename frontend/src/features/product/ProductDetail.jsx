@@ -206,49 +206,49 @@ const ProductDetail = () => {
                         ))}
                     </div>
 
-                    <div className="py-8">
-                        {activeTab === "reviews" && (
-                            <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-bold">All Reviews (451)</h3>
-                                    <div className="flex gap-3">
-                                        <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm">
-                                            <span>Latest</span>
-                                            <ChevronDown className="w-4 h-4" />
-                                        </button>
-                                        <button className="px-4 py-2 bg-black text-white rounded-full text-sm">Write a Review</button>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {reviews.map((review, index) => (
-                                        <div key={index} className="border border-gray-200 rounded-lg p-6">
-                                            <div className="flex items-center gap-1 mb-2">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`w-4 h-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="font-medium">{review.name}</span>
-                                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                            </div>
-                                            <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>
-                                            <span className="text-xs text-gray-400">{review.date}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="text-center mt-8">
-                                    <button className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50">
-                                        Load More Reviews
+                    {/* Reviews Tab */}
+                    {activeTab === "reviews" && (
+                        <div>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold">All Reviews ({product?.reviews?.length || 0})</h3>
+                                <div className="flex gap-3">
+                                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm">
+                                        <span>Latest</span>
+                                        <ChevronDown className="w-4 h-4" />
                                     </button>
+                                    <button className="px-4 py-2 bg-black text-white rounded-full text-sm">Write a Review</button>
                                 </div>
                             </div>
-                        )}
-                    </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {product?.reviews?.map((review) => (
+                                    <div key={review.id} className="border border-gray-200 rounded-lg p-6">
+                                        <div className="flex items-center gap-1 mb-2">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    className={`w-4 h-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="font-medium">{review.user_name}</span>
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>
+                                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("vi-VN")}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="text-center mt-8">
+                                <button className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50">
+                                    Load More Reviews
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
 
                 {/* You Might Also Like */}
