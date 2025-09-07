@@ -79,7 +79,7 @@ class ProductService {
                 {
                     model: Review,
                     as: "reviews",
-                    attributes: ["id", "user_name", "rating", "text"],
+                    attributes: ["id", "user_name", "rating", "text", "created_at"],
                 },
             ],
         });

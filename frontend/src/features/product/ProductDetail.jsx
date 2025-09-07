@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Star, ChevronDown, Plus, Minus } from "lucide-react"
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
+
 import ProductSlider from "@/features/home/components/ProductSlider.jsx";
 import { getBestSellingProducts } from "../../services/productService.jsx";
 import "swiper/css";
@@ -28,7 +29,17 @@ const ProductDetail = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState(null);
-
+    const [visibleCount, setVisibleCount] = useState(4);
+    const colorMap = {
+        "Red": "bg-red-500",
+        "Blue": "bg-blue-500",
+        "Black": "bg-black",
+        "Gray": "bg-gray-500",
+        "Brown": "bg-yellow-700",
+        "White": "bg-white",
+        "Silver": "bg-gray-300",
+        "Gold": "bg-yellow-400"
+    };
     useEffect(() => {
         const fetchData = async () => {
             const res = await getProductById(id);
@@ -139,13 +150,16 @@ const ProductDetail = () => {
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-900 mb-3">Select Colors</h3>
                                     <div className="flex gap-3">
+
+
                                         {product?.colors?.map((color, index) => (
                                             <button
                                                 key={index}
-                                                onClick={() => setSelectedColor(index)}
-                                                className={`w-8 h-8 rounded-full ${color.class || color} ${selectedColor === index ? "ring-2 ring-offset-2 ring-black" : ""}`}
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`w-8 h-8 rounded-full ${colorMap[color.name]} ${selectedColor?.name === color.name ? "ring-2 ring-offset-2 ring-black" : ""}`}
                                             />
                                         ))}
+
                                     </div>
                                 </div>
 
@@ -221,7 +235,7 @@ const ProductDetail = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {product?.reviews?.map((review) => (
+                                {product?.reviews?.slice(0, visibleCount).map((review) => (
                                     <div key={review.id} className="border border-gray-200 rounded-lg p-6">
                                         <div className="flex items-center gap-1 mb-2">
                                             {[...Array(5)].map((_, i) => (
@@ -236,18 +250,24 @@ const ProductDetail = () => {
                                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                         </div>
                                         <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>
-                                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("vi-VN")}</span>
+                                        <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString("vi-VN")}</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="text-center mt-8">
-                                <button className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50">
-                                    Load More Reviews
-                                </button>
-                            </div>
+                            {visibleCount < product?.reviews?.length && (
+                                <div className="text-center mt-8">
+                                    <button
+                                        onClick={() => setVisibleCount(prev => prev + 4)}
+                                        className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50"
+                                    >
+                                        Load More Reviews
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
+                    {/* Product Details Tab */}
 
                 </div>
 
