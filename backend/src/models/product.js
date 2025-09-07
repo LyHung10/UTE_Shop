@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
             Product.hasMany(models.ProductImage, { foreignKey: 'product_id', as: 'images' });
             Product.hasOne(models.Inventory, { foreignKey: 'product_id', as: 'inventory' });
             Product.hasMany(models.OrderItem, { foreignKey: 'product_id' });
+            Product.hasMany(models.Review, { foreignKey: 'product_id', as: 'reviews' });
         }
     }
     Product.init(
@@ -22,7 +23,17 @@ module.exports = (sequelize, DataTypes) => {
             view_count: DataTypes.INTEGER,
             sale_count: DataTypes.INTEGER,
             is_active: DataTypes.BOOLEAN,
-            featured: DataTypes.BOOLEAN
+            featured: DataTypes.BOOLEAN,
+            colors: {
+                type: DataTypes.JSON,
+                allowNull: true, // sản phẩm không bắt buộc có màu
+                defaultValue: [], // default empty array
+            },
+            sizes: {
+                type: DataTypes.JSON,
+                allowNull: true, // sản phẩm không bắt buộc có size
+                defaultValue: [], // default empty array
+            },
         },
         {
             sequelize,

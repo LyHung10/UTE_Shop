@@ -1,4 +1,4 @@
-import { Product, ProductImage } from "../models/index.js";
+import { Product, ProductImage, Inventory, Review } from "../models/index.js";
 
 class ProductService {
     // 1. Lấy 8 sản phẩm có view_count cao nhất
@@ -61,12 +61,25 @@ class ProductService {
     // 4. Khi xem chi tiết sản phẩm + tăng view_count
     async getProductById(id) {
         const product = await Product.findByPk(id, {
+            attributes: {
+                include: ['colors', 'sizes'] // đảm bảo Sequelize lấy 2 cột này
+            },
             include: [
                 {
                     model: ProductImage,
                     as: "images",
                     attributes: ["id", "url", "alt", "sort_order"],
                     order: [["sort_order", "ASC"]],
+                },
+                {
+                    model: Inventory,
+                    as: "inventory",
+                    attributes: ["stock", "reserved"],
+                },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: ["id", "user_name", "rating", "text", "created_at"],
                 },
             ],
         });

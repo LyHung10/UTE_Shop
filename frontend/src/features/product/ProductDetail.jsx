@@ -1,261 +1,413 @@
-import {useParams} from "react-router-dom";
+"use client"
+import { useState, useEffect } from "react";
+import { Star, ChevronDown, Plus, Minus } from "lucide-react"
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 
+import ProductSlider from "@/features/home/components/ProductSlider.jsx";
+import { getBestSellingProducts } from "../../services/productService.jsx";
+import "swiper/css";
+import "swiper/css/free-mode";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
+
+import { useParams } from "react-router-dom"
+import { getProductById } from "../../services/productService.jsx"
 const ProductDetail = () => {
-    const params = useParams();
-    const quizId = params.id;
-    console.log(quizId);
-    return(
-        <div className="bg-white mt-30">
-            <div className="pt-6">
-                <nav aria-label="Breadcrumb">
-                    <ol role="list"
-                        className="mx-auto flex max-w-2xl items-center space-x-2 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
-                        <li>
-                            <div className="flex items-center">
-                                <a href="#" className="mr-2 text-sm font-medium text-gray-900">Men</a>
-                                <svg viewBox="0 0 16 20" width="16" height="20" fill="currentColor" aria-hidden="true"
-                                     className="h-5 w-4 text-gray-300">
-                                    <path d="M5.697 4.34L8.98 16.532h1.327L7.025 4.341H5.697z"/>
-                                </svg>
-                            </div>
-                        </li>
-                        <li>
-                            <div className="flex items-center">
-                                <a href="#" className="mr-2 text-sm font-medium text-gray-900">Clothing</a>
-                                <svg viewBox="0 0 16 20" width="16" height="20" fill="currentColor" aria-hidden="true"
-                                     className="h-5 w-4 text-gray-300">
-                                    <path d="M5.697 4.34L8.98 16.532h1.327L7.025 4.341H5.697z"/>
-                                </svg>
-                            </div>
-                        </li>
+    const { id } = useParams();
+    const [product, setProduct] = useState(null);
 
-                        <li className="text-sm">
-                            <a href="#" aria-current="page" className="font-medium text-gray-500 hover:text-gray-600">Basic
-                                Tee 6-Pack</a>
-                        </li>
-                    </ol>
-                </nav>
+    const [listBestSellingProducts, setListBestSellingProducts] = useState([]);
+    const fetchListBestSellingProducts = async () => {
+        let data = await getBestSellingProducts();
+        setListBestSellingProducts(data);
+    };
+    const [reviews] = useState([]);
+    const [relatedProducts] = useState([]);
+    const [activeTab, setActiveTab] = useState("details");
+    const [selectedColor, setSelectedColor] = useState(null);
+    const [selectedSize, setSelectedSize] = useState(null);
+    const [quantity, setQuantity] = useState(1);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [visibleCount, setVisibleCount] = useState(4);
+    const colorMap = {
+        "Red": "bg-red-500",
+        "Blue": "bg-blue-500",
+        "Black": "bg-black",
+        "Gray": "bg-gray-500",
+        "Brown": "bg-yellow-700",
+        "White": "bg-white",
+        "Silver": "bg-gray-300",
+        "Gold": "bg-yellow-400"
+    };
+    useEffect(() => {
+        const fetchData = async () => {
+            const res = await getProductById(id);
+            setProduct(res);
+        };
+        fetchData();
+        fetchListBestSellingProducts();
+    }, [id]);
 
-                <div className="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-8 lg:px-8">
-                    <img
-                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-02-secondary-product-shot.jpg"
-                        alt="Two each of gray, white, and black shirts laying flat."
-                        className="row-span-2 aspect-3/4 size-full rounded-lg object-cover max-lg:hidden"/>
-                    <img
-                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-02-tertiary-product-shot-01.jpg"
-                        alt="Model wearing plain black basic tee."
-                        className="col-start-2 aspect-3/2 size-full rounded-lg object-cover max-lg:hidden"/>
-                    <img
-                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-02-tertiary-product-shot-02.jpg"
-                        alt="Model wearing plain gray basic tee."
-                        className="col-start-2 row-start-2 aspect-3/2 size-full rounded-lg object-cover max-lg:hidden"/>
-                    <img
-                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-02-featured-product-shot.jpg"
-                        alt="Model wearing plain white basic tee."
-                        className="row-span-2 aspect-4/5 size-full object-cover sm:rounded-lg lg:aspect-3/4"/>
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Breadcrumb */}
+            <div className="border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 py-3">
+                    <div className="flex items-center text-sm text-gray-500">
+                        <span>Home</span>
+                        <span className="mx-2">/</span>
+                        <span>Shop</span>
+                        <span className="mx-2">/</span>
+                        <span>Men</span>
+                        <span className="mx-2">/</span>
+                        <span className="text-black">T-Shirts</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Product Section */}
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    {/* Product Images */}
+                    <div className="space-y-4">
+                        {product && (
+                            <div className="flex gap-4">
+                                {/* Thumbnail list */}
+                                <div className="flex flex-col gap-4">
+                                    {product.images.map((img, idx) => (
+                                        <img
+                                            key={img.id}
+                                            src={img.url}
+                                            alt={img.alt}
+                                            onClick={() => setSelectedImage(img)} // ?? click d? d?i ?nh
+                                            className={`w-20 h-20 object-cover rounded-lg border cursor-pointer ${selectedImage?.id === img.id
+                                                ? "border-2 border-black"
+                                                : "border-gray-200"
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Main Image */}
+                                <div className="flex-1">
+                                    <img
+                                        src={selectedImage?.url || product.images[0]?.url} // ?? l?y ?nh du?c ch?n, n?u chua ch?n th� m?c d?nh ?nh d?u
+                                        alt={selectedImage?.alt || product.images[0]?.alt}
+                                        className="w-full h-96 object-cover rounded-lg"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* Product Info */}
+                    <div className="space-y-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-black mb-2">{product?.name}</h1>
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={`w-5 h-5 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-sm text-gray-600">4.5/5</span>
+                            </div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className="text-3xl font-bold text-black">
+                                    {product?.price
+                                        ? Number(product.price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+                                        : ""}
+                                </span>
+                                <span className="text-xl text-gray-400 line-through">
+                                    {product?.original_price
+                                        ? Number(product.original_price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+                                        : ""}
+                                </span>
+
+                                {product?.discount_percent > 0 && (
+                                    <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-medium">
+                                        -{product.discount_percent}%
+                                    </span>
+                                )}
+                            </div>
+
+                            <p className="text-gray-600 leading-relaxed">{product?.short_description}</p>
+                            <p className="text-gray-600 leading-relaxed mt-2">{product?.description}</p>
+                            <p className="text-sm text-gray-500">
+                                Còn lại: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
+                            </p>
+
+                        </div>
+
+                        <div className="border-t border-gray-200 pt-6">
+                            <div className="space-y-6">
+                                {/* Colors */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-900 mb-3">Select Colors</h3>
+                                    <div className="flex gap-3">
+
+
+                                        {product?.colors?.map((color, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`w-8 h-8 rounded-full ${colorMap[color.name]} ${selectedColor?.name === color.name ? "ring-2 ring-offset-2 ring-black" : ""}`}
+                                            />
+                                        ))}
+
+                                    </div>
+                                </div>
+
+                                {/* Sizes */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-900 mb-3">Choose Size</h3>
+                                    <div className="flex gap-2">
+                                        {product?.sizes?.map((size) => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                className={`px-4 py-2 text-sm border rounded-full ${selectedSize === size
+                                                    ? "bg-black text-white border-black"
+                                                    : "bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300"
+                                                    }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+
+                                {/* Quantity and Add to Cart */}
+                                <div className="flex gap-4">
+                                    <div className="flex items-center border border-gray-200 rounded-full">
+                                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3 hover:bg-gray-50">
+                                            <Minus className="w-4 h-4" />
+                                        </button>
+                                        <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
+                                        <button onClick={() => setQuantity(quantity + 1)} className="p-3 hover:bg-gray-50">
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <button className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div
-                    className="mx-auto max-w-2xl px-4 pt-10 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:grid-rows-[auto_auto_1fr] lg:gap-x-8 lg:px-8 lg:pt-16 lg:pb-24">
-                    <div className="lg:col-span-2 lg:border-r lg:border-gray-200 lg:pr-8">
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Basic Tee
-                            6-Pack</h1>
-                    </div>
-
-
-                    <div className="mt-4 lg:row-span-3 lg:mt-0">
-                        <h2 className="sr-only">Product information</h2>
-                        <p className="text-3xl tracking-tight text-gray-900">$192</p>
-
-
-                        <div className="mt-6">
-                            <h3 className="sr-only">Reviews</h3>
-                            <div className="flex items-center">
-                                <div className="flex items-center">
-
-                                    <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true"
-                                         className="size-5 shrink-0 text-gray-900">
-                                        <path
-                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                                            clipRule="evenodd" fillRule="evenodd"/>
-                                    </svg>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true"
-                                         className="size-5 shrink-0 text-gray-900">
-                                        <path
-                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                                            clipRule="evenodd" fillRule="evenodd"/>
-                                    </svg>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true"
-                                         className="size-5 shrink-0 text-gray-900">
-                                        <path
-                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                                            clipRule="evenodd" fillRule="evenodd"/>
-                                    </svg>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true"
-                                         className="size-5 shrink-0 text-gray-900">
-                                        <path
-                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                                            clipRule="evenodd" fillRule="evenodd"/>
-                                    </svg>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true"
-                                         className="size-5 shrink-0 text-gray-200">
-                                        <path
-                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                                            clipRule="evenodd" fillRule="evenodd"/>
-                                    </svg>
-                                </div>
-                                <p className="sr-only">4 out of 5 stars</p>
-                                <a href="#" className="ml-3 text-sm font-medium text-indigo-600 hover:text-indigo-500">117
-                                    reviews</a>
-                            </div>
-                        </div>
-
-                        <form className="mt-10">
-
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-900">Color</h3>
-
-                                <fieldset aria-label="Choose a color" className="mt-4">
-                                    <div className="flex items-center gap-x-3">
-                                        <div className="flex rounded-full outline -outline-offset-1 outline-black/10">
-                                            <input type="radio" name="color" value="white" checked aria-label="White"
-                                                   className="size-8 appearance-none rounded-full bg-white forced-color-adjust-none checked:outline-2 checked:outline-offset-2 checked:outline-gray-400 focus-visible:outline-3 focus-visible:outline-offset-3"/>
-                                        </div>
-                                        <div className="flex rounded-full outline -outline-offset-1 outline-black/10">
-                                            <input type="radio" name="color" value="gray" aria-label="Gray"
-                                                   className="size-8 appearance-none rounded-full bg-gray-200 forced-color-adjust-none checked:outline-2 checked:outline-offset-2 checked:outline-gray-400 focus-visible:outline-3 focus-visible:outline-offset-3"/>
-                                        </div>
-                                        <div className="flex rounded-full outline -outline-offset-1 outline-black/10">
-                                            <input type="radio" name="color" value="black" aria-label="Black"
-                                                   className="size-8 appearance-none rounded-full bg-gray-900 forced-color-adjust-none checked:outline-2 checked:outline-offset-2 checked:outline-gray-900 focus-visible:outline-3 focus-visible:outline-offset-3"/>
-                                        </div>
-                                    </div>
-                                </fieldset>
-                            </div>
-
-
-                            <div className="mt-10">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-medium text-gray-900">Size</h3>
-                                    <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Size
-                                        guide</a>
-                                </div>
-
-                                <fieldset aria-label="Choose a size" className="mt-4">
-                                    <div className="grid grid-cols-4 gap-3">
-                                        <label aria-label="XXS"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size" disabled
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">XXS</span>
-                                        </label>
-                                        <label aria-label="XS"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">XS</span>
-                                        </label>
-                                        <label aria-label="S"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size" checked
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">S</span>
-                                        </label>
-                                        <label aria-label="M"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">M</span>
-                                        </label>
-                                        <label aria-label="L"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">L</span>
-                                        </label>
-                                        <label aria-label="XL"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">XL</span>
-                                        </label>
-                                        <label aria-label="2XL"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">2XL</span>
-                                        </label>
-                                        <label aria-label="3XL"
-                                               className="group relative flex items-center justify-center rounded-md border border-gray-300 bg-white p-3 has-checked:border-indigo-600 has-checked:bg-indigo-600 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-indigo-600 has-disabled:border-gray-400 has-disabled:bg-gray-200 has-disabled:opacity-25">
-                                            <input type="radio" name="size"
-                                                   className="absolute inset-0 appearance-none focus:outline-none disabled:cursor-not-allowed"/>
-                                            <span
-                                                className="text-sm font-medium text-gray-900 uppercase group-has-checked:text-white">3XL</span>
-                                        </label>
-                                    </div>
-                                </fieldset>
-                            </div>
-
-                            <button type="submit"
-                                    className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden">Add
-                                to bag
+                {/* Product Details Tabs */}
+                <div className="mt-16 border-t border-gray-200">
+                    <div className="flex border-b border-gray-200">
+                        {["Product Details", "Rating & Reviews", "FAQs"].map((tab, index) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(["details", "reviews", "faqs"][index])}
+                                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === ["details", "reviews", "faqs"][index]
+                                    ? "border-black text-black"
+                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                    }`}
+                            >
+                                {tab}
                             </button>
-                        </form>
+                        ))}
                     </div>
 
-                    <div
-                        className="py-10 lg:col-span-2 lg:col-start-1 lg:border-r lg:border-gray-200 lg:pt-6 lg:pr-8 lg:pb-16">
-
+                    {/* Reviews Tab */}
+                    {activeTab === "reviews" && (
                         <div>
-                            <h3 className="sr-only">Description</h3>
-
-                            <div className="space-y-6">
-                                <p className="text-base text-gray-900">The Basic Tee 6-Pack allows you to fully express
-                                    your vibrant personality with three grayscale options. Feeling adventurous? Put on a
-                                    heather gray tee. Want to be a trendsetter? Try our exclusive
-                                    colorway: &quot;Black&quot;. Need to add an extra pop of color to your outfit? Our
-                                    white tee has you covered.</p>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold">All Reviews ({product?.reviews?.length || 0})</h3>
+                                <div className="flex gap-3">
+                                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm">
+                                        <span>Latest</span>
+                                        <ChevronDown className="w-4 h-4" />
+                                    </button>
+                                    <button className="px-4 py-2 bg-black text-white rounded-full text-sm">Write a Review</button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="mt-10">
-                            <h3 className="text-sm font-medium text-gray-900">Highlights</h3>
-
-                            <div className="mt-4">
-                                <ul role="list" className="list-disc space-y-2 pl-4 text-sm">
-                                    <li className="text-gray-400"><span className="text-gray-600">Hand cut and sewn locally</span>
-                                    </li>
-                                    <li className="text-gray-400"><span className="text-gray-600">Dyed with our proprietary colors</span>
-                                    </li>
-                                    <li className="text-gray-400"><span
-                                        className="text-gray-600">Pre-washed &amp; pre-shrunk</span></li>
-                                    <li className="text-gray-400"><span
-                                        className="text-gray-600">Ultra-soft 100% cotton</span></li>
-                                </ul>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {product?.reviews?.slice(0, visibleCount).map((review) => (
+                                    <div key={review.id} className="border border-gray-200 rounded-lg p-6">
+                                        <div className="flex items-center gap-1 mb-2">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    className={`w-4 h-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="font-medium">{review.user_name}</span>
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>
+                                        <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString("vi-VN")}</span>
+                                    </div>
+                                ))}
                             </div>
+
+                            {visibleCount < product?.reviews?.length && (
+                                <div className="text-center mt-8">
+                                    <button
+                                        onClick={() => setVisibleCount(prev => prev + 4)}
+                                        className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50"
+                                    >
+                                        Load More Reviews
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                    )}
+                    {/* Product Details Tab */}
 
-                        <div className="mt-10">
-                            <h2 className="text-sm font-medium text-gray-900">Details</h2>
+                </div>
 
-                            <div className="mt-4 space-y-6">
-                                <p className="text-sm text-gray-600">The 6-Pack includes two black, two white, and two
-                                    heather gray Basic Tees. Sign up for our subscription service and be the first to
-                                    get new, exciting colors, like our upcoming &quot;Charcoal Gray&quot; limited
-                                    release.</p>
+                {/* You Might Also Like */}
+                <div className="mt-0">
+                    <h2 className="text-3xl font-bold text-center">YOU MIGHT ALSO LIKE</h2>
+                    <div>
+                        <ProductSlider
+                            listProducts={listBestSellingProducts}
+                        // nameTop="BEST SELLERS"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {relatedProducts.map((product, index) => (
+                            <div key={index} className="group">
+                                <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                                    <img
+                                        src={product.image || "/placeholder.svg"}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                </div>
+                                <h3 className="font-medium text-sm mb-2">{product.name}</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold">{product.price}</span>
+                                    {product.originalPrice && (
+                                        <span className="text-gray-400 line-through text-sm">{product.originalPrice}</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Newsletter Section */}
+            <div className="bg-black text-white mt-20">
+                <div className="max-w-7xl mx-auto px-4 py-16">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div>
+                            <h2 className="text-3xl font-bold mb-2">STAY UPTO DATE ABOUT</h2>
+                            <h2 className="text-3xl font-bold">OUR LATEST OFFERS</h2>
+                        </div>
+                        <div className="space-y-4 w-full md:w-auto">
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email address"
+                                    className="w-full md:w-80 px-4 py-3 rounded-full text-black pr-12"
+                                />
+                                <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white px-4 py-2 rounded-full text-sm">
+                                    Subscribe to Newsletter
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Footer */}
+            <footer className="bg-gray-100">
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+                        <div className="md:col-span-1">
+                            <h3 className="text-2xl font-bold mb-4">SHOP.CO</h3>
+                            <p className="text-gray-600 text-sm mb-6">
+                                We have clothes that suits your style and which you're proud to wear. From women to men.
+                            </p>
+                            <div className="flex gap-3">
+                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                                    <span className="text-xs">f</span>
+                                </div>
+                                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                                    <span className="text-white text-xs">t</span>
+                                </div>
+                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                                    <span className="text-xs">in</span>
+                                </div>
+                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                                    <span className="text-xs">ig</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium mb-4">COMPANY</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li>About</li>
+                                <li>Features</li>
+                                <li>Works</li>
+                                <li>Career</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium mb-4">HELP</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li>Customer Support</li>
+                                <li>Delivery Details</li>
+                                <li>Terms & Conditions</li>
+                                <li>Privacy Policy</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium mb-4">FAQ</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li>Account</li>
+                                <li>Manage Deliveries</li>
+                                <li>Orders</li>
+                                <li>Payments</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium mb-4">RESOURCES</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li>Free eBooks</li>
+                                <li>Development Tutorial</li>
+                                <li>How to - Blog</li>
+                                <li>Youtube Playlist</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                        <p className="text-sm text-gray-600">Shop.co � 2000-2023, All Rights Reserved</p>
+                        <div className="flex gap-2 mt-4 md:mt-0">
+                            <img src="/visa-logo-generic.png" alt="Visa" className="h-6" />
+                            <img src="/mastercard-logo.png" alt="Mastercard" className="h-6" />
+                            <img src="/paypal-logo.png" alt="PayPal" className="h-6" />
+                            <img src="/apple-pay-logo.png" alt="Apple Pay" className="h-6" />
+                            <img src="src/assets/google-pay.png" alt="Google Pay" className="h-6" />
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     )
 }
+
 export default ProductDetail

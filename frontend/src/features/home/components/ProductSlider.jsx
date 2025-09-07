@@ -1,7 +1,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
-import {Navigation} from "swiper/modules";
+import { Navigation } from "swiper/modules";
 import { Button } from "@/components/ui/button.jsx";
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Star } from "lucide-react";
@@ -9,11 +9,19 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import '../../../styles/TopProduct.css'
 import 'swiper/css/effect-fade';
+import { useNavigate } from "react-router-dom";
 
 const ProductSlider = (props) => {
-    const {listProducts, nameTop} = props;
+
+    const { listProducts, nameTop } = props;
+    const navigate = useNavigate();
+    const handleClickProduct = (productId) => {
+        navigate(`/product/${productId}`);
+    };
+
     return (
         <section className="py-8">
+
             <div className="container mx-auto px-35">
                 <h3 className="text-3xl font-bold text-center mb-3 text-black">
                     {nameTop}
@@ -23,7 +31,8 @@ const ProductSlider = (props) => {
                     {/* Nút Prev */}
                     <button
                         id="custom-prev"
-                        className= " rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
+
+                        className=" rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +70,12 @@ const ProductSlider = (props) => {
                         {listProducts && listProducts.length > 0 ? (
                             listProducts.map((item) => (
                                 <SwiperSlide key={item.id}>
-                                    <Card className="border-0 shadow-md hover:shadow-xl my-4 hover:-translate-y-1 transform transition-all duration-100 rounded-xl">
+
+                                    <Card
+                                        className="border-0 shadow-md hover:shadow-xl my-4 hover:-translate-y-1 transform transition-all duration-100 rounded-xl cursor-pointer"
+                                        onClick={() => handleClickProduct(item.id)} // ⚡ thêm onClick
+                                    >
+
                                         <CardContent className="!p-3">
                                             <div className="h-65 bg-white rounded-lg mb-4">
                                                 <div className="size-full rounded flex items-center justify-center">
@@ -77,6 +91,7 @@ const ProductSlider = (props) => {
                                                 </div>
                                             </div>
 
+
                                             <h4 className="font-semibold mb-2 text-lg">{item.name}</h4>
 
                                             <div className="flex items-center gap-2 mb-2">
@@ -88,28 +103,36 @@ const ProductSlider = (props) => {
                                                 <span className="text-sm text-gray-600">5.0/5</span>
                                             </div>
 
+
                                             <div className="flex items-center gap-2" style={{ fontFamily: "Poppins, sans-serif" }}>
                                                 {
                                                     nameTop === "BEST DEALS" ? (
                                                         <>
                                                             <span className="font-bold text-lg">
                                                                 {new Intl.NumberFormat("vi-VN", {
-                                                                style: "currency",
-                                                                currency: "VND",
-                                                            }).format(item.price)}</span>
+                                                                    style: "currency",
+                                                                    currency: "VND",
+                                                                    currencyDisplay: "code", // VND
+                                                                }).format(item.price)}
+                                                            </span>
+
                                                             <span className="text-gray-500 line-through">
                                                                 {new Intl.NumberFormat("vi-VN", {
-                                                                style: "currency",
-                                                                currency: "VND",
-                                                            }).format(item.original_price)}</span>
+                                                                    style: "currency",
+                                                                    currency: "VND",
+                                                                    currencyDisplay: "code",
+                                                                }).format(item.original_price)}
+                                                            </span>
+
                                                             <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">{`-${item.discount_percent}%`}</span>
                                                         </>
                                                     ) : (
                                                         <span className="font-bold text-lg">
-                                                          {new Intl.NumberFormat("vi-VN", {
-                                                              style: "currency",
-                                                              currency: "VND",
-                                                          }).format(item.price)}
+
+                                                            {new Intl.NumberFormat("vi-VN", {
+                                                                style: "currency",
+                                                                currency: "VND",
+                                                            }).format(item.price)}
                                                         </span>
                                                     )
                                                 }
@@ -126,7 +149,8 @@ const ProductSlider = (props) => {
                     {/* Nút Next */}
                     <button
                         id="custom-next"
-                        className= " rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
+
+                        className=" rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

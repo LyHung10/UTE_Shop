@@ -10,7 +10,6 @@ import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
 import UserProfile from "@/features/user/UserProfile.jsx";
 import ProductDetail from "@/features/product/ProductDetail.jsx";
-import ProductCategories from "@/features/product/pages/ProductCategories.jsx";
 
 function App() {
   return (
@@ -20,7 +19,6 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="profile" element={<UserProfile/>} />
             <Route path="product/:id" element={<ProductDetail/>} />
-            <Route path="cate" element={<ProductCategories/>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
