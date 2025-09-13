@@ -1,7 +1,6 @@
 import axios from "axios";
 import NProgress from "nprogress";
-import {store} from "@/redux/store.jsx";
-
+import { store } from "@/redux/store.jsx";
 
 NProgress.configure(
     {
@@ -14,8 +13,10 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use(function (config) {
-    const access_token = store?.getState()?.user?.account?.accessToken;
+    const access_token = store.getState().user.account.accessToken;
     config.headers["Authorization"] = `Bearer ${access_token}`;
+    console.log(">>> Access token trong request:", access_token);
+
     NProgress.start();
     // Do something before request is sent
     // log đường dẫn thực sự mà axios sẽ gọi

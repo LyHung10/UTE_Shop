@@ -1,34 +1,42 @@
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {getUser, postLogin} from "../../../services/apiService.jsx";
-import {toast} from "react-toastify";
-import {useDispatch} from "react-redux";
-import {doLogin} from "../../../redux/action/userAction.jsx";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getUser, postLogin } from "../../../services/apiService.jsx";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { doLogin } from "../../../redux/action/userAction.jsx";
 
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const [email,setEmail] = useState("");
-    const [password,setPassword] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const handleLogin = async () => {
         let data = await postLogin(email, password);
+
         if (data.accessToken && data.refreshToken) {
-            dispatch(doLogin(data));
+            // B1: Lưu token trước
+            dispatch(doLogin({
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+            }));
+
             toast.success("Đăng nhập thành công");
-            // await props.fetchListUsers();)
-            let user = await getUser();
-            dispatch(doLogin(user));
-            console.log(user);
-            navigate("/")
+
+            // B2: Lấy thông tin user
+            const user = await getUser();
+            dispatch(doLogin(user)); // chỉ update profile thôi
+
+            navigate("/");
         }
+
         if (data && data.message) {
             toast.error(data.message);
         }
-    }
+    };
     return (
         <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 lg:px-8 bg-white">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <img
                     src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
                     alt="Your Company"
@@ -52,7 +60,7 @@ const Login = () => {
                                 id="email"
                                 type="email"
                                 name="email"
-                                onChange={(event)=>{setEmail(event.target.value)}}
+                                onChange={(event) => { setEmail(event.target.value) }}
                                 required
                                 autoComplete="email"
                                 className="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-lg text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-600"
@@ -82,7 +90,7 @@ const Login = () => {
                                 id="password"
                                 type="password"
                                 name="password"
-                                onChange={(event)=>{setPassword(event.target.value)}}
+                                onChange={(event) => { setPassword(event.target.value) }}
                                 required
                                 autoComplete="current-password"
                                 className="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-lg text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-600"
@@ -93,7 +101,7 @@ const Login = () => {
                     <div>
                         <button
                             type="button"
-                            onClick={()=>handleLogin(email,password)}
+                            onClick={() => handleLogin(email, password)}
                             className="w-full text-white bg-black hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                             Sign in
                         </button>

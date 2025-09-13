@@ -13,6 +13,8 @@ import "swiper/css/thumbs";
 
 import { useParams } from "react-router-dom"
 import { getProductById } from "../../services/productService.jsx"
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, updateQuantity } from "../../redux/action/cartAction.jsx";
 const ProductDetail = () => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
@@ -39,6 +41,16 @@ const ProductDetail = () => {
         "White": "bg-white",
         "Silver": "bg-gray-300",
         "Gold": "bg-yellow-400"
+    };
+
+    const dispatch = useDispatch();
+
+    const handleAddToCart = () => {
+        if (!selectedSize || !selectedColor) {
+            alert("Please choose size and color");
+            return;
+        }
+        dispatch(addToCart(product.id, quantity));
     };
     useEffect(() => {
         const fetchData = async () => {
@@ -194,7 +206,9 @@ const ProductDetail = () => {
                                             <Plus className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <button className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
+                                    <button
+                                        onClick={() => handleAddToCart()}
+                                        className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
                                         Add to Cart
                                     </button>
                                 </div>

@@ -11,16 +11,17 @@ import ResetPassword from "./features/auth/components/ResetPassword.jsx";
 import UserProfile from "@/features/user/UserProfile.jsx";
 import ProductDetail from "@/features/product/ProductDetail.jsx";
 import ProductCategories from "@/features/product/pages/ProductCategories.jsx";
-
+import ShoppingCart from "@/features/cart/pages/ShoppingCart.jsx";
 function App() {
   return (
     <>
       <Routes>
         <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="profile" element={<UserProfile/>} />
-            <Route path="product/:id" element={<ProductDetail/>} />
-            <Route path="categories" element={<ProductCategories/>} />
+          <Route index element={<HomePage />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="categories" element={<ProductCategories />} />
+          <Route path="cart" element={<ShoppingCart />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
