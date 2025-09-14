@@ -1,4 +1,4 @@
-import { Product, ProductImage, Inventory, Review } from "../models/index.js";
+import { Product, ProductImage, Inventory, Review, Category } from "../models/index.js";
 
 class ProductService {
     // 1. Lấy 8 sản phẩm có view_count cao nhất
@@ -141,6 +141,51 @@ class ProductService {
         return await Product.findByPk(product.id, {
             include: [{ model: ProductImage, as: "images" }],
         });
+    }
+
+    async getProductsByCategorySlug(slug, page, limit = 3) {
+        const offset = (page - 1) * limit;
+
+        // lấy dữ liệu + tổng số sản phẩm để tính totalPages
+        const { rows: products, count: totalItems } = await Product.findAndCountAll({
+            include: [
+                {
+                    model: Category,
+                    as: "category",
+                    attributes: ["id", "name", "slug"],
+                    where: { slug }, // lọc theo slug
+                },
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+                {
+                    model: Inventory,
+                    as: "inventory",
+                    attributes: ["stock", "reserved"],
+                },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: ["id", "user_name", "rating", "text", "created_at"],
+                },
+            ],
+            limit,
+            offset,
+            distinct: true, // tránh bị count sai khi join nhiều bảng
+        });
+
+        return {
+            products,
+            pagination: {
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: page,
+                pageSize: limit,
+            },
+        };
     }
 }
 

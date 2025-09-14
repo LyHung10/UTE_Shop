@@ -1,12 +1,38 @@
-import { Fragment } from "react";
+import {Fragment, useEffect, useState} from "react";
 import Sort from "@/features/product/components/Sort.jsx";
 import Filter from "@/features/product/components/Filter.jsx";
-import ListProduct from "@/features/product/components/ListProduct.jsx";
+import ListProducts from "@/features/product/components/ListProducts.jsx";
+import {Card, CardContent} from "@/components/ui/card.jsx";
+import {Star} from "lucide-react";
+import {useParams} from "react-router-dom";
+import {getProductsByCategorySlug} from "@/services/productService.jsx";
+import {ConfigProvider, Pagination} from "antd";
 const ProductCategories = () => {
+    const { category} = useParams();
+    const [pagination,setPagination] = useState({
+            totalItems: 0,
+            totalPages: 0,
+            pageSize: 0,
+        }
+    );
+    const [currentPage, setCurrentPage] = useState(1);
+    const [listCategoryProducts, setListCategoryProducts] = useState([]);
+    const fetchListCategoryProducts = async () => {
+        let res = await getProductsByCategorySlug(category,currentPage);
+        setListCategoryProducts(res.data.products);
+        setPagination({
+            totalItems: res.data.pagination.totalItems,
+            totalPages: res.data.pagination.totalPages,
+            pageSize: res.data.pagination.pageSize,
+        });
+    };
 
+    useEffect(() => {
+        fetchListCategoryProducts();
+    }, [currentPage, category]); // thêm cả category để load lại khi đổi danh mục
     return (
         <>
-            <div className="bg-white">
+            <div className="bg-[#f3f4f6]">
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex items-baseline justify-between border-b border-gray-200 pt-18 pb-6">
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">New Arrivals</h1>
@@ -15,11 +41,13 @@ const ProductCategories = () => {
 
                     <section aria-labelledby="products-heading" className="pt-6 pb-24">
                         <h2 id="products-heading" className="sr-only">Products</h2>
-
-                        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-                            <form className="hidden lg:block">
-                                <div className="max-h-[500px] overflow-y-auto
-                                    [&::-webkit-scrollbar]:w-[5px]
+                        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-5">
+                            <div className="hidden lg:block bg-white">
+                                <div className="max-h-[500px] overflow-y-auto px-3 py-3 space-y-4 border-b border-gray-200 pb-6 text-sm font-medium  text-gray-900">
+                                    Bộ lọc tìm kiếm
+                                </div>
+                                <div className="max-h-[420px] overflow-y-auto px-3 py-4
+                                    [&::-webkit-scrollbar]:w-[4px]
                                     [&::-webkit-scrollbar-thumb]:bg-gray-400
                                     [&::-webkit-scrollbar-thumb]:rounded
                                     [&::-webkit-scrollbar-track]:bg-transparent">
@@ -44,15 +72,42 @@ const ProductCategories = () => {
                                     </ul>
                                     <Filter/>
                                 </div>
-                            </form>
-                            <div className="lg:col-span-3">
-                                <ListProduct/>
+                            </div>
+                            <div className="lg:col-span-4 flex flex-col gap-6">
+                                <ListProducts listProducts={listCategoryProducts} />
+                                <div className="flex justify-center">
+                                    <Pagination
+                                        current={currentPage}
+                                        total={pagination.totalItems}
+                                        pageSize={pagination.pageSize}
+                                        showQuickJumper={true}
+                                        showTotal={(total) => `Tổng ${total} sản phẩm`}
+                                        onChange={(page) => setCurrentPage(page)}
+                                        itemRender={(page, type, originalElement) => {
+                                            if (type === "page") {
+                                                return (
+                                                    <div
+                                                        style={{
+                                                            border: currentPage === page ? "1px solid #000" : "1px solid #d9d9d9",
+                                                            color: currentPage === page ? "#000" : "#666",
+                                                            borderRadius: 6,
+                                                            padding: "0 8px",
+                                                            cursor: "pointer",
+                                                        }}
+                                                    >
+                                                        {page}
+                                                    </div>
+                                                );
+                                            }
+                                            return originalElement;
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </section>
                 </main>
             </div>
-
         </>
     )
 }

@@ -13,11 +13,13 @@ router.get("/newest", productController.getNewestProducts);
 
 router.get("/best-selling", productController.getBestSellingProducts);
 
+router.get("/:slug/:page", productController.getProductsByCategorySlug);
 // 3. Tất cả sản phẩm (phân trang)
 router.get("/", productController.getAllProducts);
 
 // 4. Xem chi tiết sản phẩm + tăng view_count
 router.get("/:id", productController.getProductById);
+
 
 
 // upload.array('images', 5) => max 5 ảnh
