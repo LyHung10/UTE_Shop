@@ -8,7 +8,21 @@ export const CLEAR_CART = "CLEAR_CART";
 export const FETCH_CART = "FETCH_CART";
 export const SET_CART_ERROR = "SET_CART_ERROR";
 export const SET_CART_LOADING = "SET_CART_LOADING";
+export const SET_CART_COUNT = "SET_CART_COUNT";
 
+export const setCartCount = (count) => ({
+    type: SET_CART_COUNT,
+    payload: count,
+});
+
+export const fetchCartCount = () => async (dispatch) => {
+    try {
+        const res = await axios.get("api/orders/cart/count");
+        dispatch(setCartCount(res.count));
+    } catch (err) {
+        console.error("Failed to fetch cart count", err);
+    }
+};
 // Thêm sản phẩm vào giỏ
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
     try {
@@ -23,12 +37,12 @@ export const addToCart = (productId, qty, color, size) => async (dispatch) => {
 
         // Fetch lại cart sau khi add
         const res = await axios.get('api/orders/cart');
-        console.log("Add to cart - response:", res);
 
         dispatch({
             type: FETCH_CART,
             payload: res // Đảm bảo lấy .data
         });
+        dispatch(fetchCartCount());
 
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {

@@ -1,15 +1,20 @@
-import {useNavigate} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Search, ShoppingCart, User, Menu as MenuIcon } from "lucide-react";
-import {Menu, Popover, PopoverButton, PopoverPanel} from "@headlessui/react";
-import {doLogout} from "@/redux/action/userAction.jsx";
-const Header = () =>
-{
+import { Menu, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { doLogout } from "@/redux/action/userAction.jsx";
+import { motion } from "framer-motion";
+import { useRef } from "react";
+
+const Header = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const isAuthenticated = useSelector(state => state.user.isAuthenticated);
     const user = useSelector(state => state.user.account);
-    const handleLogOut = () =>{
+    const cartCount = useSelector(state => state.cart.count);
+    const cartRef = useRef(null); // ref để tính animation fly-to-cart
+
+    const handleLogOut = () => {
         dispatch(doLogout());
         navigate("/");
     }
@@ -23,7 +28,8 @@ const Header = () =>
             {/* Main header */}
             <div className="container mx-auto px-20 py-8 flex items-center justify-between">
                 <div className="flex items-center gap-8">
-                    <h1 className="text-2xl font-bold">SHOP.CO</h1>
+
+                    <h1 className="text-2xl font-bold" onClick={() => navigate("/")}>SHOP.CO</h1>
                     <nav className="hidden md:flex items-center gap-6">
                         <button className="flex items-center gap-1">
                             Shop <MenuIcon className="w-4 h-4" />
@@ -59,10 +65,10 @@ const Header = () =>
                                                     href="#"
                                                     className="mt-6 block font-medium text-gray-900"
                                                 >
-                                                                <span
-                                                                    aria-hidden="true"
-                                                                    className="absolute inset-0 z-10"
-                                                                ></span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="absolute inset-0 z-10"
+                                                    ></span>
                                                     New Arrivals
                                                 </a>
                                                 <p aria-hidden="true" className="mt-1">
@@ -79,10 +85,10 @@ const Header = () =>
                                                     href="#"
                                                     className="mt-6 block font-medium text-gray-900"
                                                 >
-                                                                <span
-                                                                    aria-hidden="true"
-                                                                    className="absolute inset-0 z-10"
-                                                                ></span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="absolute inset-0 z-10"
+                                                    ></span>
                                                     Basic Tees
                                                 </a>
                                                 <p aria-hidden="true" className="mt-1">
@@ -188,7 +194,20 @@ const Header = () =>
                             className="bg-transparent text-white placeholder-gray-400 outline-none"
                         />
                     </div>
-                    <ShoppingCart className="w-6 h-6" />
+
+                    {/* Cart Icon with Badge and Click */}
+                    <div className="relative cursor-pointer" onClick={() => navigate("/cart")}>
+                        <ShoppingCart
+                            className="w-6 h-6 hover:text-gray-300 transition-colors"
+                        />
+                        {cartCount > 0 && (
+                            <span className="cart-badge absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                                {cartCount}
+                            </span>
+                        )}
+                    </div>
+
+
                     {isAuthenticated === false ?
                         <User
                             onClick={() => navigate("/login")}
@@ -204,31 +223,28 @@ const Header = () =>
                                     <Menu.Item as="div">
                                         {({ active }) => (
                                             <span
-                                                className={`block px-4 py-2 text-sm ${
-                                                    active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                }`}
+                                                className={`block px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                                    }`}
                                             >{user?.email}
                                             </span>
                                         )}
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
-                                               onClick={()=>(navigate("/profile"))}
-                                               className={({ active }) =>
-                                                   `block w-full text-left px-4 py-2 text-sm ${
-                                                       active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                   }`
-                                               }>
+                                        onClick={() => (navigate("/profile"))}
+                                        className={({ active }) =>
+                                            `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                            }`
+                                        }>
                                         Account settings
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
-                                               onClick={()=>(handleLogOut())}
-                                               className={({ active }) =>
-                                                   `block w-full text-left px-4 py-2 text-sm ${
-                                                       active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                   }`
-                                               }>
+                                        onClick={() => (handleLogOut())}
+                                        className={({ active }) =>
+                                            `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                            }`
+                                        }>
                                         Log out
                                     </Menu.Item>
                                 </div>

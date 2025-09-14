@@ -9,4 +9,5 @@ router.get('/cart', authenticateToken, OrderController.getCart);
 router.put('/cart', authenticateToken, OrderController.updateQuantity);
 router.delete('/cart/:itemId', authenticateToken, OrderController.removeItem);
 router.delete('/cart', authenticateToken, OrderController.clearCart);
+router.get('/cart/count', authenticateToken, OrderController.getCartCount);
 export default router;

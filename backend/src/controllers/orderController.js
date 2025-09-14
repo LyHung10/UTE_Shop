@@ -55,6 +55,18 @@ class OrderController {
             res.status(500).json({ error: 'Failed to clear cart', message: err.message });
         }
     }
+
+
+    // xem số item in cart
+    static async getCartCount(req, res, next) {
+        try {
+            const userId = req.user.sub;
+            const count = await OrderService.getCartCount(userId);
+            return res.json({ count });
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 export default OrderController;

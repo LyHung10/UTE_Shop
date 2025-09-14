@@ -191,5 +191,16 @@ class OrderService {
 
         return { items: cartItems, totalAmount };
     }
+
+    static async getCartCount(userId) {
+        const order = await Order.findOne({
+            where: { user_id: userId, status: 'pending' },
+            include: [{ model: OrderItem }]
+        });
+
+        if (!order) return 0;
+
+        return order.OrderItems.reduce((sum, item) => sum + item.qty, 0);
+    }
 }
 export default OrderService;

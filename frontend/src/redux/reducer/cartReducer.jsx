@@ -1,8 +1,9 @@
 // cartReducer.js
-import { FETCH_CART, ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART } from "../action/cartAction";
+import { FETCH_CART, ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, SET_CART_COUNT } from "../action/cartAction";
 
 const initialState = {
   items: [], // {id, name, price, qty}
+  count: 0,
 };
 
 export default function cartReducer(state = initialState, action) {
@@ -42,6 +43,12 @@ export default function cartReducer(state = initialState, action) {
       return {
         ...state,
         items: []
+      };
+
+    case SET_CART_COUNT:
+      return {
+        ...state,
+        count: action.payload
       };
 
     default:

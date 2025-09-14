@@ -10,7 +10,7 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/navigation";
 import "swiper/css/thumbs";
-
+import { useRef } from "react";
 import { useParams } from "react-router-dom"
 import { getProductById } from "../../services/productService.jsx"
 import { useDispatch, useSelector } from "react-redux";
@@ -24,7 +24,6 @@ const ProductDetail = () => {
         let data = await getBestSellingProducts();
         setListBestSellingProducts(data);
     };
-    const [reviews] = useState([]);
     const [relatedProducts] = useState([]);
     const [activeTab, setActiveTab] = useState("details");
     const [selectedColor, setSelectedColor] = useState(null);
@@ -50,7 +49,7 @@ const ProductDetail = () => {
             alert("Please choose size and color");
             return;
         }
-
+        animateAddToCart(); // Gọi hàm animation
         dispatch(addToCart(
             product.id,         // productId
             quantity,           // qty
@@ -58,7 +57,92 @@ const ProductDetail = () => {
             selectedSize        // size
         ));
     };
+    // animation
+    const [isAnimating, setIsAnimating] = useState(false);
+    // Thêm refs
+    const productImageRef = useRef(null);
+    const cartIcon = document.querySelector('header .relative svg');
 
+    // Thêm function animation này
+    const animateAddToCart = () => {
+        if (isAnimating) return;
+
+        setIsAnimating(true);
+
+        // Tìm ảnh sản phẩm và icon giỏ hàng
+        const productImg = productImageRef.current;
+        const cartIcon = document.querySelector('header .relative svg'); // Selector cho cart icon trong header
+
+        if (!productImg || !cartIcon) {
+            setIsAnimating(false);
+            return;
+        }
+
+        // Lấy vị trí của ảnh sản phẩm và giỏ hàng
+        const productRect = productImg.getBoundingClientRect();
+        const cartRect = cartIcon.getBoundingClientRect();
+
+        // Tạo ảnh clone để animate
+        const flyingImg = productImg.cloneNode(true);
+        flyingImg.style.position = 'fixed';
+        flyingImg.style.top = productRect.top + 'px';
+        flyingImg.style.left = productRect.left + 'px';
+        flyingImg.style.width = productRect.width + 'px';
+        flyingImg.style.height = productRect.height + 'px';
+        flyingImg.style.zIndex = '9999';
+        flyingImg.style.pointerEvents = 'none';
+        flyingImg.style.borderRadius = '8px';
+        flyingImg.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        flyingImg.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+
+        document.body.appendChild(flyingImg);
+
+        // Animate sau 10ms để trigger transition
+        setTimeout(() => {
+            // Di chuyển và scale ảnh đến vị trí giỏ hàng
+            flyingImg.style.top = cartRect.top + cartRect.height / 2 + 'px';
+            flyingImg.style.left = cartRect.left + cartRect.width / 2 + 'px';
+            flyingImg.style.width = '20px';
+            flyingImg.style.height = '20px';
+            flyingImg.style.opacity = '0.8';
+
+            // Tạo hiệu ứng parabolic path (đường cong)
+            flyingImg.style.transform = `translateY(-40px)`;
+        }, 10);
+
+        // Tạo hiệu ứng bounce cho giỏ hàng
+        setTimeout(() => {
+            cartIcon.style.transform = 'scale(1.3)';
+            cartIcon.style.transition = 'transform 0.2s ease-out';
+        }, 600);
+
+        setTimeout(() => {
+            cartIcon.style.transform = 'scale(1)';
+        }, 800);
+
+        // Cleanup và cập nhật
+        setTimeout(() => {
+            if (document.body.contains(flyingImg)) {
+                document.body.removeChild(flyingImg);
+            }
+            setIsAnimating(false);
+
+            // Reset cart icon style
+            cartIcon.style.transform = '';
+            cartIcon.style.transition = '';
+
+            // Hiệu ứng cho badge số lượng
+            const badge = document.querySelector('.cart-badge');
+            if (badge) {
+                badge.style.transform = 'scale(1.5)';
+                badge.style.transition = 'transform 0.2s ease-out';
+
+                setTimeout(() => {
+                    badge.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }, 850);
+    };
     useEffect(() => {
         const fetchData = async () => {
             const res = await getProductById(id);
@@ -99,7 +183,7 @@ const ProductDetail = () => {
                                             key={img.id}
                                             src={img.url}
                                             alt={img.alt}
-                                            onClick={() => setSelectedImage(img)} // ?? click d? d?i ?nh
+                                            onClick={() => setSelectedImage(img)} // Chọn ảnh khi click
                                             className={`w-20 h-20 object-cover rounded-lg border cursor-pointer ${selectedImage?.id === img.id
                                                 ? "border-2 border-black"
                                                 : "border-gray-200"
@@ -111,7 +195,9 @@ const ProductDetail = () => {
                                 {/* Main Image */}
                                 <div className="flex-1">
                                     <img
-                                        src={selectedImage?.url || product.images[0]?.url} // ?? l?y ?nh du?c ch?n, n?u chua ch?n th� m?c d?nh ?nh d?u
+                                        ref={productImageRef} // QUAN TRỌNG: Thêm ref này
+
+                                        src={selectedImage?.url || product.images[0]?.url} // Hiển thị ảnh được chọn hoặc ảnh đầu tiên
                                         alt={selectedImage?.alt || product.images[0]?.alt}
                                         className="w-full h-96 object-cover rounded-lg"
                                     />
@@ -213,10 +299,21 @@ const ProductDetail = () => {
                                             <Plus className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <button
+                                    {/* <button
                                         onClick={() => handleAddToCart()}
                                         className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
                                         Add to Cart
+                                    </button> */}
+                                    {/* Updated Add to Cart button */}
+                                    <button
+                                        onClick={handleAddToCart}
+                                        disabled={isAnimating}
+                                        className={`flex-1 py-3 px-6 rounded-full font-medium transition-all duration-200 ${isAnimating
+                                            ? 'bg-gray-600 text-white cursor-not-allowed'
+                                            : 'bg-black text-white hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98]'
+                                            }`}
+                                    >
+                                        {isAnimating ? 'Adding to Cart...' : 'Add to Cart'}
                                     </button>
                                 </div>
                             </div>
