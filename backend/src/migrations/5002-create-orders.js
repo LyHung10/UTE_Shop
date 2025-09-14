@@ -15,12 +15,12 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       status: {
-        type: DataTypes.STRING, // 'cart', 'pending', 'paid', ...
+        type: Sequelize.STRING, // 'cart', 'pending', 'paid', ...
         defaultValue: 'cart',
       }, total_amount: { type: Sequelize.DECIMAL(12, 2), defaultValue: 0.00 },
-      total_amount: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
-      created_at: { allowNull: false, type: DataTypes.DATE, defaultValue: DataTypes.literal('CURRENT_TIMESTAMP') },
-      updated_at: { allowNull: false, type: DataTypes.DATE, defaultValue: DataTypes.literal('CURRENT_TIMESTAMP') }
+      total_amount: { type: Sequelize.DECIMAL(12, 2), defaultValue: 0.00 },
+      created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') },
+      updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') }
     });
   },
 

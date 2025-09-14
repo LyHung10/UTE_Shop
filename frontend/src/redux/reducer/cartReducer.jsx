@@ -10,7 +10,8 @@ export default function cartReducer(state = initialState, action) {
     case FETCH_CART:
       return {
         ...state,
-        items: action.payload.data || action.payload || [] // Xử lý cả trường hợp có nested data
+        items: Array.isArray(action.payload.items) ? action.payload.items : []
+
       };
 
     case ADD_TO_CART:

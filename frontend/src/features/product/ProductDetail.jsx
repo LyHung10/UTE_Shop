@@ -50,8 +50,15 @@ const ProductDetail = () => {
             alert("Please choose size and color");
             return;
         }
-        dispatch(addToCart(product.id, quantity));
+
+        dispatch(addToCart(
+            product.id,         // productId
+            quantity,           // qty
+            selectedColor.name, // color
+            selectedSize        // size
+        ));
     };
+
     useEffect(() => {
         const fetchData = async () => {
             const res = await getProductById(id);
