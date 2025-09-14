@@ -67,6 +67,38 @@ class OrderController {
             next(err);
         }
     }
+
+    static async checkoutCOD(req, res) {
+        try {
+            const userId = req.user.sub;
+            const result = await OrderService.checkoutCOD(userId);
+            res.status(201).json({
+                success: true,
+                message: "Checkout COD success",
+                order: result.order,
+                payment: result.payment
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
+
+    static async confirmCODPayment(req, res) {
+        try {
+            const { orderId } = req.params;
+            const result = await OrderService.confirmCODPayment(orderId);
+            res.json({
+                success: true,
+                message: "COD payment confirmed",
+                order: result.order,
+                payment: result.payment
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
 }
 
 export default OrderController;

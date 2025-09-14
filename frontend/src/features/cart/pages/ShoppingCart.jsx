@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Minus, Plus } from 'lucide-react';
 import { useSelector, useDispatch } from "react-redux";
 import { fetchCart, updateQuantity, removeFromCart, clearCart } from "../../../redux/action/cartAction";
+import { useNavigate } from "react-router-dom";
 
 const ShoppingCart = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     // Lấy items từ Redux, mặc định là mảng
     const cartItems = useSelector(state => state.cart.items) || [];
@@ -160,10 +162,13 @@ const ShoppingCart = () => {
                         </div>
 
                         <div className="mt-8 space-y-4">
-                            <button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-4 px-6 rounded-lg transition duration-200">
+                            <button
+                                className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-4 px-6 rounded-lg transition duration-200"
+                                onClick={() => navigate("/checkout")}>
                                 Buy Now
                             </button>
-                            <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-lg transition duration-200">
+                            <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-lg transition duration-200"
+                                onClick={() => navigate("/")}>
                                 Continue Shopping
                             </button>
                         </div>

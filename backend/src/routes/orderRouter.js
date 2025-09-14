@@ -10,4 +10,7 @@ router.put('/cart', authenticateToken, OrderController.updateQuantity);
 router.delete('/cart/:itemId', authenticateToken, OrderController.removeItem);
 router.delete('/cart', authenticateToken, OrderController.clearCart);
 router.get('/cart/count', authenticateToken, OrderController.getCartCount);
+
+router.post("/checkout/cod", authenticateToken, OrderController.checkoutCOD);
+router.put("/:orderId/confirm-cod", authenticateToken, OrderController.confirmCODPayment);
 export default router;

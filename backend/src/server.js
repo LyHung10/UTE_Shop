@@ -11,7 +11,6 @@ import userRoutes from './routes/user.routes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRouter.js';
 import { errorHandler } from './middleware/errorHandler.js';
-
 dotenv.config();
 
 const app = express();
@@ -26,7 +25,7 @@ const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 app.use('/api/auth/register', otpLimiter);
-app.use('/api/auth/forgot-password', otpLimiter); // chỉnh lại đúng route
+app.use('/api/auth/forgot-password', otpLimiter);
 app.use('/api/auth/login', loginLimiter);
 
 // Routes

@@ -1,4 +1,4 @@
-const { Order, OrderItem, Product, ProductImage } = require('../models');
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment } = require('../models');
 
 class OrderService {
     static async addToCart(userId, productId, qty, color, size) {
@@ -201,6 +201,76 @@ class OrderService {
         if (!order) return 0;
 
         return order.OrderItems.reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    static async checkoutCOD(userId) {
+        return await Order.sequelize.transaction(async (t) => {
+            // Lấy giỏ hàng pending
+            const order = await Order.findOne({
+                where: { user_id: userId, status: 'pending' },
+                include: [{ model: OrderItem, include: [Product] }],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (!order || order.OrderItems.length === 0) {
+                throw new Error("Cart is empty");
+            }
+
+            // Kiểm tra tồn kho
+            for (const item of order.OrderItems) {
+                const inv = await Inventory.findOne({
+                    where: { product_id: item.product_id },
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+
+                if (!inv || inv.stock < item.qty) {
+                    throw new Error(`Product ${item.product_id} out of stock`);
+                }
+
+                inv.stock -= item.qty;
+                inv.reserved += item.qty;
+                await inv.save({ transaction: t });
+            }
+
+            // Cập nhật status order
+            order.status = "confirmed"; // chờ giao hàng
+            order.total_amount = order.OrderItems.reduce(
+                (sum, i) => sum + parseFloat(i.price) * i.qty,
+                0
+            );
+            await order.save({ transaction: t });
+
+            // Tạo payment COD
+            const payment = await Payment.create({
+                order_id: order.id,
+                method: "COD",
+                status: "pending", // chờ shipper thu tiền
+                amount: order.total_amount
+            }, { transaction: t });
+
+            return { order, payment };
+        });
+    }
+
+    static async confirmCODPayment(orderId) {
+        return await Order.sequelize.transaction(async (t) => {
+            const payment = await Payment.findOne({
+                where: { order_id: orderId },
+                transaction: t
+            });
+            if (!payment) throw new Error("Payment not found");
+
+            payment.status = "paid";
+            await payment.save({ transaction: t });
+
+            const order = await Order.findByPk(orderId, { transaction: t });
+            order.status = "completed";
+            await order.save({ transaction: t });
+
+            return { order, payment };
+        });
     }
 }
 export default OrderService;

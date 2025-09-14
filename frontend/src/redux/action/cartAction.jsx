@@ -9,6 +9,10 @@ export const FETCH_CART = "FETCH_CART";
 export const SET_CART_ERROR = "SET_CART_ERROR";
 export const SET_CART_LOADING = "SET_CART_LOADING";
 export const SET_CART_COUNT = "SET_CART_COUNT";
+export const CONFIRM_COD_SUCCESS = "CONFIRM_COD_SUCCESS";
+export const CONFIRM_COD_FAIL = "CONFIRM_COD_FAIL";
+export const CHECKOUT_COD_SUCCESS = "CHECKOUT_COD_SUCCESS";
+export const CHECKOUT_COD_FAIL = "CHECKOUT_COD_FAIL";
 
 export const setCartCount = (count) => ({
     type: SET_CART_COUNT,
@@ -156,5 +160,46 @@ export const fetchCart = () => async (dispatch) => {
         });
 
         dispatch({ type: SET_CART_LOADING, payload: false });
+    }
+};
+
+
+// Checkout COD
+export const checkoutCOD = (items) => async (dispatch) => {
+    try {
+        const res = await axios.post("api/orders/checkout/cod",
+            { items }
+        );
+
+        dispatch({
+            type: "CHECKOUT_COD_SUCCESS",
+            payload: res,
+        });
+
+        return res; // để component còn dùng tiếp
+    } catch (err) {
+        console.error("checkoutCOD error", err);
+        dispatch({ type: "CHECKOUT_COD_FAIL" });
+        throw err;
+    }
+};
+
+// Confirm COD Payment
+export const confirmCODPayment = (orderId) => async (dispatch) => {
+    try {
+        const res = await axios.put(
+            `api/orders/${orderId}/confirm-cod`
+        );
+
+        dispatch({
+            type: "CONFIRM_COD_SUCCESS",
+            payload: res,
+        });
+
+        return res;
+    } catch (err) {
+        console.error("confirmCODPayment error", err);
+        dispatch({ type: "CONFIRM_COD_FAIL" });
+        throw err;
     }
 };
