@@ -9,8 +9,8 @@ import { sequelize } from './config/configdb.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import productRoutes from './routes/productRoutes.js';
+import orderRoutes from './routes/orderRouter.js';
 import { errorHandler } from './middleware/errorHandler.js';
-
 dotenv.config();
 
 const app = express();
@@ -25,13 +25,14 @@ const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 app.use('/api/auth/register', otpLimiter);
-app.use('/api/auth/forgot-password', otpLimiter); // chỉnh lại đúng route
+app.use('/api/auth/forgot-password', otpLimiter);
 app.use('/api/auth/login', loginLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 // Error handler
 app.use(errorHandler);
 

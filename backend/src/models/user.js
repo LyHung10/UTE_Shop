@@ -8,6 +8,9 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.OtpCode, { foreignKey: 'user_id' });
       // 1 user có thể có nhiều refreshToken
       User.hasMany(models.RefreshToken, { foreignKey: 'user_id' });
+
+      User.hasMany(models.Order, { foreignKey: 'user_id' });
+
     }
   }
   User.init(
