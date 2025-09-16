@@ -11,12 +11,12 @@ import ScrollToTop from "@/components/ScrollToTop.jsx";
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-            <StrictMode>
+            {/*<StrictMode>*/}
                 <BrowserRouter>
                     <ScrollToTop />
                     <App />
                 </BrowserRouter>
-            </StrictMode>
+            {/*</StrictMode>*/}
         </PersistGate>
     </Provider>
 )

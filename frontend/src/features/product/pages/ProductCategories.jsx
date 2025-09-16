@@ -26,7 +26,6 @@ const ProductCategories = () => {
             pageSize: res.data.pagination.pageSize,
         });
     };
-
     useEffect(() => {
         fetchListCategoryProducts();
     }, [currentPage, category]); // thêm cả category để load lại khi đổi danh mục
@@ -35,7 +34,7 @@ const ProductCategories = () => {
             <div className="bg-[#f3f4f6]">
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex items-baseline justify-between border-b border-gray-200 pt-18 pb-6">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">New Arrivals</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">{listCategoryProducts[0].category.name}</h1>
                         <Sort/>
                     </div>
 
