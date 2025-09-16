@@ -24,11 +24,11 @@ const getProductById = (id) => {
     return axios.get(`api/products/${id}`);
 };
 
+const getProductsByCategorySlug = (category,page) => {
+    return axios.get(`api/products/${category}/${page}`);
+};
+
 export {
-    getTopDiscount,
-    getNewestProducts,
-    getTopDiscountProducts,
-    getMostViewedProducts,
-    getBestSellingProducts,
-    getProductById
+    getTopDiscount, getNewestProducts, getTopDiscountProducts, getMostViewedProducts, getBestSellingProducts,
+    getProductById, getProductsByCategorySlug
 };

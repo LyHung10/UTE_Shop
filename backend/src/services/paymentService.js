@@ -19,7 +19,7 @@ class PaymentService {
         console.log("VNPay amount x100:", Math.round(order.amount * 100));
 
         return await vnpay.buildPaymentUrl({
-            vnp_Amount: Math.round(order.amount * 100),
+            vnp_Amount: Math.round(Number(order.amount) * 100).toString(),
             vnp_IpAddr: order.ip,
             vnp_TxnRef: order.id,
             vnp_OrderInfo: order.description,

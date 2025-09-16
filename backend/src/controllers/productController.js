@@ -86,6 +86,21 @@ class ProductController {
       next(err);
     }
   }
-}
+  async getProductsByCategorySlug(req, res, next) {
+    try {
+      const { slug } = req.params;
+      const page = parseInt(req.params.page, 10); // nếu không có thì mặc định = 1
 
+      const data = await productService.getProductsByCategorySlug(slug, page);
+
+      res.json({
+        success: true,
+        message: "Lấy sản phẩm theo danh mục thành công",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+}
 export default new ProductController();

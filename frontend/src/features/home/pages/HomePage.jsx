@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input.jsx"
 import { Star } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
 import banner from "../../../assets/coming_soon.jpg"
-import banner2 from "../../../assets/ao_khoa_chinh_tri_luat.jpg"
+// import banner2 from "../../../assets/ao_khoa_chinh_tri_luat.jpg"
 import ProductSlider from "@/features/home/components/ProductSlider.jsx";
 import {
   getBestSellingProducts,
@@ -35,11 +35,14 @@ export default function HomePage() {
     let data = await getMostViewedProducts();
     setListTopMostViewedProducts(data);
   };
-  useEffect(() => {
+  const loadData = () =>{
     fetchListTopNewestProducts();
     fetchListTopDiscountProducts();
     fetchTopMostViewedProducts();
     fetchListBestSellingProducts();
+  }
+  useEffect(() => {
+    loadData();
   }, []);
   return (
     <div className="min-h-screen bg-white">

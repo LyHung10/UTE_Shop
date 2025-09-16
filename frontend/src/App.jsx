@@ -22,7 +22,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="profile" element={<UserProfile />} />
           <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="categories" element={<ProductCategories />} />
+          <Route path=":category" element={<ProductCategories />} />
           <Route path="cart" element={<ShoppingCart />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="payment/completed" element={<VNPayReturnPage />} />

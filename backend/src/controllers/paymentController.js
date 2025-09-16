@@ -7,7 +7,7 @@ export const createPayment = async (req, res) => {
 
         const paymentUrl = await paymentService.createPayment({
             id: orderId,
-            amount: amount,
+            amount: Number(amount),
             description: description,
             ip: req.ip,
         });
