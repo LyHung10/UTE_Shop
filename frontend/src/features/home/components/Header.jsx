@@ -4,7 +4,8 @@ import { Search, ShoppingCart, User, Menu as MenuIcon } from "lucide-react";
 import { Menu, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { doLogout } from "@/redux/action/userAction.jsx";
 import { motion } from "framer-motion";
-import { useRef } from "react";
+import {useEffect, useRef, useState} from "react";
+import {getCategories} from "@/services/categoryService.jsx";
 
 const Header = () => {
     const dispatch = useDispatch();
@@ -12,12 +13,25 @@ const Header = () => {
     const isAuthenticated = useSelector(state => state.user.isAuthenticated);
     const user = useSelector(state => state.user.account);
     const cartCount = useSelector(state => state.cart.count);
-    const cartRef = useRef(null); // ref để tính animation fly-to-cart
+    const cartRef = useRef(null); // ref để tính animation fly-to-cart\
+
 
     const handleLogOut = () => {
         dispatch(doLogout());
         navigate("/");
     }
+
+    const [listCategories,setListCategories] = useState([]);
+    const fetchCategories = async () => {
+        const data = await getCategories();
+        if (data)
+        {
+            setListCategories(data);
+        }
+    }
+    useEffect(() => {
+        fetchCategories();
+    }, []);
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white">
             {/* Top banner */}
@@ -36,7 +50,7 @@ const Header = () => {
                         </button>
                         <Popover className="flex">
                             <div className="relative flex">
-                                <PopoverButton className="group relative flex items-center justify-center text-sm font-medium transition-colors duration-200 ease-out text-white hover:text-white data-[headlessui-state=open]:text-indigo-600">
+                                <PopoverButton className="group cursor-pointer relative flex items-center justify-center text-sm font-medium transition-colors duration-200 ease-out text-white hover:text-white data-[headlessui-state=open]:text-indigo-600">
                                     SẢN PHẨM
                                     <span
                                         aria-hidden="true"
@@ -99,83 +113,48 @@ const Header = () => {
 
                                         {/* Cột menu list */}
                                         <div className="row-start-1 grid grid-cols-3 gap-x-8 gap-y-10 text-sm">
-                                            <div>
-                                                <p
-                                                    id="Clothing-heading"
-                                                    className="font-medium text-gray-900"
-                                                >
-                                                    Clothing
-                                                </p>
-                                                <ul
-                                                    role="list"
-                                                    aria-labelledby="Clothing-heading"
-                                                    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"
-                                                >
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Tops
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Dresses
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Pants
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div>
-                                                <p
-                                                    id="Accessories-heading"
-                                                    className="font-medium text-gray-900"
-                                                >
-                                                    Accessories
-                                                </p>
-                                                <ul
-                                                    role="list"
-                                                    aria-labelledby="Accessories-heading"
-                                                    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"
-                                                >
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Watches
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Bags
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div>
-                                                <p
-                                                    id="Brands-heading"
-                                                    className="font-medium text-gray-900"
-                                                >
-                                                    Brands
-                                                </p>
-                                                <ul
-                                                    role="list"
-                                                    aria-labelledby="Brands-heading"
-                                                    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"
-                                                >
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            Full Nelson
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" className="hover:text-gray-800">
-                                                            My Way
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
+                                            {listCategories && listCategories.length > 0 ? (
+                                                    listCategories.map((item) =>(
+                                                        <div key={item.id}>
+                                                            <Popover.Button
+                                                                as="p" // để render như <p>, bạn có thể đổi thành 'a' hoặc 'div' nếu muốn
+                                                                onClick={() => navigate(`/${item.slug}`)}
+                                                                className="font-medium text-gray-900
+                                                                         cursor-pointer
+                                                                         hover:underline
+                                                                         underline-offset-5
+                                                                         decoration-1
+                                                                         decoration-black"
+                                                            >
+                                                                {item.name}
+                                                            </Popover.Button>
+                                                            {/*<ul*/}
+                                                            {/*    role="list"*/}
+                                                            {/*    aria-labelledby="Clothing-heading"*/}
+                                                            {/*    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"*/}
+                                                            {/*>*/}
+                                                            {/*    <li>*/}
+                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                            {/*            Tops*/}
+                                                            {/*        </a>*/}
+                                                            {/*    </li>*/}
+                                                            {/*    <li>*/}
+                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                            {/*            Dresses*/}
+                                                            {/*        </a>*/}
+                                                            {/*    </li>*/}
+                                                            {/*    <li>*/}
+                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                            {/*            Pants*/}
+                                                            {/*        </a>*/}
+                                                            {/*    </li>*/}
+                                                            {/*</ul>*/}
+                                                        </div>
+                                                                ))
+                                                ) : (
+                                                    <span>Not Found</span>
+                                                )
+                                            }
                                         </div>
                                     </div>
                                 </div>
