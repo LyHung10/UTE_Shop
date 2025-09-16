@@ -15,29 +15,53 @@ class PaymentService {
     async createPayment(order) {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        console.log("VNPay amount input:", order.amount);
-        console.log("VNPay amount x100:", Math.round(order.amount * 100));
 
-        return await vnpay.buildPaymentUrl({
-            vnp_Amount: Math.round(Number(order.amount) * 100).toString(),
+        // Ensure amount is properly formatted and converted
+        const amount = Number(order.amount);
+        if (isNaN(amount) || amount <= 0) {
+            throw new Error('Invalid payment amount');
+        }
+
+        // VNPay requires amount in VND cents (multiply by 100)
+        const vnpAmount = Math.round(amount * 100);
+
+        console.log("Original amount:", order.amount);
+        console.log("VNPay amount (VND cents):", vnpAmount);
+
+        const paymentData = {
+            vnp_Amount: vnpAmount,
             vnp_IpAddr: order.ip,
-            vnp_TxnRef: order.id,
+            vnp_TxnRef: order.id.toString(),
             vnp_OrderInfo: order.description,
             vnp_OrderType: ProductCode.Other,
             vnp_ReturnUrl: process.env.VNP_RETURN_URL,
             vnp_Locale: VnpLocale.VN,
             vnp_CreateDate: dateFormat(new Date()),
             vnp_ExpireDate: dateFormat(tomorrow)
-        });
+        };
+
+        console.log("Payment data being sent:", paymentData);
+
+        return await vnpay.buildPaymentUrl(paymentData);
     }
 
     async verifyPayment(query) {
-        const result = vnpay.verifyReturnUrl(query);
-        console.log("VNPay verify result:", result);
-        console.log("VNPay raw query:", query);
-        return result;
-    }
+        try {
+            console.log("VNPay verification - Raw query:", query);
 
+            // Log the amount from the query for debugging
+            console.log("VNPay verification - Amount from query:", query.vnp_Amount);
+
+            const result = vnpay.verifyReturnUrl(query);
+            console.log("VNPay verify result:", result);
+
+            return result;
+        } catch (error) {
+            console.error("VNPay verification error:", error);
+            console.error("Query parameters:", query);
+            throw error;
+        }
+    }
 }
 
 export default new PaymentService();

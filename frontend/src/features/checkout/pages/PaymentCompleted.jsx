@@ -1,6 +1,6 @@
 import { CheckCircle } from "lucide-react";
 
-export default function PaymentSuccess() {
+export default function PaymentCompleted() {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
             <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md w-full text-center">

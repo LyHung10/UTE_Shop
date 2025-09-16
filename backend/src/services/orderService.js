@@ -276,7 +276,6 @@ class OrderService {
 
     //////////////
 
-    // checkout VNPay
     static async checkoutVNPay(userId) {
         return await Order.sequelize.transaction(async (t) => {
             const order = await Order.findOne({
@@ -290,21 +289,36 @@ class OrderService {
                 throw new Error("Cart is empty");
             }
 
-            // ❌ Không trừ stock, không update order thành confirmed ở đây
-            order.total_amount = order.OrderItems.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
+            // Tính tổng tiền
+            const totalAmount = order.OrderItems.reduce((sum, item) => {
+                return sum + (parseFloat(item.price) * parseInt(item.qty));
+            }, 0);
+
+            const roundedAmount = Math.round(totalAmount) / 100;
+
+            order.status = "completed";
+            order.total_amount = roundedAmount;
             await order.save({ transaction: t });
 
+            //Payment cũng cho là đã paid
             const payment = await Payment.create({
                 order_id: order.id,
                 method: "VNPay",
-                status: "pending",
-                amount: order.total_amount
+                status: "paid",
+                amount: roundedAmount
             }, { transaction: t });
 
+            console.log("Creating VNPay payment (mock) for order:", {
+                orderId: order.id,
+                amount: roundedAmount,
+                itemCount: order.OrderItems.length
+            });
+
+            // Vẫn build URL cho đẹp, nhưng thực tế order đã completed
             const paymentUrl = await paymentService.createPayment({
                 id: order.id,
-                amount: order.total_amount,
-                description: "Thanh toán đơn hàng UteShop",
+                amount: roundedAmount,
+                description: `Thanh toán đơn hàng UteShop #${order.id}`,
                 ip: "127.0.0.1"
             });
 
@@ -313,44 +327,68 @@ class OrderService {
     }
 
 
-    // callback confirm từ VNPay
+    // Updated VNPay confirmation method
     static async confirmVNPayPayment(orderId, query) {
         return await Order.sequelize.transaction(async (t) => {
-            const result = await paymentService.verifyPayment(query);
-            if (!result || result.responseCode !== '00') {
-                throw new Error("Payment failed or invalid");
-            }
+            console.log("Confirming VNPay payment for order:", orderId);
+            console.log("Query parameters received:", query);
 
-            const payment = await Payment.findOne({ where: { order_id: orderId }, transaction: t });
-            if (!payment) throw new Error("Payment not found");
+            try {
+                const result = await paymentService.verifyPayment(query);
 
-            const order = await Order.findByPk(orderId, { include: [OrderItem], transaction: t });
-            if (!order) throw new Error("Order not found");
-
-            // ✅ Chỉ trừ stock ở bước confirm này
-            for (const item of order.OrderItems) {
-                const inv = await Inventory.findOne({
-                    where: { product_id: item.product_id },
-                    transaction: t,
-                    lock: t.LOCK.UPDATE
-                });
-                if (!inv || inv.stock < item.qty) {
-                    throw new Error(`Product ${item.product_id} out of stock`);
+                if (!result || result.responseCode !== '00') {
+                    console.error("VNPay payment verification failed:", result);
+                    throw new Error(`Payment failed: ${result?.responseCode || 'Unknown error'}`);
                 }
-                inv.stock -= item.qty;
-                await inv.save({ transaction: t });
+
+                const payment = await Payment.findOne({
+                    where: { order_id: orderId },
+                    transaction: t
+                });
+                if (!payment) throw new Error("Payment not found");
+
+                const order = await Order.findByPk(orderId, {
+                    include: [OrderItem],
+                    transaction: t
+                });
+                if (!order) throw new Error("Order not found");
+
+                // Verify the amount matches (convert from VND cents back to VND)
+                const queryAmount = parseInt(query.vnp_Amount) / 100;
+                const orderAmount = parseFloat(payment.amount);
+
+                if (Math.abs(queryAmount - orderAmount) > 0.01) {
+                    throw new Error(`Amount mismatch: expected ${orderAmount}, got ${queryAmount}`);
+                }
+
+                // Only deduct stock when payment is confirmed
+                for (const item of order.OrderItems) {
+                    const inv = await Inventory.findOne({
+                        where: { product_id: item.product_id },
+                        transaction: t,
+                        lock: t.LOCK.UPDATE
+                    });
+                    if (!inv || inv.stock < item.qty) {
+                        throw new Error(`Product ${item.product_id} out of stock`);
+                    }
+                    inv.stock -= item.qty;
+                    await inv.save({ transaction: t });
+                }
+
+                payment.status = "paid";
+                await payment.save({ transaction: t });
+
+                order.status = "completed";
+                await order.save({ transaction: t });
+
+                console.log("VNPay payment confirmed successfully for order:", orderId);
+                return { order, payment };
+
+            } catch (error) {
+                console.error("Error confirming VNPay payment:", error);
+                throw error;
             }
-
-            payment.status = "paid";
-            await payment.save({ transaction: t });
-
-            order.status = "completed";
-            await order.save({ transaction: t });
-
-            return { order, payment };
         });
     }
-
-
 }
 export default OrderService;
