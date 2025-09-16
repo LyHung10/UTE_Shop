@@ -1,5 +1,5 @@
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment } = require('../models');
-
+import paymentService from './paymentService.js';
 class OrderService {
     static async addToCart(userId, productId, qty, color, size) {
         if (qty <= 0) throw new Error('Quantity must be greater than 0');
@@ -272,5 +272,85 @@ class OrderService {
             return { order, payment };
         });
     }
+
+
+    //////////////
+
+    // checkout VNPay
+    static async checkoutVNPay(userId) {
+        return await Order.sequelize.transaction(async (t) => {
+            const order = await Order.findOne({
+                where: { user_id: userId, status: 'pending' },
+                include: [{ model: OrderItem, include: [Product] }],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (!order || order.OrderItems.length === 0) {
+                throw new Error("Cart is empty");
+            }
+
+            // ❌ Không trừ stock, không update order thành confirmed ở đây
+            order.total_amount = order.OrderItems.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
+            await order.save({ transaction: t });
+
+            const payment = await Payment.create({
+                order_id: order.id,
+                method: "VNPay",
+                status: "pending",
+                amount: order.total_amount
+            }, { transaction: t });
+
+            const paymentUrl = await paymentService.createPayment({
+                id: order.id,
+                amount: order.total_amount,
+                description: "Thanh toán đơn hàng UteShop",
+                ip: "127.0.0.1"
+            });
+
+            return { order, payment, paymentUrl };
+        });
+    }
+
+
+    // callback confirm từ VNPay
+    static async confirmVNPayPayment(orderId, query) {
+        return await Order.sequelize.transaction(async (t) => {
+            const result = await paymentService.verifyPayment(query);
+            if (!result || result.responseCode !== '00') {
+                throw new Error("Payment failed or invalid");
+            }
+
+            const payment = await Payment.findOne({ where: { order_id: orderId }, transaction: t });
+            if (!payment) throw new Error("Payment not found");
+
+            const order = await Order.findByPk(orderId, { include: [OrderItem], transaction: t });
+            if (!order) throw new Error("Order not found");
+
+            // ✅ Chỉ trừ stock ở bước confirm này
+            for (const item of order.OrderItems) {
+                const inv = await Inventory.findOne({
+                    where: { product_id: item.product_id },
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+                if (!inv || inv.stock < item.qty) {
+                    throw new Error(`Product ${item.product_id} out of stock`);
+                }
+                inv.stock -= item.qty;
+                await inv.save({ transaction: t });
+            }
+
+            payment.status = "paid";
+            await payment.save({ transaction: t });
+
+            order.status = "completed";
+            await order.save({ transaction: t });
+
+            return { order, payment };
+        });
+    }
+
+
 }
 export default OrderService;

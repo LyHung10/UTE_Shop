@@ -13,4 +13,8 @@ router.get('/cart/count', authenticateToken, OrderController.getCartCount);
 
 router.post("/checkout/cod", authenticateToken, OrderController.checkoutCOD);
 router.put("/:orderId/confirm-cod", authenticateToken, OrderController.confirmCODPayment);
+
+
+router.post("/checkout/vnpay", authenticateToken, OrderController.checkoutVNPay);
+router.put("/:orderId/confirm-vnpay", authenticateToken, OrderController.confirmVNPay);
 export default router;

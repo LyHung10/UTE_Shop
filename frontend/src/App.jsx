@@ -13,6 +13,7 @@ import ProductDetail from "@/features/product/ProductDetail.jsx";
 import ProductCategories from "@/features/product/pages/ProductCategories.jsx";
 import ShoppingCart from "@/features/cart/pages/ShoppingCart.jsx";
 import CheckoutPage from "@/features/checkout/pages/CheckoutPage.jsx";
+import VNPayReturnPage from "@/features/checkout/pages/Vnpay-return.jsx";
 function App() {
   return (
     <>
@@ -24,6 +25,8 @@ function App() {
           <Route path="categories" element={<ProductCategories />} />
           <Route path="cart" element={<ShoppingCart />} />
           <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="payment/completed" element={<VNPayReturnPage />} />
+
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
