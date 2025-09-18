@@ -203,3 +203,19 @@ export const confirmCODPayment = (orderId) => async (dispatch) => {
         throw err;
     }
 };
+
+
+export const CREATE_VNPAY_ORDER_SUCCESS = "CREATE_VNPAY_ORDER_SUCCESS";
+export const CREATE_VNPAY_ORDER_FAIL = "CREATE_VNPAY_ORDER_FAIL";
+
+export const createVNPayOrder = (items) => async (dispatch) => {
+    try {
+        const res = await axios.post("api/orders/checkout/vnpay", { items });
+        dispatch({ type: CREATE_VNPAY_ORDER_SUCCESS, payload: res });
+        return res; // { orderId, paymentUrl }
+    } catch (err) {
+        dispatch({ type: CREATE_VNPAY_ORDER_FAIL });
+        console.error("VNPay checkout error:", err);
+        throw err;
+    }
+};

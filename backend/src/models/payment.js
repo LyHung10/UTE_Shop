@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false
         },
         method: {
-            type: DataTypes.STRING, // 'COD', 'E_WALLET', 'CARD', ...
+            type: DataTypes.STRING, // 'COD', 'VNPAY', 'CARD', ...
             allowNull: false
         },
         status: {

@@ -1,4 +1,5 @@
 import OrderService from '../services/orderService';
+
 class OrderController {
     static async addToCart(req, res) {
         try {
@@ -91,6 +92,43 @@ class OrderController {
             res.json({
                 success: true,
                 message: "COD payment confirmed",
+                order: result.order,
+                payment: result.payment
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
+
+
+    ////////////////////
+    static async checkoutVNPay(req, res) {
+        try {
+            const userId = req.user.sub;
+            const result = await OrderService.checkoutVNPay(userId);
+
+            res.status(201).json({
+                success: true,
+                message: "Checkout VNPay success",
+                order: result.order,
+                payment: result.payment,
+                paymentUrl: result.paymentUrl
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
+
+    static async confirmVNPay(req, res) {
+        try {
+            const { orderId } = req.params;
+            const result = await OrderService.confirmVNPayPayment(orderId, req.query);
+
+            res.json({
+                success: true,
+                message: "VNPay payment confirmed",
                 order: result.order,
                 payment: result.payment
             });
