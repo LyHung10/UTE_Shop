@@ -1,6 +1,112 @@
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment } = require('../models');
 import paymentService from './paymentService.js';
 class OrderService {
+    static async getUserOrders(userId, options = {}) {
+        const {
+            status,
+            from,
+            to,
+            page = 1,
+            pageSize = 10,
+            sort = '-created_at'
+        } = options;
+
+        const where = { user_id: userId };
+        if (status) {
+            where.status = status;
+        }
+        // Lọc khoảng thời gian theo created_at nếu truyền from/to
+        if (from || to) {
+            where.created_at = {};
+            if (from) where.created_at[Op.gte] = new Date(from);
+            if (to)   where.created_at[Op.lte] = new Date(to);
+        }
+        // Sắp xếp
+        const orderBy =
+            sort === 'created_at'
+                ? [['created_at', 'ASC']]
+                : [['created_at', 'DESC']];
+        // Lấy dữ liệu
+        const { rows, count } = await Order.findAndCountAll({
+            where,
+            order: orderBy,
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
+            include: [
+                {
+                    model: OrderItem,
+                    include: [
+                        {
+                            model: Product,
+                            attributes: [
+                                'id',
+                                'name',
+                                'price',
+                                'original_price',
+                                'discount_percent'
+                            ],
+                            include: [
+                                {
+                                    model: ProductImage,
+                                    as: 'images',
+                                    attributes: ['url'],
+                                    separate: true,     // để limit hoạt động chính xác
+                                    limit: 1
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+        // Chuẩn hoá response + tính tổng
+        const data = rows.map((order) => {
+            const items = (order.OrderItems || []).map((it) => {
+                const prod = it.Product;
+                const firstImage = prod && Array.isArray(prod.images) && prod.images.length > 0
+                    ? prod.images[0].url
+                    : null;
+
+                return {
+                    id: it.id,
+                    product_id: it.product_id,
+                    qty: it.qty,
+                    price: Number(it.price),   // DECIMAL → Number để tính
+                    color: it.color,
+                    size: it.size,
+                    product: prod
+                        ? {
+                            id: prod.id,
+                            name: prod.name,
+                            price: Number(prod.price),
+                            original_price: prod.original_price != null ? Number(prod.original_price) : null,
+                            discount_percent: prod.discount_percent != null ? Number(prod.discount_percent) : null,
+                            image: firstImage
+                        }
+                        : null
+                };
+            });
+
+            const totalAmount = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+            return {
+                id: order.id,
+                status: order.status,
+                created_at: order.created_at || order.createdAt,
+                updated_at: order.updated_at || order.updatedAt,
+                total_amount: Number(totalAmount.toFixed(2)),
+                items
+            };
+        });
+
+        return {
+            page,
+            page_size: pageSize,
+            total: count,
+            data
+        };
+    }
+
     static async addToCart(userId, productId, qty, color, size) {
         if (qty <= 0) throw new Error('Quantity must be greater than 0');
 

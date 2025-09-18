@@ -1,6 +1,39 @@
 import OrderService from '../services/orderService';
 
 class OrderController {
+    static async getUserOrders(req, res) {
+        try {
+            // Middleware auth đã gắn user vào req
+            const userId = req.user?.sub;
+            // Query params: ?status=&from=&to=&page=&page_size=&sort=
+            const {
+                status,
+                from,
+                to,
+                page,
+                page_size,
+                sort // 'created_at' | '-created_at' (default trong service là '-created_at')
+            } = req.query;
+            // Ép kiểu số hợp lệ cho page & page_size (nếu truyền)
+            const pageNum = page !== undefined ? Math.max(1, Number(page)) : undefined;
+            const pageSizeNum = page_size !== undefined ? Math.max(1, Number(page_size)) : undefined;
+
+            const result = await OrderService.getUserOrders(userId, {
+                status,
+                from,
+                to,
+                page: pageNum,
+                pageSize: pageSizeNum,
+                sort
+            });
+            res.json(result);
+        } catch (err) {
+            // Log server-side để debug
+            console.error('[getUserOrders] error:', err);
+            res.status(400).json({ error: err.message || 'Bad request' });
+        }
+    }
+
     static async addToCart(req, res) {
         try {
             const userId = req.user.sub; // Giả sử middleware auth gắn user vào req

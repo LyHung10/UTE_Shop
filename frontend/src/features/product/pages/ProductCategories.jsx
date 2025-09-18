@@ -2,11 +2,9 @@ import {Fragment, useEffect, useState} from "react";
 import Sort from "@/features/product/components/Sort.jsx";
 import Filter from "@/features/product/components/Filter.jsx";
 import ListProducts from "@/features/product/components/ListProducts.jsx";
-import {Card, CardContent} from "@/components/ui/card.jsx";
-import {Star} from "lucide-react";
 import {useParams} from "react-router-dom";
 import {getProductsByCategorySlug} from "@/services/productService.jsx";
-import {ConfigProvider, Pagination} from "antd";
+import {Pagination} from "antd";
 const ProductCategories = () => {
     const { category} = useParams();
     const [pagination,setPagination] = useState({
@@ -17,9 +15,13 @@ const ProductCategories = () => {
     );
     const [currentPage, setCurrentPage] = useState(1);
     const [listCategoryProducts, setListCategoryProducts] = useState([]);
+    const [categoryName, setCategoryName] = useState("");
     const fetchListCategoryProducts = async () => {
         let res = await getProductsByCategorySlug(category,currentPage);
         setListCategoryProducts(res.data.products);
+        if (res.data.products.length > 0) {
+            setCategoryName(res.data.products[0].category.name);
+        }
         setPagination({
             totalItems: res.data.pagination.totalItems,
             totalPages: res.data.pagination.totalPages,
@@ -34,7 +36,7 @@ const ProductCategories = () => {
             <div className="bg-[#f3f4f6]">
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex items-baseline justify-between border-b border-gray-200 pt-18 pb-6">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">{listCategoryProducts[0].category.name}</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">{categoryName}</h1>
                         <Sort/>
                     </div>
 

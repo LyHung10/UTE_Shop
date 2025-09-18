@@ -8,19 +8,28 @@ import SignUp from "./features/auth/pages/SignUp.jsx";
 import AuthOtp from "./features/auth/components/AuthOtp.jsx";
 import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
-import UserProfile from "@/features/user/UserProfile.jsx";
+import UserProfile from "@/features/user/pages/UserProfile.jsx";
 import ProductDetail from "@/features/product/ProductDetail.jsx";
 import ProductCategories from "@/features/product/pages/ProductCategories.jsx";
 import ShoppingCart from "@/features/cart/pages/ShoppingCart.jsx";
 import CheckoutPage from "@/features/checkout/pages/CheckoutPage.jsx";
 import PaymentCompleted from "@/features/checkout/pages/PaymentCompleted.jsx";
+import UserLayout from "@/features/user/UserLayout.jsx";
+import OrderHistory from "@/features/order/papes/OrderHistory.jsx";
 function App() {
   return (
     <>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="profile" element={<UserProfile />} />
+
+          <Route path="user" element={<UserLayout />}>
+            <Route index element={<UserProfile />} />
+            <Route path="my-orders" element={<OrderHistory/>} />
+            <Route path="profile" element={<UserProfile />} />
+          </Route>
+
+
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path=":category" element={<ProductCategories />} />
           <Route path="cart" element={<ShoppingCart />} />

@@ -210,12 +210,21 @@ const Header = () => {
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
-                                        onClick={() => (navigate("/profile"))}
+                                        onClick={() => (navigate("/user/profile"))}
                                         className={({ active }) =>
-                                            `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                            `mt-0.5 block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
                                             }`
                                         }>
-                                        Account settings
+                                        Tài khoản của tôi
+                                    </Menu.Item>
+
+                                    <Menu.Item as="button"
+                                               onClick={() => (navigate("/user/my-orders"))}
+                                               className={({ active }) =>
+                                                   `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                                   }`
+                                               }>
+                                        Đơn hàng của tôi
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
@@ -224,7 +233,7 @@ const Header = () => {
                                             `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
                                             }`
                                         }>
-                                        Log out
+                                        Đăng xuất
                                     </Menu.Item>
                                 </div>
                             </Menu.Items>
