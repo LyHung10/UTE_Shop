@@ -15,7 +15,7 @@ import ShoppingCart from "@/features/cart/pages/ShoppingCart.jsx";
 import CheckoutPage from "@/features/checkout/pages/CheckoutPage.jsx";
 import PaymentCompleted from "@/features/checkout/pages/PaymentCompleted.jsx";
 import UserLayout from "@/features/user/UserLayout.jsx";
-import OrderHistory from "@/features/order/papes/OrderHistory.jsx";
+import OrderHistory from "@/features/user/pages/OrderHistory.jsx";
 function App() {
   return (
     <>
@@ -44,7 +44,7 @@ function App() {
         <Route path="/resetpassword" element={<ResetPassword />} />
       </Routes>
       <ToastContainer
-        position="top-right"
+        position="top-left"
         autoClose={5000}
         hideProgressBar={false}
         newestOnTop={false}

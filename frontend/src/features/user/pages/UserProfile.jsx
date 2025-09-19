@@ -6,7 +6,7 @@ import {useSelector} from "react-redux";
 export default function ProfilePage() {
     const user = useSelector(state => state.user.account);
     return (
-        <div className="max-w-4xl mt-30 mx-auto p-6 space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Section */}
             <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">

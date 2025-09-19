@@ -1,10 +1,23 @@
 import {Outlet} from "react-router-dom";
+import UserSidebar from "@/features/user/UserSidebar.jsx";
 
 const UserLayout = () => {
     return(
-        <>
-            <Outlet />
-        </>
+        <div className="bg-[#f3f4f6]">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <section aria-labelledby="products-heading" className="pt-6 pb-24">
+                    <h2 id="products-heading" className="sr-only">Products</h2>
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+                        <div className="self-start">
+                            <UserSidebar />
+                        </div>
+                        <div className="lg:col-span-3 flex flex-col gap-6">
+                            <Outlet/>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
     )
 }
 export default  UserLayout;

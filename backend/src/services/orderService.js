@@ -68,8 +68,6 @@ class OrderService {
                     : null;
 
                 return {
-                    id: it.id,
-                    product_id: it.product_id,
                     qty: it.qty,
                     price: Number(it.price),   // DECIMAL → Number để tính
                     color: it.color,
