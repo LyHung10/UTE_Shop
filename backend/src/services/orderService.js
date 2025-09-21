@@ -1,4 +1,4 @@
-const { Order, OrderItem, Product, ProductImage, Inventory, Payment } = require('../models');
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User } = require('../models');
 import paymentService from './paymentService.js';
 class OrderService {
     static async addToCart(userId, productId, qty, color, size) {
@@ -314,6 +314,14 @@ class OrderService {
                 itemCount: order.OrderItems.length
             });
 
+            // Cộng điểm tích lũy cho user
+            const user = await User.findByPk(userId, { transaction: t, lock: t.LOCK.UPDATE });
+            if (user) {
+                const pointsEarned = Math.floor(roundedAmount / 100);  // mỗi 100k là được 1k
+                user.loyalty_points = (user.loyalty_points || 0) + pointsEarned;
+                console.log(`User ${userId} earned ${pointsEarned} loyalty points, total now ${user.loyalty_points}`);
+                await user.save({ transaction: t });
+            }
             // Vẫn build URL cho đẹp, nhưng thực tế order đã completed
             const paymentUrl = await paymentService.createPayment({
                 id: order.id,
