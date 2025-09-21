@@ -364,7 +364,7 @@ const ProductDetail = () => {
                                             ))}
                                         </div>
                                         <div className="flex items-center gap-2 mb-3">
-                                            <span className="font-medium">{review.user_name}</span>
+                                            <span className="font-medium">{review.user_id}</span>
                                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                         </div>
                                         <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>

@@ -50,6 +50,14 @@ const OrderHistory = () => {
         )
         : orders;
 
+    // Lọc bỏ items COMMENTED + bỏ order rỗng
+    const cleaned = filtered
+        .map(order => ({
+            ...order,
+            items: order.items.filter(it => it.status !== "COMMENTED")
+        }))
+        .filter(order => order.items.length > 0);
+
     return (
         <div className="flex flex-col gap-4">
             {/* Tabs */}
@@ -101,12 +109,12 @@ const OrderHistory = () => {
                     <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700">
                         Lỗi: {err}
                     </div>
-                ) : filtered.length === 0 ? (
+                ) : cleaned.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
                         Không tìm thấy đơn hàng phù hợp.
                     </div>
                 ) : (
-                    filtered.map((order) => <OrderCard key={order.id} order={order} />)
+                    cleaned.map((order) => <OrderCard key={order.id} order={order} />)
                 )}
             </div>
 

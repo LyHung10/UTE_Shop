@@ -1,10 +1,11 @@
-import {CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle} from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const formatPrice = (v) => {
     return v.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 }
 
-const  StatusBadge = ({ status }) => {
+const StatusBadge = ({ status }) => {
     const map = {
         PENDING: { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200", Icon: Clock },
         SHIPPING: { label: "Vận chuyển", cls: "bg-blue-50 text-blue-700 border-blue-200", Icon: Truck },
@@ -16,14 +17,14 @@ const  StatusBadge = ({ status }) => {
     const { Icon } = m;
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>
-      <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3.5 w-3.5" />
             {m.label}
-    </span>
+        </span>
     );
 }
 
 const OrderCard = (props) => {
-    const { order} = props;
+    const { order } = props;
     return (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Header */}
@@ -69,9 +70,21 @@ const OrderCard = (props) => {
                     <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
                         Xem chi tiết <ChevronRight className="h-4 w-4" />
                     </button>
-                    {order.status === "COMPLETED" && (
-                        <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Mua lại</button>
-                    )}
+
+                    {order.status === "COMPLETED" &&
+                        order.items
+                            .filter(it => it.status !== "COMMENTED") // chỉ lấy sản phẩm chưa comment
+                            .map((it) => (
+                                <Link
+                                    key={it.product.id}
+                                    to={`/review?orderId=${order.id}&productId=${it.product.id}`}
+                                >
+                                    <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                                        Đánh giá
+                                    </button>
+                                </Link>
+                            ))
+                    }   
                 </div>
             </div>
         </div>

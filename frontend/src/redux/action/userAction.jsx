@@ -1,16 +1,14 @@
-export const FETCH_USER_LOGIN_SUCCESS = 'FETCH_USER_LOGIN_SUCCESS';
-export const USER_LOGOUT_SUCCESS = 'USER_LOGOUT_SUCCESS';
+import { FETCH_USER_LOGIN_SUCCESS, USER_LOGOUT_SUCCESS } from "./actionTypes";
+import { resetCart } from "./cartAction";
 
-
-export const doLogin = (data) => {
-    return {
-        type: FETCH_USER_LOGIN_SUCCESS,
-        payload: data
-    };
-};
+export const doLogin = (data) => ({
+  type: FETCH_USER_LOGIN_SUCCESS,
+  payload: data,
+});
 
 export const doLogout = () => {
-    return {
-        type: USER_LOGOUT_SUCCESS,
-    };
+  return (dispatch) => {
+    dispatch({ type: USER_LOGOUT_SUCCESS }); // clear user
+    dispatch(resetCart()); // clear giỏ hàng
+  };
 };

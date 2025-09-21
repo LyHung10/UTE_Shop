@@ -43,7 +43,7 @@ class OrderService {
                                 'name',
                                 'price',
                                 'original_price',
-                                'discount_percent'
+                                'discount_percent',
                             ],
                             include: [
                                 {
@@ -72,6 +72,7 @@ class OrderService {
                     price: Number(it.price),   // DECIMAL → Number để tính
                     color: it.color,
                     size: it.size,
+                    status: it.status,
                     product: prod
                         ? {
                             id: prod.id,
@@ -177,6 +178,7 @@ class OrderService {
             price: item.price,
             color: item.color,
             size: item.size,
+            status: item.status,
             product: {
                 id: productWithImage.id,
                 name: productWithImage.name,
@@ -339,7 +341,7 @@ class OrderService {
             }
 
             // Cập nhật status order
-            order.status = "confirmed"; // chờ giao hàng
+            order.status = "CONFIRMED"; // chờ giao hàng
             order.total_amount = order.OrderItems.reduce(
                 (sum, i) => sum + parseFloat(i.price) * i.qty,
                 0
@@ -350,7 +352,7 @@ class OrderService {
             const payment = await Payment.create({
                 order_id: order.id,
                 method: "COD",
-                status: "pending", // chờ shipper thu tiền
+                status: "PENDING", // chờ shipper thu tiền
                 amount: order.total_amount
             }, { transaction: t });
 
@@ -366,11 +368,11 @@ class OrderService {
             });
             if (!payment) throw new Error("Payment not found");
 
-            payment.status = "paid";
+            payment.status = "PAID";
             await payment.save({ transaction: t });
 
             const order = await Order.findByPk(orderId, { transaction: t });
-            order.status = "completed";
+            order.status = "COMPLETED";
             await order.save({ transaction: t });
 
             return { order, payment };
@@ -383,7 +385,7 @@ class OrderService {
     static async checkoutVNPay(userId) {
         return await Order.sequelize.transaction(async (t) => {
             const order = await Order.findOne({
-                where: { user_id: userId, status: 'pending' },
+                where: { user_id: userId, status: 'PENDING' },
                 include: [{ model: OrderItem, include: [Product] }],
                 transaction: t,
                 lock: t.LOCK.UPDATE
@@ -400,15 +402,15 @@ class OrderService {
 
             const roundedAmount = Math.round(totalAmount) / 100;
 
-            order.status = "completed";
+            order.status = "COMPLETED";
             order.total_amount = roundedAmount;
             await order.save({ transaction: t });
 
-            //Payment cũng cho là đã paid
+            //Payment cũng cho là đã PAID
             const payment = await Payment.create({
                 order_id: order.id,
                 method: "VNPay",
-                status: "paid",
+                status: "PAID",
                 amount: roundedAmount
             }, { transaction: t });
 
@@ -426,7 +428,7 @@ class OrderService {
                 console.log(`User ${userId} earned ${pointsEarned} loyalty points, total now ${user.loyalty_points}`);
                 await user.save({ transaction: t });
             }
-            // Vẫn build URL cho đẹp, nhưng thực tế order đã completed
+            // Vẫn build URL cho đẹp, nhưng thực tế order đã COMPLETED
             const paymentUrl = await paymentService.createPayment({
                 id: order.id,
                 amount: roundedAmount,
@@ -473,7 +475,7 @@ class OrderService {
                     throw new Error(`Amount mismatch: expected ${orderAmount}, got ${queryAmount}`);
                 }
 
-                // Only deduct stock when payment is confirmed
+                // Only deduct stock when payment is CONFIRMED
                 for (const item of order.OrderItems) {
                     const inv = await Inventory.findOne({
                         where: { product_id: item.product_id },
@@ -487,13 +489,13 @@ class OrderService {
                     await inv.save({ transaction: t });
                 }
 
-                payment.status = "paid";
+                payment.status = "PAID";
                 await payment.save({ transaction: t });
 
-                order.status = "completed";
+                order.status = "COMPLETED";
                 await order.save({ transaction: t });
 
-                console.log("VNPay payment confirmed successfully for order:", orderId);
+                console.log("VNPay payment CONFIRMED successfully for order:", orderId);
                 return { order, payment };
 
             } catch (error) {

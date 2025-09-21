@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.RefreshToken, { foreignKey: 'user_id' });
 
       User.hasMany(models.Order, { foreignKey: 'user_id' });
+      User.hasMany(models.Review, { foreignKey: 'user_id' });
 
     }
   }
