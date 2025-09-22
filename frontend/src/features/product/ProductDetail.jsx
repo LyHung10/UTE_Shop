@@ -320,10 +320,10 @@ const ProductDetail = () => {
                                         </button>
                                     </div>
                                     {/* <button
-                                        onClick={() => handleAddToCart()}
-                                        className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
-                                        Add to Cart
-                                    </button> */}
+                                                                                                                                onClick={() => handleAddToCart()}
+                                                                                                                                className="flex-1 bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors">
+                                                                                                                                Add to Cart
+                                                                                                                            </button> */}
                                     {/* Updated Add to Cart button */}
                                     <button
                                         onClick={handleAddToCart}
@@ -418,8 +418,8 @@ const ProductDetail = () => {
                                                         <Star
                                                             key={i}
                                                             className={`w-4 h-4 ${i < review.rating
-                                                                    ? "fill-yellow-400 text-yellow-400"
-                                                                    : "text-gray-300"
+                                                                ? "fill-yellow-400 text-yellow-400"
+                                                                : "text-gray-300"
                                                                 }`}
                                                         />
                                                     ))}

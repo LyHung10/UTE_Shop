@@ -1,6 +1,42 @@
 import productService from "../services/productService";
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
 
 class ProductController {
+  async tryOnClothes(req, res) {
+    try {
+      console.log(">>> TryOn API hit");
+      res.json({ msg: "TryOn API working", body: req.body });
+      const { personUrl, clothUrl } = req.body;
+
+      if (!personUrl || !clothUrl) {
+        return res.status(400).json({ error: "Thiếu ảnh người hoặc quần áo" });
+      }
+
+      // gọi model Replicate
+      const output = await replicate.run(
+        "viktorfa/oot_diffusion:9f8fa4956970dde99689af7488157a30aa152e23953526a605df1d77598343d7",
+        {
+          input: {
+            person_image: personUrl,
+            garment_image: clothUrl,
+          },
+        }
+      );
+
+      // output là array chứa ảnh
+      res.json({
+        success: true,
+        result: output, // mảng link ảnh
+      });
+    } catch (err) {
+      console.error("❌ Lỗi thử quần áo:", err);
+      res.status(500).json({ error: "Có lỗi xảy ra khi thử quần áo" });
+    }
+  };
   async getMostViewed(req, res, next) {
     try {
       const products = await productService.getMostViewed();

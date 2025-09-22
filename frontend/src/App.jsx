@@ -18,6 +18,7 @@ import UserLayout from "@/features/user/UserLayout.jsx";
 import OrderHistory from "@/features/user/pages/OrderHistory.jsx";
 import OrderDetail from "@/features/user/pages/OrderDetail.jsx";
 import ReviewPage from "@/features/review/pages/ReviewPage.jsx";
+import TryOnPage from "@/features/product/pages/Tryon.jsx";
 function App() {
   return (
     <>
@@ -28,7 +29,7 @@ function App() {
           <Route path="user" element={<UserLayout />}>
             <Route index element={<UserProfile />} />
             <Route path="my-orders" element={<OrderHistory />} />
-            <Route path="order-detail/:id" element={<OrderDetail/>} />
+            <Route path="order-detail/:id" element={<OrderDetail />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="payment/completed" element={<PaymentCompleted />} />
           <Route path="review" element={<ReviewPage />} />
+          <Route path="tryon" element={<TryOnPage />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
