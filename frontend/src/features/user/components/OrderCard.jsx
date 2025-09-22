@@ -1,8 +1,8 @@
 import {CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle} from "lucide-react";
+import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
+import {useNavigate} from "react-router-dom";
 
-const formatPrice = (v) => {
-    return v.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-}
+
 
 const  StatusBadge = ({ status }) => {
     const map = {
@@ -12,7 +12,7 @@ const  StatusBadge = ({ status }) => {
         COMPLETED: { label: "Hoàn thành", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: CheckCircle2 },
         CANCELLED: { label: "Đã hủy", cls: "bg-rose-50 text-rose-700 border-rose-200", Icon: XCircle },
     };
-    const m = map[status] || { label: status, cls: "bg-gray-50 text-gray-700 border-gray-200", Icon: Package };
+    const m = map[normalizeStatus(status)] || { label: status, cls: "bg-gray-50 text-gray-700 border-gray-200", Icon: Package };
     const { Icon } = m;
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>
@@ -23,7 +23,9 @@ const  StatusBadge = ({ status }) => {
 }
 
 const OrderCard = (props) => {
-    const { order} = props;
+    const {order} = props;
+    const navigate = useNavigate();
+
     return (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Header */}
@@ -56,17 +58,12 @@ const OrderCard = (props) => {
             <div className="flex flex-col gap-3 px-4 py-3 bg-gray-50 md:flex-row md:items-center md:justify-between">
                 <div className="text-sm text-gray-600">
                     Ngày đặt:{" "}
-                    {new Date(order.created_at).toLocaleString("vi-VN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                    })}
+                    {formatDateTime(order.created_at)}
                 </div>
                 <div className="flex items-center gap-3 md:gap-4">
                     <div className="text-sm">Tổng tiền: <span className="font-semibold text-gray-900">{formatPrice(order.total_amount)}</span></div>
-                    <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    <button className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                            onClick={()=>navigate(`/user/order-detail/${order.id}`)}>
                         Xem chi tiết <ChevronRight className="h-4 w-4" />
                     </button>
                     {order.status === "COMPLETED" && (

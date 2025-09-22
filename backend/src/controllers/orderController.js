@@ -34,6 +34,55 @@ class OrderController {
         }
     }
 
+    static async getDetailOrder(req, res) {
+        try {
+            // Middleware auth đã gắn user vào req
+            const userId = req.user?.sub;
+            const orderId = req.params.orderId;
+            const order = await OrderService.getDetailOrder(userId, orderId);
+
+            const data = {
+                id: order.id,
+                status: order.status,
+                created_at: order.created_at,
+                updated_at: order.updated_at,
+                total_amount: Number(order.total_amount ?? 0),
+
+                // Nếu bảng Order có các field dưới thì trả ra (tùy schema của bạn)
+                receiver_name: order.receiver_name || null,
+                receiver_phone: order.receiver_phone || null,
+                shipping_address: order.shipping_address || null,
+                shipping_fee: Number(order.shipping_fee ?? 0),
+                discount: Number(order.discount ?? 0),
+                voucher_discount: Number(order.voucher_discount ?? 0),
+                payment_method: order.Payment.method || null,
+
+                items: (order.OrderItems || order.items || []).map((it) => ({
+                    qty: it.qty,
+                    price: Number(it.price),
+                    color: it.color,
+                    size: it.size,
+                    product: it.Product
+                        ? {
+                            name: it.Product.name,
+                            price: Number(it.Product.price),
+                            original_price: Number(it.Product.original_price),
+                            discount_percent: it.Product.discount_percent,
+                            image:
+                                (it.Product.images && it.Product.images[0]?.url) || null,
+                        }
+                        : null,
+                })),
+            };
+
+            res.json({data});
+        } catch (err) {
+            // Log server-side để debug
+            console.error('[getDetailOrder] error:', err);
+            res.status(400).json({ error: err.message || 'Bad request' });
+        }
+    }
+
     static async addToCart(req, res) {
         try {
             const userId = req.user.sub; // Giả sử middleware auth gắn user vào req

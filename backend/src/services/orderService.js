@@ -1,5 +1,6 @@
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User } = require('../models');
 import paymentService from './paymentService.js';
+
 class OrderService {
     static async getUserOrders(userId, options = {}) {
         const {
@@ -103,6 +104,39 @@ class OrderService {
             total: count,
             data
         };
+    }
+
+    static async getDetailOrder(userId, orderId = {}) {
+        return await Order.findOne({
+            where: {
+                id: orderId,
+                user_id: userId
+            },
+            include: [
+                {
+                    model: OrderItem,
+                    include: [
+                        {
+                            model: Product,
+                            attributes: ["id", "name", "price", "original_price", "discount_percent"
+                            ],
+                            include: [
+                                {
+                                    model: ProductImage,
+                                    as: "images",
+                                    attributes: ["url"],
+                                    separate: true,
+                                    limit: 1
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    model: Payment
+                }
+            ]
+        });
     }
 
     static async addToCart(userId, productId, qty, color, size) {

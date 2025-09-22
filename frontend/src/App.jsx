@@ -16,6 +16,7 @@ import CheckoutPage from "@/features/checkout/pages/CheckoutPage.jsx";
 import PaymentCompleted from "@/features/checkout/pages/PaymentCompleted.jsx";
 import UserLayout from "@/features/user/UserLayout.jsx";
 import OrderHistory from "@/features/user/pages/OrderHistory.jsx";
+import OrderDetail from "@/features/user/pages/OrderDetail.jsx";
 function App() {
   return (
     <>
@@ -26,6 +27,7 @@ function App() {
           <Route path="user" element={<UserLayout />}>
             <Route index element={<UserProfile />} />
             <Route path="my-orders" element={<OrderHistory/>} />
+            <Route path="order-detail/:id" element={<OrderDetail/>} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
 

@@ -5,7 +5,7 @@ import { authenticateToken } from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', authenticateToken, OrderController.getUserOrders);
-
+router.get('/:orderId/detail', authenticateToken, OrderController.getDetailOrder);
 router.post('/cart', authenticateToken, OrderController.addToCart);
 router.get('/cart', authenticateToken, OrderController.getCart);
 router.put('/cart', authenticateToken, OrderController.updateQuantity);
