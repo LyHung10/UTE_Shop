@@ -1,6 +1,36 @@
-import { Product, ProductImage, Inventory, Review, Category } from "../models/index.js";
+import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order } from "../models/index.js";
+
 
 class ProductService {
+    async getProductEngagement(productId) {
+        // 1. Lấy danh sách user_id đã mua sản phẩm trong các order "completed"
+        const buyerRows = await Order.findAll({
+            where: { status: "completed" }, // chỉ lấy đơn hoàn thành
+            include: [
+                {
+                    model: OrderItem,
+                    where: { product_id: productId },
+                    attributes: [],
+                },
+            ],
+            attributes: ["user_id"],
+            group: ["Order.user_id"], // group để loại trùng user
+            raw: true,
+        });
+
+        const buyersCount = buyerRows.length; // số khách mua duy nhất
+
+        // 2. Đếm tất cả các review (số dòng) cho sản phẩm
+        const reviewsCount = await Review.count({
+            where: { product_id: productId },
+        });
+
+        return {
+            buyersCount,
+            reviewsCount,
+        };
+    }
+
     // 1. Lấy 8 sản phẩm có view_count cao nhất
     async getMostViewed(limit = 8) {
         return await Product.findAll({
@@ -169,7 +199,7 @@ class ProductService {
                 {
                     model: Review,
                     as: "reviews",
-                    attributes: ["id", "user_name", "rating", "text", "created_at"],
+                    attributes: ["id", "rating", "text", "created_at"],
                 },
             ],
             limit,

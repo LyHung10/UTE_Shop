@@ -138,5 +138,30 @@ class ProductController {
       next(err);
     }
   }
+
+  async getProductStats(req, res) {
+    try {
+      const rawId = req.params.id;
+      const productId = Number(rawId);
+
+      if (!productId || Number.isNaN(productId)) {
+        return res.status(400).json({ error: "productId không hợp lệ" });
+      }
+
+      // luôn mặc định chỉ tính các order có trạng thái 'completed'
+      const result = await productService.getProductEngagement(productId);
+
+      return res.json({
+        product_id: productId,
+        ...result,
+      });
+    } catch (err) {
+      console.error("[getProductStats] error:", err);
+      return res
+          .status(500)
+          .json({ error: err.message || "Internal Server Error" });
+    }
+  }
+
 }
 export default new ProductController();

@@ -4,7 +4,9 @@ import parser from '../middleware/multerCloudinary.js';
 
 const router = express.Router();
 
-// Thử quần áo 
+
+
+// Thử quần áo
 router.post("/try-on", productController.tryOnClothes);
 // Upload sản phẩm (cũng nên để trước /:id)
 router.post("/add", parser.array('images', 5), productController.addProduct);
@@ -21,13 +23,16 @@ router.get("/newest", productController.getNewestProducts);
 // 4. Sản phẩm bán chạy nhất
 router.get("/best-selling", productController.getBestSellingProducts);
 
+// Lấy chỉ số tương tác của sản phẩm
+router.get("/:id/stats",productController.getProductStats);
+
 // Route động theo slug + page
 router.get("/:slug/:page", productController.getProductsByCategorySlug);
 
-// Tất cả sản phẩm (phân trang)
-router.get("/", productController.getAllProducts);
-
 // Xem chi tiết sản phẩm + tăng view_count
 router.get("/:id", productController.getProductById);
+
+// Tất cả sản phẩm (phân trang)
+router.get("/", productController.getAllProducts);
 
 export default router;
