@@ -8,7 +8,8 @@ module.exports = {
         const originalReviews = [
             {
                 product_id: 1,
-                user_name: 'Nguyen Van A',
+                user_id: 1,
+                order_id: 1,
                 rating: 5,
                 text: 'Sản phẩm chất lượng, rất hài lòng!',
                 created_at: new Date(),
@@ -16,7 +17,8 @@ module.exports = {
             },
             {
                 product_id: 1,
-                user_name: 'Tran Thi B',
+                user_id: 2,
+                order_id: 2,
                 rating: 4,
                 text: 'Hơi nhỏ nhưng vẫn đẹp, giao hàng nhanh.',
                 created_at: new Date(),
@@ -24,7 +26,8 @@ module.exports = {
             },
             {
                 product_id: 2,
-                user_name: 'Le Van C',
+                user_id: 2,
+                order_id: 1,
                 rating: 3,
                 text: 'Bình thường, không có gì đặc biệt.',
                 created_at: new Date(),

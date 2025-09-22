@@ -1,11 +1,12 @@
 'use strict';
+const { hashPassword } = require('../utils/password'); // điều chỉnh path cho đúng
 
 module.exports = {
   async up(queryInterface, Sequelize) {
     return queryInterface.bulkInsert('users', [
       {
-        email: 'a@example.com',
-        password: '123456', // lưu hash cho chuẩn nha
+        email: 'phuongtrinhdangthuc@gmail.com',
+        password: await hashPassword('103204'), // 🔒 hash password bằng hàm custom
         first_name: 'Nguyễn',
         last_name: 'Văn A',
         address: 'Hà Nội',
@@ -18,21 +19,21 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date()
       },
-      // {
-      //   email: 'b@example.com',
-      //   password: '123456',
-      //   first_name: 'Trần',
-      //   last_name: 'Thị B',
-      //   address: 'Đà Nẵng',
-      //   phone_number: '0987654321',
-      //   gender: false,
-      //   image: null,
-      //   is_verified: false,
-      //   role_id: 'user',
-      //   position_id: 'staff',
-      //   created_at: new Date(),
-      //   updated_at: new Date()
-      // }
+      {
+        email: 'lyhung10nctlop95@gmail.com',
+        password: await hashPassword('103204'), // 🔒 hash password bằng hàm custom
+        first_name: 'Trần',
+        last_name: 'Thị B',
+        address: 'Đà Nẵng',
+        phone_number: '0987654321',
+        gender: false,
+        image: "https://t4.ftcdn.net/jpg/02/14/74/61/360_F_214746128_31JkeaP6rU0NzzzdFC4khGkmqc8noe6h.jpg",
+        is_verified: true,
+        role_id: 'user',
+        position_id: 'staff',
+        created_at: new Date(),
+        updated_at: new Date()
+      }
     ], {});
   },
 

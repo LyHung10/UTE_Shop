@@ -15,10 +15,12 @@ import { useParams } from "react-router-dom"
 import { getProductById } from "../../services/productService.jsx"
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, updateQuantity } from "../../redux/action/cartAction.jsx";
+import axios from "../../utils/axiosCustomize.jsx";
 const ProductDetail = () => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
-
+    const [reviews, setReviews] = useState([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
     const [listBestSellingProducts, setListBestSellingProducts] = useState([]);
     const fetchListBestSellingProducts = async () => {
         let data = await getBestSellingProducts();
@@ -57,12 +59,30 @@ const ProductDetail = () => {
             selectedSize        // size
         ));
     };
+
+
     // animation
     const [isAnimating, setIsAnimating] = useState(false);
     // Thêm refs
     const productImageRef = useRef(null);
     const cartIcon = document.querySelector('header .relative svg');
+    useEffect(() => {
+        if (!product?.id) return;
 
+        const fetchReviews = async () => {
+            try {
+                setLoadingReviews(true);
+                const res = await axios.get(`api/reviews/product/${product.id}`);
+                setReviews(res); // backend trả về mảng review
+            } catch (err) {
+                console.error("Lỗi load reviews:", err);
+            } finally {
+                setLoadingReviews(false);
+            }
+        };
+
+        fetchReviews();
+    }, [product?.id]);
     // Thêm function animation này
     const animateAddToCart = () => {
         if (isAnimating) return;
@@ -324,11 +344,11 @@ const ProductDetail = () => {
                 {/* Product Details Tabs */}
                 <div className="mt-16 border-t border-gray-200">
                     <div className="flex border-b border-gray-200">
-                        {["Product Details", "Rating & Reviews", "FAQs"].map((tab, index) => (
+                        {["Rating & Reviews", "Product Details", "FAQs"].map((tab, index) => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(["details", "reviews", "faqs"][index])}
-                                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === ["details", "reviews", "faqs"][index]
+                                onClick={() => setActiveTab(["reviews", "details", "faqs"][index])}
+                                className={`px-6 py-4 text-sm font-medium border-b-2 ${activeTab === ["reviews", "details", "faqs"][index]
                                     ? "border-black text-black"
                                     : "border-transparent text-gray-500 hover:text-gray-700"
                                     }`}
@@ -342,49 +362,116 @@ const ProductDetail = () => {
                     {activeTab === "reviews" && (
                         <div>
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-bold">All Reviews ({product?.reviews?.length || 0})</h3>
+                                <h3 className="text-xl font-bold">
+                                    All Reviews ({reviews.length})
+                                </h3>
                                 <div className="flex gap-3">
                                     <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm">
                                         <span>Latest</span>
                                         <ChevronDown className="w-4 h-4" />
                                     </button>
-                                    <button className="px-4 py-2 bg-black text-white rounded-full text-sm">Write a Review</button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {product?.reviews?.slice(0, visibleCount).map((review) => (
-                                    <div key={review.id} className="border border-gray-200 rounded-lg p-6">
-                                        <div className="flex items-center gap-1 mb-2">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`w-4 h-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="font-medium">{review.user_name}</span>
-                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.text}</p>
-                                        <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString("vi-VN")}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {visibleCount < product?.reviews?.length && (
-                                <div className="text-center mt-8">
-                                    <button
-                                        onClick={() => setVisibleCount(prev => prev + 4)}
-                                        className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50"
-                                    >
-                                        Load More Reviews
+                                    <button className="px-4 py-2 bg-black text-white rounded-full text-sm">
+                                        Write a Review
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Loading */}
+                            {loadingReviews ? (
+                                <div className="text-center text-gray-500 py-10">Đang tải reviews...</div>
+                            ) : reviews.length === 0 ? (
+                                // Nếu không có review
+                                <div className="text-center text-gray-500 py-10">
+                                    Chưa có review nào
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Nếu có review */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {reviews.slice(0, visibleCount).map((review) => (
+                                            <div
+                                                key={review.id}
+                                                className="border border-gray-200 rounded-lg p-6"
+                                            >
+                                                {/* Thông tin user */}
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <img
+                                                        src={review.User?.image || "/default-avatar.png"}
+                                                        alt={review.User?.first_name || "user"}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                    <div>
+                                                        <p className="font-semibold">
+                                                            {review.User?.first_name + " " + review.User?.last_name || `User #${review.user_id}`}
+                                                        </p>
+                                                        {review.size || review.color ? (
+                                                            <p className="text-xs text-gray-500">
+                                                                Đã mua: {review.size || "-"} | Màu: {review.color || "-"}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+
+                                                {/* Rating */}
+                                                <div className="flex items-center gap-1 mb-2">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            className={`w-4 h-4 ${i < review.rating
+                                                                    ? "fill-yellow-400 text-yellow-400"
+                                                                    : "text-gray-300"
+                                                                }`}
+                                                        />
+                                                    ))}
+                                                    <span className="ml-2 text-sm text-gray-600">
+                                                        {review.rating}/5
+                                                    </span>
+                                                </div>
+
+                                                {/* Nội dung review */}
+                                                <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                                                    {review.text}
+                                                </p>
+
+                                                {/* Hình ảnh review */}
+                                                {review.images?.length > 0 && (
+                                                    <div className="flex gap-2 mb-3">
+                                                        {review.images.map((img, idx) => (
+                                                            <img
+                                                                key={idx}
+                                                                src={img}
+                                                                alt={`review-img-${idx}`}
+                                                                className="w-16 h-16 rounded-lg object-cover border"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Ngày tạo */}
+                                                <span className="text-xs text-gray-400">
+                                                    {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Nút load thêm */}
+                                    {visibleCount < reviews.length && (
+                                        <div className="text-center mt-8">
+                                            <button
+                                                onClick={() => setVisibleCount((prev) => prev + 4)}
+                                                className="px-6 py-2 border border-gray-200 rounded-full text-sm hover:bg-gray-50"
+                                            >
+                                                Load More Reviews
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}
+
+
                     {/* Product Details Tab */}
 
                 </div>

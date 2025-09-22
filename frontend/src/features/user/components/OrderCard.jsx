@@ -1,4 +1,5 @@
-import {CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle} from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
 import {useNavigate} from "react-router-dom";
 
@@ -16,9 +17,9 @@ const  StatusBadge = ({ status }) => {
     const { Icon } = m;
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>
-      <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3.5 w-3.5" />
             {m.label}
-    </span>
+        </span>
     );
 }
 
@@ -66,9 +67,21 @@ const OrderCard = (props) => {
                             onClick={()=>navigate(`/user/order-detail/${order.id}`)}>
                         Xem chi tiết <ChevronRight className="h-4 w-4" />
                     </button>
-                    {order.status === "COMPLETED" && (
-                        <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Mua lại</button>
-                    )}
+
+                    {order.status === "COMPLETED" &&
+                        order.items
+                            .filter(it => it.status !== "COMMENTED") // chỉ lấy sản phẩm chưa comment
+                            .map((it) => (
+                                <Link
+                                    key={it.product.id}
+                                    to={`/review?orderId=${order.id}&productId=${it.product.id}`}
+                                >
+                                    <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                                        Đánh giá
+                                    </button>
+                                </Link>
+                            ))
+                    }   
                 </div>
             </div>
         </div>

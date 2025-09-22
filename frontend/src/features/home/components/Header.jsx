@@ -4,8 +4,9 @@ import { Search, ShoppingCart, User, Menu as MenuIcon } from "lucide-react";
 import { Menu, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { doLogout } from "@/redux/action/userAction.jsx";
 import { motion } from "framer-motion";
-import {useEffect, useRef, useState} from "react";
-import {getCategories} from "@/services/categoryService.jsx";
+import { useEffect, useRef, useState } from "react";
+import { getCategories } from "@/services/categoryService.jsx";
+import { fetchCartCount } from "@/redux/action/cartAction.jsx";
 
 const Header = () => {
     const dispatch = useDispatch();
@@ -13,7 +14,7 @@ const Header = () => {
     const isAuthenticated = useSelector(state => state.user.isAuthenticated);
     const user = useSelector(state => state.user.account);
     const cartCount = useSelector(state => state.cart.count);
-    const cartRef = useRef(null); // ref để tính animation fly-to-cart\
+    const cartRef = useRef(null); // ref để tính animation fly-to-cart
 
 
     const handleLogOut = () => {
@@ -21,14 +22,18 @@ const Header = () => {
         navigate("/");
     }
 
-    const [listCategories,setListCategories] = useState([]);
+    const [listCategories, setListCategories] = useState([]);
     const fetchCategories = async () => {
         const data = await getCategories();
-        if (data)
-        {
+        if (data) {
             setListCategories(data);
         }
     }
+
+    useEffect(() => {
+        dispatch(fetchCartCount());
+    }, [dispatch]);
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -114,46 +119,46 @@ const Header = () => {
                                         {/* Cột menu list */}
                                         <div className="row-start-1 grid grid-cols-3 gap-x-8 gap-y-10 text-sm">
                                             {listCategories && listCategories.length > 0 ? (
-                                                    listCategories.map((item) =>(
-                                                        <div key={item.id}>
-                                                            <Popover.Button
-                                                                as="p" // để render như <p>, bạn có thể đổi thành 'a' hoặc 'div' nếu muốn
-                                                                onClick={() => navigate(`/${item.slug}`)}
-                                                                className="font-medium text-gray-900
+                                                listCategories.map((item) => (
+                                                    <div key={item.id}>
+                                                        <Popover.Button
+                                                            as="p" // để render như <p>, bạn có thể đổi thành 'a' hoặc 'div' nếu muốn
+                                                            onClick={() => navigate(`/${item.slug}`)}
+                                                            className="font-medium text-gray-900
                                                                          cursor-pointer
                                                                          hover:underline
                                                                          underline-offset-5
                                                                          decoration-1
                                                                          decoration-black"
-                                                            >
-                                                                {item.name}
-                                                            </Popover.Button>
-                                                            {/*<ul*/}
-                                                            {/*    role="list"*/}
-                                                            {/*    aria-labelledby="Clothing-heading"*/}
-                                                            {/*    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"*/}
-                                                            {/*>*/}
-                                                            {/*    <li>*/}
-                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
-                                                            {/*            Tops*/}
-                                                            {/*        </a>*/}
-                                                            {/*    </li>*/}
-                                                            {/*    <li>*/}
-                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
-                                                            {/*            Dresses*/}
-                                                            {/*        </a>*/}
-                                                            {/*    </li>*/}
-                                                            {/*    <li>*/}
-                                                            {/*        <a href="#" className="hover:text-gray-800">*/}
-                                                            {/*            Pants*/}
-                                                            {/*        </a>*/}
-                                                            {/*    </li>*/}
-                                                            {/*</ul>*/}
-                                                        </div>
-                                                                ))
-                                                ) : (
-                                                    <span>Not Found</span>
-                                                )
+                                                        >
+                                                            {item.name}
+                                                        </Popover.Button>
+                                                        {/*<ul*/}
+                                                        {/*    role="list"*/}
+                                                        {/*    aria-labelledby="Clothing-heading"*/}
+                                                        {/*    className="mt-6 space-y-6 sm:mt-4 sm:space-y-4"*/}
+                                                        {/*>*/}
+                                                        {/*    <li>*/}
+                                                        {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                        {/*            Tops*/}
+                                                        {/*        </a>*/}
+                                                        {/*    </li>*/}
+                                                        {/*    <li>*/}
+                                                        {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                        {/*            Dresses*/}
+                                                        {/*        </a>*/}
+                                                        {/*    </li>*/}
+                                                        {/*    <li>*/}
+                                                        {/*        <a href="#" className="hover:text-gray-800">*/}
+                                                        {/*            Pants*/}
+                                                        {/*        </a>*/}
+                                                        {/*    </li>*/}
+                                                        {/*</ul>*/}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span>Not Found</span>
+                                            )
                                             }
                                         </div>
                                     </div>
@@ -219,11 +224,11 @@ const Header = () => {
                                     </Menu.Item>
 
                                     <Menu.Item as="button"
-                                               onClick={() => (navigate("/user/my-orders"))}
-                                               className={({ active }) =>
-                                                   `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                                                   }`
-                                               }>
+                                        onClick={() => (navigate("/user/my-orders"))}
+                                        className={({ active }) =>
+                                            `block w-full text-left px-4 py-2 text-sm ${active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                                            }`
+                                        }>
                                         Đơn hàng của tôi
                                     </Menu.Item>
 

@@ -15,9 +15,11 @@ module.exports = {
                 references: { model: 'products', key: 'id' },
                 onDelete: 'CASCADE'
             },
-            user_name: { // nếu chưa login, ta lưu tên thôi
-                type: Sequelize.STRING,
-                allowNull: false
+            user_id: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: { model: 'users', key: 'id' },
+                onDelete: 'CASCADE'
             },
             rating: {
                 type: Sequelize.INTEGER,

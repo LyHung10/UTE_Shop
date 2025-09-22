@@ -1,9 +1,11 @@
 // cartReducer.js
 import {
-  FETCH_CART, ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, SET_CART_COUNT,
-  CHECKOUT_COD_SUCCESS, CHECKOUT_COD_FAIL, CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
-  CREATE_VNPAY_ORDER_FAIL, CREATE_VNPAY_ORDER_SUCCESS
-} from "../action/cartAction";
+  FETCH_CART, ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART,
+  SET_CART_COUNT, CHECKOUT_COD_SUCCESS, CHECKOUT_COD_FAIL,
+  CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
+  CREATE_VNPAY_ORDER_FAIL, CREATE_VNPAY_ORDER_SUCCESS,
+  RESET_CART
+} from "../action/actionTypes";
 
 const initialState = {
   items: [], // {id, name, price, qty}
@@ -16,6 +18,8 @@ const initialState = {
 
 export default function cartReducer(state = initialState, action) {
   switch (action.type) {
+    case RESET_CART:
+      return initialState;
     case CHECKOUT_COD_SUCCESS:
       return {
         ...state,

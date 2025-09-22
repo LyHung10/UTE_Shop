@@ -1,18 +1,12 @@
-// cartAction.js
-import axios from "../../utils/axiosCustomize.jsx"
-
-export const ADD_TO_CART = "ADD_TO_CART";
-export const UPDATE_QTY = "UPDATE_QTY";
-export const REMOVE_FROM_CART = "REMOVE_FROM_CART";
-export const CLEAR_CART = "CLEAR_CART";
-export const FETCH_CART = "FETCH_CART";
-export const SET_CART_ERROR = "SET_CART_ERROR";
-export const SET_CART_LOADING = "SET_CART_LOADING";
-export const SET_CART_COUNT = "SET_CART_COUNT";
-export const CONFIRM_COD_SUCCESS = "CONFIRM_COD_SUCCESS";
-export const CONFIRM_COD_FAIL = "CONFIRM_COD_FAIL";
-export const CHECKOUT_COD_SUCCESS = "CHECKOUT_COD_SUCCESS";
-export const CHECKOUT_COD_FAIL = "CHECKOUT_COD_FAIL";
+import axios from "../../utils/axiosCustomize.jsx";
+import {
+    ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, FETCH_CART,
+    SET_CART_ERROR, SET_CART_LOADING, SET_CART_COUNT,
+    CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
+    CHECKOUT_COD_SUCCESS, CHECKOUT_COD_FAIL,
+    RESET_CART,
+    CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
+} from "./actionTypes";
 
 export const setCartCount = (count) => ({
     type: SET_CART_COUNT,
@@ -128,6 +122,10 @@ export const clearCart = () => async (dispatch) => {
         dispatch({ type: SET_CART_LOADING, payload: false });
     }
 };
+// redux/action/cartAction.js
+export const resetCart = () => ({
+    type: RESET_CART
+});
 
 // Lấy giỏ hàng từ server
 export const fetchCart = () => async (dispatch) => {
@@ -203,10 +201,6 @@ export const confirmCODPayment = (orderId) => async (dispatch) => {
         throw err;
     }
 };
-
-
-export const CREATE_VNPAY_ORDER_SUCCESS = "CREATE_VNPAY_ORDER_SUCCESS";
-export const CREATE_VNPAY_ORDER_FAIL = "CREATE_VNPAY_ORDER_FAIL";
 
 export const createVNPayOrder = (items) => async (dispatch) => {
     try {

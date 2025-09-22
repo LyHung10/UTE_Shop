@@ -17,6 +17,7 @@ import PaymentCompleted from "@/features/checkout/pages/PaymentCompleted.jsx";
 import UserLayout from "@/features/user/UserLayout.jsx";
 import OrderHistory from "@/features/user/pages/OrderHistory.jsx";
 import OrderDetail from "@/features/user/pages/OrderDetail.jsx";
+import ReviewPage from "@/features/review/pages/ReviewPage.jsx";
 function App() {
   return (
     <>
@@ -26,7 +27,7 @@ function App() {
 
           <Route path="user" element={<UserLayout />}>
             <Route index element={<UserProfile />} />
-            <Route path="my-orders" element={<OrderHistory/>} />
+            <Route path="my-orders" element={<OrderHistory />} />
             <Route path="order-detail/:id" element={<OrderDetail/>} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
@@ -37,7 +38,7 @@ function App() {
           <Route path="cart" element={<ShoppingCart />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="payment/completed" element={<PaymentCompleted />} />
-
+          <Route path="review" element={<ReviewPage />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
