@@ -3,11 +3,6 @@ import express from "express";
 import parser from '../middleware/multerCloudinary.js';
 
 const router = express.Router();
-
-
-
-// Thử quần áo
-router.post("/try-on", productController.tryOnClothes);
 // Upload sản phẩm (cũng nên để trước /:id)
 router.post("/add", parser.array('images', 5), productController.addProduct);
 
