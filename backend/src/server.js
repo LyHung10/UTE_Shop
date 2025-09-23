@@ -4,7 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-
+import path from 'path';
 import { sequelize } from './config/configdb.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -27,11 +27,14 @@ app.use(cookieParser());
 const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
+// Serve file tạm / output
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// Routes
 app.use('/api/auth/register', otpLimiter);
 app.use('/api/auth/forgot-password', otpLimiter);
 app.use('/api/auth/login', loginLimiter);
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);

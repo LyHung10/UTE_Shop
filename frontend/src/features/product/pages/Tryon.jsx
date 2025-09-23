@@ -10,7 +10,7 @@ export default function TryOnPage() {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            const res = await axios.post("api/products/tryon", {
+            const res = await axios.post("api/products/try-on", {
                 personUrl,
                 clothUrl,
             });

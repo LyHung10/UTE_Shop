@@ -1,42 +1,60 @@
 import productService from "../services/productService";
-import Replicate from "replicate";
-
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
+import fs from 'fs';
+import path from 'path';
+import { generateText } from 'ai';
 
 class ProductController {
   async tryOnClothes(req, res) {
     try {
-      console.log(">>> TryOn API hit");
-      res.json({ msg: "TryOn API working", body: req.body });
-      const { personUrl, clothUrl } = req.body;
+      const personFile = req.files?.person?.[0];
+      const clothFile = req.files?.cloth?.[0];
 
-      if (!personUrl || !clothUrl) {
-        return res.status(400).json({ error: "Thiếu ảnh người hoặc quần áo" });
+      if (!personFile || !clothFile) {
+        return res.status(400).json({ error: "Thiếu file ảnh người hoặc quần áo" });
       }
 
-      // gọi model Replicate
-      const output = await replicate.run(
-        "viktorfa/oot_diffusion:9f8fa4956970dde99689af7488157a30aa152e23953526a605df1d77598343d7",
-        {
-          input: {
-            person_image: personUrl,
-            garment_image: clothUrl,
-          },
-        }
-      );
+      const promptText = 'Apply the cloth to the person realistically, keeping perspective and folds.';
 
-      // output là array chứa ảnh
-      res.json({
-        success: true,
-        result: output, // mảng link ảnh
+      const result = await generateText({
+        model: 'google/gemini-2.5-flash-image-preview',
+        providerOptions: {
+          google: { responseModalities: ['TEXT', 'IMAGE'] }, // ✅ Không cần API key
+        },
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: promptText },
+              { type: 'file', mediaType: personFile.mimetype, data: fs.readFileSync(personFile.path) },
+              { type: 'file', mediaType: clothFile.mimetype, data: fs.readFileSync(clothFile.path) },
+            ],
+          },
+        ],
       });
-    } catch (err) {
-      console.error("❌ Lỗi thử quần áo:", err);
-      res.status(500).json({ error: "Có lỗi xảy ra khi thử quần áo" });
+
+      // Lấy ảnh đầu tiên trả về
+      const imageFile = result.files.find(f => f.mediaType?.startsWith('image/'));
+      if (!imageFile) return res.status(500).json({ error: "Không có ảnh nào được tạo" });
+
+      // Lưu ra file output
+      const outputDir = path.join(process.cwd(), 'uploads', 'tryon');
+      fs.mkdirSync(outputDir, { recursive: true });
+      const filename = `tryon-${Date.now()}.png`;
+      const filepath = path.join(outputDir, filename);
+      await fs.promises.writeFile(filepath, imageFile.uint8Array);
+
+      res.json({
+        message: 'Ảnh try-on đã tạo',
+        url: `/uploads/tryon/${filename}`,
+      });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
     }
   };
+
+
   async getMostViewed(req, res, next) {
     try {
       const products = await productService.getMostViewed();
