@@ -97,7 +97,8 @@ class OrderController {
     static async getCart(req, res) {
         try {
             const userId = req.user.sub;
-            const cart = await OrderService.getCart(userId);
+            const { voucherCode } = req.query; // lấy từ query param
+            const cart = await OrderService.getCart(userId, voucherCode);
             res.json(cart);
         } catch (err) {
             res.status(400).json({ error: err.message });

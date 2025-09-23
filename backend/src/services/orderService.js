@@ -1,5 +1,6 @@
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User } = require('../models');
 import paymentService from './paymentService.js';
+import voucherService from "./voucherService";
 
 class OrderService {
     static async getUserOrders(userId, options = {}) {
@@ -225,14 +226,17 @@ class OrderService {
 
     }
 
-    static async getCart(userId) {
+    static async getCart(userId, voucherCode = null) {
         const order = await Order.findOne({
             where: { user_id: userId, status: 'pending' },
             include: [{
-                model: OrderItem, include: {
+                model: OrderItem,
+                include: {
                     model: Product,
-                    attributes: ['id', 'name', 'price', 'original_price', 'discount_percent',],
-                    include: [{ model: ProductImage, as: 'images', attributes: ['url'], limit: 1 }]
+                    attributes: ['id', 'name', 'price', 'original_price', 'discount_percent'],
+                    include: [
+                        { model: ProductImage, as: 'images', attributes: ['url'], limit: 1 }
+                    ]
                 }
             }]
         });
@@ -240,11 +244,29 @@ class OrderService {
         if (!order) return { items: [], total: 0 };
 
         const items = order.OrderItems;
+        let total = items.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
 
-        // Tính tổng tiền
-        const total = items.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
+        let discount = 0;
+        let appliedVoucher = null;
 
-        return { items, total };
+        if (voucherCode) {
+            const result = await voucherService.validateVoucher(voucherCode, total);
+            if (result.valid) {
+                discount = result.discount;
+                appliedVoucher = result.voucher.slug;
+            }
+        }
+
+        const finalTotal = Math.max(total - discount, 0);
+
+        return {
+            items,
+            total,
+            itemCount: items.length,
+            discount,
+            finalTotal,
+            appliedVoucher
+        };
     }
 
 

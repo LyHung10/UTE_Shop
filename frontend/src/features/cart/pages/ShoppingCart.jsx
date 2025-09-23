@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Minus, Plus } from 'lucide-react';
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCart, updateQuantity, removeFromCart, clearCart } from "../../../redux/action/cartAction";
+import { fetchCart, updateQuantity, removeFromCart } from "../../../redux/action/cartAction";
 import { useNavigate } from "react-router-dom";
 
 const ShoppingCart = () => {

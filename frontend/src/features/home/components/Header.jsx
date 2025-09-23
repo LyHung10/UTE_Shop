@@ -6,7 +6,7 @@ import { doLogout } from "@/redux/action/userAction.jsx";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { getCategories } from "@/services/categoryService.jsx";
-import { fetchCartCount } from "@/redux/action/cartAction.jsx";
+import {fetchCart} from "@/redux/action/cartAction.jsx";
 
 const Header = () => {
     const dispatch = useDispatch();
@@ -31,7 +31,7 @@ const Header = () => {
     }
 
     useEffect(() => {
-        dispatch(fetchCartCount());
+        dispatch(fetchCart());
     }, [dispatch]);
 
     useEffect(() => {

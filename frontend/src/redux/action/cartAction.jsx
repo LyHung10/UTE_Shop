@@ -7,20 +7,21 @@ import {
     RESET_CART,
     CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
 } from "./actionTypes";
+import {getCart} from "@/services/cartService.jsx";
 
-export const setCartCount = (count) => ({
-    type: SET_CART_COUNT,
-    payload: count,
-});
-
-export const fetchCartCount = () => async (dispatch) => {
-    try {
-        const res = await axios.get("api/orders/cart/count");
-        dispatch(setCartCount(res.count));
-    } catch (err) {
-        console.error("Failed to fetch cart count", err);
-    }
-};
+// export const setCartCount = (count) => ({
+//     type: SET_CART_COUNT,
+//     payload: count,
+// });
+//
+// export const fetchCartCount = () => async (dispatch) => {
+//     try {
+//         const res = await axios.get("api/orders/cart/count");
+//         dispatch(setCartCount(res.count));
+//     } catch (err) {
+//         console.error("Failed to fetch cart count", err);
+//     }
+// };
 // Thêm sản phẩm vào giỏ
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
     try {
@@ -33,14 +34,7 @@ export const addToCart = (productId, qty, color, size) => async (dispatch) => {
             size: size || null
         });
 
-        // Fetch lại cart sau khi add
-        const res = await axios.get('api/orders/cart');
-
-        dispatch({
-            type: FETCH_CART,
-            payload: res // Đảm bảo lấy .data
-        });
-        dispatch(fetchCartCount());
+        dispatch(fetchCart());
 
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {
@@ -63,7 +57,11 @@ export const updateQuantity = (itemId, qty) => async (dispatch) => {
 
         dispatch({
             type: FETCH_CART,
-            payload: res
+            payload: {
+                items: Array.isArray(res.items) ? res.items :
+                    Array.isArray(res) ? res : [],
+                count: res.itemCount
+            }
         });
 
         dispatch({ type: SET_CART_LOADING, payload: false });
@@ -90,7 +88,11 @@ export const removeFromCart = (itemId) => async (dispatch) => {
 
         dispatch({
             type: FETCH_CART,
-            payload: res
+            payload: {
+                items: Array.isArray(res.items) ? res.items :
+                    Array.isArray(res) ? res : [],
+                count: res.itemCount
+            }
         });
 
         dispatch({ type: SET_CART_LOADING, payload: false });
@@ -128,21 +130,22 @@ export const resetCart = () => ({
 });
 
 // Lấy giỏ hàng từ server
-export const fetchCart = () => async (dispatch) => {
+export const fetchCart = (voucherId) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
 
-        const res = await axios.get('api/orders/cart');
+        const res = await getCart(voucherId);
         console.log("Fetched cart data:", res);
 
         // Đảm bảo data có đúng structure
         const cartData = res || {};
-
+        console.log("count cart",cartData.itemCount);
         dispatch({
             type: FETCH_CART,
             payload: {
                 items: Array.isArray(cartData.items) ? cartData.items :
-                    Array.isArray(cartData) ? cartData : []
+                    Array.isArray(cartData) ? cartData : [],
+                count: cartData.itemCount
             }
         });
 

@@ -41,8 +41,8 @@ export default function cartReducer(state = initialState, action) {
     case FETCH_CART:
       return {
         ...state,
-        items: Array.isArray(action.payload.items) ? action.payload.items : []
-
+        items: Array.isArray(action.payload.items) ? action.payload.items : [],
+        count: action.payload.count,
       };
 
     case ADD_TO_CART:
@@ -75,11 +75,11 @@ export default function cartReducer(state = initialState, action) {
         items: []
       };
 
-    case SET_CART_COUNT:
-      return {
-        ...state,
-        count: action.payload
-      };
+    // case SET_CART_COUNT:
+    //   return {
+    //     ...state,
+    //     count: action.payload
+    //   };
 
     default:
       return state;

@@ -14,6 +14,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js'
 import { errorHandler } from './middleware/errorHandler.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import voucherRoutes from "./routes/voucherRoutes";
 dotenv.config();
 
 const app = express();
@@ -39,6 +40,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/vouchers', voucherRoutes);
 // Error handler
 app.use(errorHandler);
 
