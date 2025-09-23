@@ -1,19 +1,8 @@
 import productController from "../controllers/productController";
 import express from "express";
 import parser from '../middleware/multerCloudinary.js';
-import multer from 'multer';
 
 const router = express.Router();
-
-
-
-// Thử quần áo
-const upload = multer({ dest: 'uploads/tmp/' });
-
-router.post('/try-on', upload.fields([
-  { name: 'person', maxCount: 1 },
-  { name: 'cloth', maxCount: 1 },
-]), productController.tryOnClothes);
 // Upload sản phẩm (cũng nên để trước /:id)
 router.post("/add", parser.array('images', 5), productController.addProduct);
 

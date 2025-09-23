@@ -1,60 +1,6 @@
 import productService from "../services/productService";
-import fs from 'fs';
-import path from 'path';
-import { generateText } from 'ai';
 
 class ProductController {
-  async tryOnClothes(req, res) {
-    try {
-      const personFile = req.files?.person?.[0];
-      const clothFile = req.files?.cloth?.[0];
-
-      if (!personFile || !clothFile) {
-        return res.status(400).json({ error: "Thiếu file ảnh người hoặc quần áo" });
-      }
-
-      const promptText = 'Apply the cloth to the person realistically, keeping perspective and folds.';
-
-      const result = await generateText({
-        model: 'google/gemini-2.5-flash-image-preview',
-        providerOptions: {
-          google: { responseModalities: ['TEXT', 'IMAGE'] }, // ✅ Không cần API key
-        },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: promptText },
-              { type: 'file', mediaType: personFile.mimetype, data: fs.readFileSync(personFile.path) },
-              { type: 'file', mediaType: clothFile.mimetype, data: fs.readFileSync(clothFile.path) },
-            ],
-          },
-        ],
-      });
-
-      // Lấy ảnh đầu tiên trả về
-      const imageFile = result.files.find(f => f.mediaType?.startsWith('image/'));
-      if (!imageFile) return res.status(500).json({ error: "Không có ảnh nào được tạo" });
-
-      // Lưu ra file output
-      const outputDir = path.join(process.cwd(), 'uploads', 'tryon');
-      fs.mkdirSync(outputDir, { recursive: true });
-      const filename = `tryon-${Date.now()}.png`;
-      const filepath = path.join(outputDir, filename);
-      await fs.promises.writeFile(filepath, imageFile.uint8Array);
-
-      res.json({
-        message: 'Ảnh try-on đã tạo',
-        url: `/uploads/tryon/${filename}`,
-      });
-
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: error.message });
-    }
-  };
-
-
   async getMostViewed(req, res, next) {
     try {
       const products = await productService.getMostViewed();
@@ -176,8 +122,8 @@ class ProductController {
     } catch (err) {
       console.error("[getProductStats] error:", err);
       return res
-          .status(500)
-          .json({ error: err.message || "Internal Server Error" });
+        .status(500)
+        .json({ error: err.message || "Internal Server Error" });
     }
   }
 

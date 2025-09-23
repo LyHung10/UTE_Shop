@@ -42,7 +42,6 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
-// Error handler
 app.use(errorHandler);
 
 // Start server
