@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             Order.hasMany(models.OrderItem, { foreignKey: 'order_id' });
             Order.hasOne(models.Payment, { foreignKey: 'order_id' });
+            Order.belongsTo(models.Voucher, { foreignKey: 'voucher_id', as: 'voucher' });
             // 1 order thuộc về 1 user
             Order.belongsTo(models.User, { foreignKey: 'user_id' });
             Order.hasMany(models.Review, { foreignKey: 'order_id' });// 1 order có thể có nhiều review
