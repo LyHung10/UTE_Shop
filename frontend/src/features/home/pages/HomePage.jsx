@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
@@ -5,48 +7,47 @@ import { Star } from "lucide-react"
 import casualStyle from "@/assets/non.jpg"
 import banner from "../../../assets/coming_soon.jpg"
 // import banner2 from "../../../assets/ao_khoa_chinh_tri_luat.jpg"
-import ProductSlider from "@/features/home/components/ProductSlider.jsx";
+import ProductSlider from "@/features/home/components/ProductSlider.jsx"
 import {
   getBestSellingProducts,
   getMostViewedProducts,
   getNewestProducts,
-  getTopDiscountProducts
-} from "@/services/productService.jsx";
-import { useEffect, useState } from "react";
+  getTopDiscountProducts,
+} from "@/services/productService.jsx"
+import { useEffect, useState } from "react"
 
 export default function HomePage() {
-  const [listTopNewestProducts, setListTopNewestProducts] = useState([]);
-  const [listTopDiscountProducts, setListTopDiscountProducts] = useState([]);
-  const [listTopMostViewedProducts, setListTopMostViewedProducts] = useState([]);
-  const [listBestSellingProducts, setListBestSellingProducts] = useState([]);
+  const [listTopNewestProducts, setListTopNewestProducts] = useState([])
+  const [listTopDiscountProducts, setListTopDiscountProducts] = useState([])
+  const [listTopMostViewedProducts, setListTopMostViewedProducts] = useState([])
+  const [listBestSellingProducts, setListBestSellingProducts] = useState([])
   const fetchListTopDiscountProducts = async () => {
-    let data = await getTopDiscountProducts();
-    setListTopDiscountProducts(data);
-  };
+    const data = await getTopDiscountProducts()
+    setListTopDiscountProducts(data)
+  }
   const fetchListBestSellingProducts = async () => {
-    let data = await getBestSellingProducts();
-    setListBestSellingProducts(data);
-  };
+    const data = await getBestSellingProducts()
+    setListBestSellingProducts(data)
+  }
   const fetchListTopNewestProducts = async () => {
-    let data = await getNewestProducts();
-    setListTopNewestProducts(data);
-  };
+    const data = await getNewestProducts()
+    setListTopNewestProducts(data)
+  }
   const fetchTopMostViewedProducts = async () => {
-    let data = await getMostViewedProducts();
-    setListTopMostViewedProducts(data);
-  };
-  const loadData = () =>{
-    fetchListTopNewestProducts();
-    fetchListTopDiscountProducts();
-    fetchTopMostViewedProducts();
-    fetchListBestSellingProducts();
+    const data = await getMostViewedProducts()
+    setListTopMostViewedProducts(data)
+  }
+  const loadData = () => {
+    fetchListTopNewestProducts()
+    fetchListTopDiscountProducts()
+    fetchTopMostViewedProducts()
+    fetchListBestSellingProducts()
   }
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData()
+  }, [])
   return (
     <div className="min-h-screen bg-white">
-
       <section className="bg-white">
         <div className="container mx-auto px-35 flex flex-col lg:flex-row items-center ">
           <div className="lg:w-1/2 mb-8 lg:mb-0">
@@ -89,25 +90,13 @@ export default function HomePage() {
         </div>
       </section>
       <div className="border-t border-gray-200"></div>
-      <ProductSlider
-        listProducts={listTopNewestProducts}
-        nameTop={"NEW ARRIVALS"}
-      />
+      <ProductSlider listProducts={listTopNewestProducts} nameTop={"NEW ARRIVALS"} />
       <div className="border-t border-gray-200"></div>
-      <ProductSlider
-        listProducts={listTopDiscountProducts}
-        nameTop="BEST DEALS"
-      />
+      <ProductSlider listProducts={listTopDiscountProducts} nameTop="BEST DEALS" />
       <div className="border-t border-gray-200"></div>
-      <ProductSlider
-        listProducts={listTopMostViewedProducts}
-        nameTop="MOST VIEWED"
-      />
+      <ProductSlider listProducts={listTopMostViewedProducts} nameTop="MOST VIEWED" />
       <div className="border-t border-gray-200"></div>
-      <ProductSlider
-        listProducts={listBestSellingProducts}
-        nameTop="BEST SELLERS"
-      />
+      <ProductSlider listProducts={listBestSellingProducts} nameTop="BEST SELLERS" />
       <div className="border-t border-gray-200"></div>
 
       {/* Brand Bar */}

@@ -1,183 +1,114 @@
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
-import { Button } from "@/components/ui/button.jsx";
-import { Card, CardContent } from "@/components/ui/card.jsx";
-import { Star } from "lucide-react";
-import 'swiper/css';
-import 'swiper/css/navigation';
-import '../../../styles/TopProduct.css'
-import 'swiper/css/effect-fade';
-import { useNavigate } from "react-router-dom";
+"use client"
+
+import { Swiper, SwiperSlide } from "swiper/react"
+import "swiper/css"
+import "swiper/css/navigation"
+import { Navigation, Autoplay } from "swiper/modules"
+import { Button } from "@/components/ui/button.jsx"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { useNavigate } from "react-router-dom"
+import ProductCard from "./ProductCard.jsx"
 
 const ProductSlider = (props) => {
+  const { listProducts, nameTop } = props
+  const navigate = useNavigate()
 
-    const { listProducts, nameTop } = props;
-    const navigate = useNavigate();
-    const handleClickProduct = (productId) => {
-        navigate(`/product/${productId}`);
-    };
+  return (
+    <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 grid-pattern">
+      <div className="container mx-auto px-6">
+        <motion.div
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <h3 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400 bg-clip-text text-transparent neon-text">
+            {nameTop}
+          </h3>
+          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
+        </motion.div>
 
-    return (
-        <section className="py-8">
+        <div className="relative">
+          <motion.button
+            id="custom-prev"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </motion.button>
 
-            <div className="container mx-auto px-35">
-                <h3 className="text-3xl font-bold text-center mb-3 text-black">
-                    {nameTop}
-                </h3>
+          <motion.button
+            id="custom-next"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </motion.button>
 
-                <div className="flex items-center gap-4">
-                    {/* Nút Prev */}
-                    <button
-                        id="custom-prev"
+          <Swiper
+            modules={[Navigation, Autoplay]}
+            slidesPerView={4}
+            spaceBetween={24}
+            loop={true}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false,
+            }}
+            navigation={{
+              prevEl: "#custom-prev",
+              nextEl: "#custom-next",
+            }}
+            speed={800}
+            breakpoints={{
+              320: { slidesPerView: 1, spaceBetween: 16 },
+              640: { slidesPerView: 2, spaceBetween: 20 },
+              1024: { slidesPerView: 3, spaceBetween: 24 },
+              1280: { slidesPerView: 4, spaceBetween: 24 },
+            }}
+            className="px-16"
+          >
+            {listProducts && listProducts.length > 0 ? (
+              listProducts.map((item, index) => (
+                <SwiperSlide key={item.id}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <ProductCard product={item} />
+                  </motion.div>
+                </SwiperSlide>
+              ))
+            ) : (
+              <div className="text-center text-slate-400 py-12">
+                <p>Không tìm thấy sản phẩm</p>
+              </div>
+            )}
+          </Swiper>
+        </div>
 
-                        className=" rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-6 h-6"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                            />
-                        </svg>
-                    </button>
+        <motion.div
+          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          viewport={{ once: true }}
+        >
+          <Button
+            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl animate-glow"
+            onClick={() => navigate("/products")}
+          >
+            Xem tất cả sản phẩm
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
 
-                    {/* Swiper */}
-                    <Swiper
-                        modules={[Navigation]}
-                        slidesPerView={4}
-                        spaceBetween={20}
-                        loop={false}
-                        navigation={{
-                            prevEl: "#custom-prev",
-                            nextEl: "#custom-next",
-                        }}
-                        speed={800} // tốc độ animation
-                        breakpoints={{
-                            640: { slidesPerView: 1 },
-                            768: { slidesPerView: 2 },
-                            1024: { slidesPerView: 4 },
-                        }}
-                        className="flex-1">
-                        {listProducts && listProducts.length > 0 ? (
-                            listProducts.map((item) => (
-                                <SwiperSlide key={item.id}>
-
-                                    <Card
-                                        className="border-0 shadow-md hover:shadow-xl my-4 hover:-translate-y-1 transform transition-all duration-100 rounded-xl cursor-pointer"
-                                        onClick={() => handleClickProduct(item.id)} // ⚡ thêm onClick
-                                    >
-
-                                        <CardContent className="!p-3">
-                                            <div className="h-65 bg-white rounded-lg mb-4">
-                                                <div className="size-full rounded flex items-center justify-center">
-                                                    {item.images && item.images.length > 0 ? (
-                                                        <img
-                                                            src={item.images[0].url}
-                                                            alt={item.images[0].alt}
-                                                            className="object-contain rounded w-full h-full"
-                                                        />
-                                                    ) : (
-                                                        <div className="text-gray-500">{item.slug}</div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-
-                                            <h4 className="font-semibold mb-2 text-lg">{item.name}</h4>
-
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="flex text-yellow-400">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star key={i} className="w-4 h-4 fill-current" />
-                                                    ))}
-                                                </div>
-                                                <span className="text-sm text-gray-600">5.0/5</span>
-                                            </div>
-
-
-                                            <div className="flex items-center gap-2" style={{ fontFamily: "Poppins, sans-serif" }}>
-                                                {
-                                                    nameTop === "BEST DEALS" ? (
-                                                        <>
-                                                            <span className="font-bold text-lg">
-                                                                {new Intl.NumberFormat("vi-VN", {
-                                                                    style: "currency",
-                                                                    currency: "VND",
-                                                                    currencyDisplay: "code", // VND
-                                                                }).format(item.price)}
-                                                            </span>
-
-                                                            <span className="text-gray-500 line-through">
-                                                                {new Intl.NumberFormat("vi-VN", {
-                                                                    style: "currency",
-                                                                    currency: "VND",
-                                                                    currencyDisplay: "code",
-                                                                }).format(item.original_price)}
-                                                            </span>
-
-                                                            <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">{`-${item.discount_percent}%`}</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="font-bold text-lg">
-
-                                                            {new Intl.NumberFormat("vi-VN", {
-                                                                style: "currency",
-                                                                currency: "VND",
-                                                            }).format(item.price)}
-                                                        </span>
-                                                    )
-                                                }
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </SwiperSlide>
-                            ))
-                        ) : (
-                            <span>Not found data</span>
-                        )}
-                    </Swiper>
-
-                    {/* Nút Next */}
-                    <button
-                        id="custom-next"
-
-                        className=" rounded-full p-2 text-black transition duration-300 hover:shadow-lg hover:scale-105 "
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-6 h-6 rotate-180"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                            />
-                        </svg>
-                    </button>
-                </div>
-
-
-                <div className="text-center mt-4">
-                    <Button className="px-8 py-3 rounded-full bg-black text-white hover:bg-gray-800">
-                        View All
-                    </Button>
-                </div>
-            </div>
-        </section>
-    );
-};
-
-export default ProductSlider;
+export default ProductSlider
