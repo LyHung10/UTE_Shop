@@ -20,6 +20,7 @@ module.exports = {
       featured: { type: Sequelize.BOOLEAN, defaultValue: false },
       colors: { type: Sequelize.JSON, allowNull: true, defaultValue: [] },
       sizes: { type: Sequelize.JSON, allowNull: true, defaultValue: [] },
+      tryon: { type: Sequelize.BOOLEAN, allowNull: true, defaultValue: false },
       created_at: { allowNull: false, type: Sequelize.DATE },
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });

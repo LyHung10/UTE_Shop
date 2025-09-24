@@ -21,6 +21,7 @@ module.exports = {
           { name: 'Blue', class: 'bg-blue-500' }
         ]),
         sizes: JSON.stringify(['S', 'M', 'L']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -41,6 +42,7 @@ module.exports = {
           { name: 'Blue', class: 'bg-blue-500' }
         ]),
         sizes: JSON.stringify(['S', 'M', 'L']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -62,6 +64,7 @@ module.exports = {
           { name: 'Gray', class: 'bg-gray-500' }
         ]),
         sizes: JSON.stringify(['One Size']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -83,6 +86,7 @@ module.exports = {
           { name: 'Black', class: 'bg-black' }
         ]),
         sizes: JSON.stringify(['One Size']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -104,6 +108,7 @@ module.exports = {
           { name: 'Black', class: 'bg-black' }
         ]),
         sizes: JSON.stringify(['S', 'M']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -125,6 +130,7 @@ module.exports = {
           { name: 'Red', class: 'bg-red-500' }
         ]),
         sizes: JSON.stringify(['One Size']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -146,6 +152,7 @@ module.exports = {
           { name: 'Red', class: 'bg-red-500' }
         ]),
         sizes: JSON.stringify(['One Size']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -167,6 +174,7 @@ module.exports = {
           { name: 'White', class: 'bg-white' }
         ]),
         sizes: JSON.stringify(['Small', 'Medium', 'Large']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -188,6 +196,7 @@ module.exports = {
           { name: 'Gray', class: 'bg-gray-500' }
         ]),
         sizes: JSON.stringify(['Large']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -209,6 +218,7 @@ module.exports = {
           { name: 'Gold', class: 'bg-yellow-400' }
         ]),
         sizes: JSON.stringify(['One Size']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -230,6 +240,7 @@ module.exports = {
           { name: 'Black', class: 'bg-black' }
         ]),
         sizes: JSON.stringify(['S', 'M', 'L']),
+        tryon: false,
         created_at: new Date(),
         updated_at: new Date()
       }

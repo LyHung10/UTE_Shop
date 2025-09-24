@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true, // sản phẩm không bắt buộc có size
                 defaultValue: [], // default empty array
             },
+            tryon: DataTypes.BOOLEAN,
         },
         {
             sequelize,
