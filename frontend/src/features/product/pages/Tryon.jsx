@@ -44,13 +44,13 @@ export default function VirtualTryOn() {
         {
           headers: {
             "X-RapidAPI-Host": "try-on-diffusion.p.rapidapi.com",
-            "X-RapidAPI-Key": "1ee66f8e4bmsh76496bb819b2b81p105894jsn38f6549d7cb3", // 🔑 thay bằng key của bạn
+            "X-RapidAPI-Key": "1ee66f8e4bmsh76496bb819b2b81p105894jsn38f6549d7cb3", 
           },
           responseType: "arraybuffer", // lấy binary
         }
       );
 
-      // ✅ Convert ArrayBuffer → base64 (browser way, không dùng Buffer)
+      //Convert ArrayBuffer → base64 (browser way, không dùng Buffer)
       const base64 = btoa(
         new Uint8Array(res.data).reduce(
           (data, byte) => data + String.fromCharCode(byte),
