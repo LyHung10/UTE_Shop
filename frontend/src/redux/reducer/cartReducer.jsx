@@ -10,6 +10,11 @@ import {
 const initialState = {
   items: [], // {id, name, price, qty}
   count: 0,
+  total: 0,
+  tax: 40000,
+  finalTotal: 0,
+  appliedVoucher: "",
+  discount: 0,
   order: null,
   payment: null,
   loading: false,
@@ -43,12 +48,10 @@ export default function cartReducer(state = initialState, action) {
         ...state,
         items: Array.isArray(action.payload.items) ? action.payload.items : [],
         count: action.payload.count,
-      };
-
-    case ADD_TO_CART:
-      return {
-        ...state,
-        items: action.payload.data || action.payload || []
+        total: action.payload.total,
+        finalTotal : action.payload.finalTotal,
+        discount: action.payload.discount,
+        appliedVoucher: action.payload.appliedVoucher,
       };
 
     case UPDATE_QTY:
@@ -74,12 +77,6 @@ export default function cartReducer(state = initialState, action) {
         ...state,
         items: []
       };
-
-    // case SET_CART_COUNT:
-    //   return {
-    //     ...state,
-    //     count: action.payload
-    //   };
 
     default:
       return state;

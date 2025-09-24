@@ -48,7 +48,7 @@ class ProductService {
     }
 
     // 2. Lấy 4 sản phẩm có discount cao nhất
-    async getTopDiscount(limit = 4) {
+    async getTopDiscount(limit = 6) {
         return await Product.findAll({
             order: [["discount_percent", "DESC"]],
             limit,

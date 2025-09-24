@@ -9,105 +9,126 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import ProductCard from "./ProductCard.jsx"
+import { useId, useRef } from "react"
 
-const ProductSlider = (props) => {
-  const { listProducts, nameTop } = props
+const ProductSlider = ({ listProducts, nameTop }) => {
   const navigate = useNavigate()
 
+  // ✅ id ổn định (không phụ thuộc Math.random) — an toàn với Next/SSR
+  const rid = useId().replace(/:/g, "")
+  const prevClass = `ps-${rid}-prev`
+  const nextClass = `ps-${rid}-next`
+
   return (
-    <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 grid-pattern">
-      <div className="container mx-auto px-6">
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-        >
-          <h3 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400 bg-clip-text text-transparent neon-text">
-            {nameTop}
-          </h3>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
-        </motion.div>
-
-        <div className="relative">
-          <motion.button
-            id="custom-prev"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+      <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 grid-pattern">
+        <div className="container mx-auto px-6">
+          <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
           >
-            <ChevronLeft className="w-6 h-6" />
-          </motion.button>
+            <h3 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400 bg-clip-text text-transparent neon-text">
+              {nameTop}
+            </h3>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" />
+          </motion.div>
 
-          <motion.button
-            id="custom-next"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </motion.button>
+          <div className="relative">
+            {/* Nút PREV/NEXT — luôn có sẵn trong DOM trước khi Swiper init */}
+            <motion.button
+                className={`${prevClass} absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                type="button"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </motion.button>
 
-          <Swiper
-            modules={[Navigation, Autoplay]}
-            slidesPerView={4}
-            spaceBetween={24}
-            loop={true}
-            autoplay={{
-              delay: 3000,
-              disableOnInteraction: false,
-            }}
-            navigation={{
-              prevEl: "#custom-prev",
-              nextEl: "#custom-next",
-            }}
-            speed={800}
-            breakpoints={{
-              320: { slidesPerView: 1, spaceBetween: 16 },
-              640: { slidesPerView: 2, spaceBetween: 20 },
-              1024: { slidesPerView: 3, spaceBetween: 24 },
-              1280: { slidesPerView: 4, spaceBetween: 24 },
-            }}
-            className="px-16"
+            <motion.button
+                className={`${nextClass} absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                type="button"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </motion.button>
+
+            <Swiper
+                modules={[Navigation, Autoplay]}
+                slidesPerView={4}
+                spaceBetween={24}
+                loop
+                speed={800}
+                autoplay={{ delay: 3000, disableOnInteraction: false }}
+                // ✅ dùng selector theo class
+                navigation={{ prevEl: `.${prevClass}`, nextEl: `.${nextClass}` }}
+                // ✅ giúp Swiper re-detect khi DOM/size thay đổi
+                observer
+                observeParents
+                watchOverflow
+                // ✅ rebind navigation sau khi Swiper thật sự init + DOM đã paint
+                onInit={(swiper) => {
+                  console.log("INIT", document.querySelector(`.${prevClass}`), document.querySelector(`.${nextClass}`))
+
+                  const prevEl = document.querySelector(`.${prevClass}`)
+                  const nextEl = document.querySelector(`.${nextClass}`)
+                  if (prevEl && nextEl) {
+                    // give the browser a tick so Framer/DOM settle
+                    setTimeout(() => {
+                      swiper.params.navigation.prevEl = prevEl
+                      swiper.params.navigation.nextEl = nextEl
+                      swiper.navigation.destroy()
+                      swiper.navigation.init()
+                      swiper.navigation.update()
+                    }, 0)
+                  }
+                }}
+                breakpoints={{
+                  320: { slidesPerView: 1, spaceBetween: 16 },
+                  640: { slidesPerView: 2, spaceBetween: 20 },
+                  1024: { slidesPerView: 3, spaceBetween: 24 },
+                  1280: { slidesPerView: 4, spaceBetween: 24 },
+                }}
+                className="px-16"
+            >
+              {Array.isArray(listProducts) && listProducts.length > 0 ? (
+                  listProducts.map((item, index) => (
+                      <SwiperSlide key={item.id ?? index}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            viewport={{ once: true }}
+                        >
+                          <ProductCard product={item} />
+                        </motion.div>
+                      </SwiperSlide>
+                  ))
+              ) : (
+                  <div className="text-center text-slate-400 py-12">Không tìm thấy sản phẩm</div>
+              )}
+            </Swiper>
+          </div>
+
+          <motion.div
+              className="text-center mt-12"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
           >
-            {listProducts && listProducts.length > 0 ? (
-              listProducts.map((item, index) => (
-                <SwiperSlide key={item.id}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                  >
-                    <ProductCard product={item} />
-                  </motion.div>
-                </SwiperSlide>
-              ))
-            ) : (
-              <div className="text-center text-slate-400 py-12">
-                <p>Không tìm thấy sản phẩm</p>
-              </div>
-            )}
-          </Swiper>
+            <Button
+                className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl animate-glow"
+                onClick={() => navigate("/products")}
+                type="button"
+            >
+              Xem tất cả sản phẩm
+            </Button>
+          </motion.div>
         </div>
-
-        <motion.div
-          className="text-center mt-12"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          <Button
-            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl animate-glow"
-            onClick={() => navigate("/products")}
-          >
-            Xem tất cả sản phẩm
-          </Button>
-        </motion.div>
-      </div>
-    </section>
+      </section>
   )
 }
 

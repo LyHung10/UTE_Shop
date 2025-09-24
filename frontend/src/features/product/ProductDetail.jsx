@@ -29,7 +29,7 @@ const ProductDetail = () => {
     const [activeImageIndex, setActiveImageIndex] = useState(0)
 
     const fetchListBestSellingProducts = async () => {
-        const data = await getBestSellingProducts()
+        const data = await getBestSellingProducts();
         setListBestSellingProducts(data)
     }
 
@@ -517,7 +517,7 @@ const ProductDetail = () => {
                         YOU MIGHT ALSO LIKE
                     </h2>
                     <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                        <ProductSlider listProducts={listBestSellingProducts} />
+                        <ProductSlider listProducts={listBestSellingProducts }/>
                     </div>
                 </div>
             </div>
