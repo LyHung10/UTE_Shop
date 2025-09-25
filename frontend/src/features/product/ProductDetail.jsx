@@ -5,7 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Navigation, Thumbs, Autoplay, EffectFade } from "swiper/modules"
 
 import ProductSlider from "@/features/home/components/ProductSlider.jsx"
-import { getBestSellingProducts } from "../../services/productService.jsx"
+import {getSimilarProducts} from "../../services/productService.jsx"
 import "swiper/css"
 import "swiper/css/free-mode"
 import "swiper/css/navigation"
@@ -24,13 +24,16 @@ const ProductDetail = () => {
     const [product, setProduct] = useState(null)
     const [reviews, setReviews] = useState([])
     const [loadingReviews, setLoadingReviews] = useState(false)
-    const [listBestSellingProducts, setListBestSellingProducts] = useState([])
+    const [listSimilarProducts, setListSimilarProducts] = useState([])
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
     const [activeImageIndex, setActiveImageIndex] = useState(0)
 
-    const fetchListBestSellingProducts = async () => {
-        const data = await getBestSellingProducts();
-        setListBestSellingProducts(data)
+    const fetchSimilarProducts= async () => {
+        const data = await getSimilarProducts(id);
+        if (data)
+        {
+            setListSimilarProducts(data.items);
+        }
     }
 
     const [relatedProducts] = useState([])
@@ -155,7 +158,7 @@ const ProductDetail = () => {
             setProduct(res)
         }
         fetchData()
-        fetchListBestSellingProducts()
+        fetchSimilarProducts()
     }, [id])
 
     return (
@@ -517,7 +520,8 @@ const ProductDetail = () => {
                         YOU MIGHT ALSO LIKE
                     </h2>
                     <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                        <ProductSlider listProducts={listBestSellingProducts }/>
+                        <ProductSlider listProducts={listSimilarProducts }
+                                       nameTop="SIMILAR PRODUCTS"/>
                     </div>
                 </div>
             </div>

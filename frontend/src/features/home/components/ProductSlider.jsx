@@ -70,8 +70,6 @@ const ProductSlider = ({ listProducts, nameTop }) => {
                 watchOverflow
                 // ✅ rebind navigation sau khi Swiper thật sự init + DOM đã paint
                 onInit={(swiper) => {
-                  console.log("INIT", document.querySelector(`.${prevClass}`), document.querySelector(`.${nextClass}`))
-
                   const prevEl = document.querySelector(`.${prevClass}`)
                   const nextEl = document.querySelector(`.${nextClass}`)
                   if (prevEl && nextEl) {

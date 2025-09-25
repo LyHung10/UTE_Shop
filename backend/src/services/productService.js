@@ -1,4 +1,5 @@
 import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order } from "../models/index.js";
+import {Op} from "sequelize";
 
 
 class ProductService {
@@ -216,6 +217,95 @@ class ProductService {
                 pageSize: limit,
             },
         };
+    }
+
+    async getSimilarProducts(productId, limit = 12) {
+        const id = Number(productId);
+        if (!Number.isFinite(id)) return [];
+
+        // 1) Lấy sản phẩm gốc
+        const base = await Product.findByPk(id, {
+            attributes: [
+                "id", "category_id", "price","original_price","discount_percent", "colors", "sizes", "is_active", "featured",
+                "sale_count", "view_count"
+            ],
+            include: [{ model: Category, as: "category", attributes: ["id", "name", "slug"] }],
+        });
+        if (!base || !base.is_active) return [];
+
+        // 2) Dải giá ±20% (tối thiểu 50k)
+        const basePrice = Number(base.price || 0);
+        const delta = Math.max(50000, Math.floor(basePrice * 0.2));
+        const minPrice = Math.max(0, basePrice - delta);
+        const maxPrice = basePrice + delta;
+
+        // 3) Ứng viên: cùng danh mục, gần giá, active, exclude chính nó
+        const candidates = await Product.findAll({
+            where: {
+                id: { [Op.ne]: base.id },
+                is_active: true,
+                category_id: base.category_id,
+                price: { [Op.between]: [minPrice, maxPrice] },
+            },
+            attributes: [
+                "id","name","slug","price","original_price","discount_percent","colors","sizes","featured","sale_count","view_count"
+            ],
+            include: [{ model: ProductImage, as: "images", attributes: ["id", "url"], required: false }],
+
+            order: [
+                ["featured", "DESC"],
+                ["sale_count", "DESC"],
+                ["view_count", "DESC"],
+            ],
+            limit: limit * 3, // lấy rộng hơn để chấm điểm
+        });
+
+        // 4) Chấm điểm nhẹ theo trùng màu/size + gần giá
+        const baseColors = Array.isArray(base.colors) ? base.colors : [];
+        const baseSizes  = Array.isArray(base.sizes)  ? base.sizes  : [];
+
+        const scored = candidates.map(p => {
+            const colors = Array.isArray(p.colors) ? p.colors : [];
+            const sizes  = Array.isArray(p.sizes)  ? p.sizes  : [];
+            const overlapColors = colors.filter(c => baseColors.includes(c)).length;
+            const overlapSizes  = sizes.filter(s => baseSizes.includes(s)).length;
+            const priceDiff = Math.abs(Number(p.price || 0) - basePrice);
+
+            const score =
+                overlapColors * 3 +
+                overlapSizes  * 2 +
+                (p.featured ? 1 : 0) +
+                Math.max(0, 2 - Math.floor(priceDiff / Math.max(1, basePrice * 0.1)));
+
+            return { item: p, score, priceDiff };
+        });
+
+        scored.sort((a, b) => b.score - a.score || a.priceDiff - b.priceDiff);
+
+        let result = scored.slice(0, limit).map(x => x.item);
+
+        // 5) Fallback: nếu chưa đủ, nới lỏng bỏ điều kiện giá (1 lần)
+        if (result.length < limit) {
+            const need = limit - result.length;
+            const widen = await Product.findAll({
+                where: {
+                    id: { [Op.notIn]: [base.id, ...result.map(r => r.id)] },
+                    is_active: true,
+                    category_id: base.category_id,
+                },
+                attributes: ["id","name","slug","price","original_price","discount_percent","colors","sizes","featured","sale_count","view_count"],
+                include: [{ model: ProductImage, as: "images", attributes: ["id", "url"], required: false }],
+                order: [
+                    ["featured", "DESC"],
+                    ["sale_count", "DESC"],
+                    ["view_count", "DESC"],
+                ],
+                limit: need,
+            });
+            result = result.concat(widen);
+        }
+
+        return result;
     }
 }
 
