@@ -1,4 +1,4 @@
-import { Voucher} from "../models/index.js";
+import {Voucher} from "../models/index.js";
 
 class VoucherService {
     async createVoucher(voucherData) {
@@ -9,9 +9,17 @@ class VoucherService {
         return await Voucher.findByPk(voucher.id);
     }
 
-    async validateVoucher(voucherCode, orderTotal) {
-        const voucher = await Voucher.findOne({ where: { slug: voucherCode, status: 'active' } });
-        if (!voucher) return { valid: false, message: 'Voucher không tồn tại hoặc đã hết hạn' };
+    async validateVoucher(voucherCode, orderTotal, transaction) {
+        // Tìm voucher còn active
+        const voucher = await Voucher.findOne({
+            where: { slug: voucherCode, status: 'active' },
+            transaction,
+            lock: transaction ? transaction.LOCK.UPDATE : undefined // nếu muốn dùng transaction an toàn
+        });
+
+        if (!voucher) {
+            return { valid: false, message: 'Voucher không tồn tại hoặc đã hết hạn' };
+        }
 
         const now = new Date();
         if (now < voucher.start_date || now > voucher.end_date) {
@@ -22,6 +30,12 @@ class VoucherService {
             return { valid: false, message: `Đơn hàng phải tối thiểu ${voucher.min_order_value}` };
         }
 
+        // Kiểm tra số lượng voucher
+        if (voucher.usage_limit <= 0) {
+            return { valid: false, message: 'Voucher đã hết lượt sử dụng' };
+        }
+
+        // Tính discount
         let discount = 0;
         if (voucher.discount_type === 'percent') {
             discount = (orderTotal * voucher.discount_value) / 100;

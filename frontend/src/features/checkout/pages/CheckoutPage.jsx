@@ -11,7 +11,7 @@ import axios from "../../../utils/axiosCustomize.jsx";
 const PaymentMethodPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const cartItems = useSelector(state => state.cart.items);
+    const cart = useSelector(state => state.cart);
 
     const [selectedMethod, setSelectedMethod] = useState("");
     const [error, setError] = useState("");
@@ -53,15 +53,9 @@ const PaymentMethodPage = () => {
         setIsProcessing(true);
 
         try {
-            const items = cartItems.map(i => ({
-                product_id: i.product_id,
-                quantity: i.qty,
-                price: i.price
-            }));
-
             if (selectedMethod === "cod") {
                 // ---------------- COD ----------------
-                const data = await dispatch(checkoutCOD(items));
+                const data = await dispatch(checkoutCOD(cart.appliedVoucher));
                 const orderId = data.order.id;
                 await dispatch(confirmCODPayment(orderId));
                 alert(`Đặt hàng COD thành công! OrderID: ${orderId}`);

@@ -25,10 +25,18 @@ const ShoppingCart = () => {
     }
     // --- Tính toán tổng ---
     const subtotal = Number(cart.finalTotal || 0);
-    const shipping = 20000;
-    const tax = 40000;
-    const total = Math.max(0, subtotal - cart.discount + shipping + tax);
-    // --- Áp mã giảm giá ---
+    let shipping = 20000;
+    let tax = 40000;
+    let total = 0;
+    if (subtotal ===0)
+    {
+        shipping = 0;
+        tax = 0;
+    }
+    else
+    {
+        total = Math.max(0, subtotal - cart.discount + shipping + tax);
+    }
 
     return (
         <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">

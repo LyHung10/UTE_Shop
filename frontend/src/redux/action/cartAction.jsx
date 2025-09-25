@@ -6,7 +6,7 @@ import {
     RESET_CART,
     CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
 } from "./actionTypes";
-import {getCart} from "@/services/cartService.jsx";
+import {getCart, postCheckoutCOD} from "@/services/cartService.jsx";
 
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
     try {
@@ -122,17 +122,15 @@ export const fetchCart = (voucherId) => async (dispatch) => {
 
 
 // Checkout COD
-export const checkoutCOD = (items) => async (dispatch) => {
+export const checkoutCOD = (voucherCode) => async (dispatch) => {
     try {
-        const res = await axios.post("api/orders/checkout/cod",
-            { items }
-        );
+        const res = await postCheckoutCOD(voucherCode);
 
         dispatch({
             type: "CHECKOUT_COD_SUCCESS",
             payload: res,
         });
-
+        dispatch(fetchCart());
         return res; // để component còn dùng tiếp
     } catch (err) {
         console.error("checkoutCOD error", err);
