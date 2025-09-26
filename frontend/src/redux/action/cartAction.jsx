@@ -1,41 +1,23 @@
 import axios from "../../utils/axiosCustomize.jsx";
 import {
-    ADD_TO_CART, UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, FETCH_CART,
-    SET_CART_ERROR, SET_CART_LOADING, SET_CART_COUNT,
-    CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
+    UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, FETCH_CART,
+    SET_CART_ERROR, SET_CART_LOADING, CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
     CHECKOUT_COD_SUCCESS, CHECKOUT_COD_FAIL,
     RESET_CART,
     CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
 } from "./actionTypes";
-import {getCart} from "@/services/cartService.jsx";
+import {getCart, postCheckoutCOD} from "@/services/cartService.jsx";
 
-// export const setCartCount = (count) => ({
-//     type: SET_CART_COUNT,
-//     payload: count,
-// });
-//
-// export const fetchCartCount = () => async (dispatch) => {
-//     try {
-//         const res = await axios.get("api/orders/cart/count");
-//         dispatch(setCartCount(res.count));
-//     } catch (err) {
-//         console.error("Failed to fetch cart count", err);
-//     }
-// };
-// Thêm sản phẩm vào giỏ
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
-
         await axios.post('api/orders/cart', {
             productId,
             qty,
             color: color || null,
             size: size || null
         });
-
         dispatch(fetchCart());
-
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {
         console.error("Error adding to cart:", err);
@@ -48,27 +30,13 @@ export const addToCart = (productId, qty, color, size) => async (dispatch) => {
 export const updateQuantity = (itemId, qty) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
-
         await axios.put('api/orders/cart', { itemId, qty });
-
         // Fetch lại cart sau khi update
-        const res = await axios.get('api/orders/cart');
-        console.log("Update quantity - response:", res);
-
-        dispatch({
-            type: FETCH_CART,
-            payload: {
-                items: Array.isArray(res.items) ? res.items :
-                    Array.isArray(res) ? res : [],
-                count: res.itemCount
-            }
-        });
-
+        dispatch(fetchCart());
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {
         console.error("Error updating quantity:", err);
         dispatch({ type: SET_CART_ERROR, payload: err.message });
-
         // Fallback: update local state only
         dispatch({ type: UPDATE_QTY, payload: { itemId, qty } });
         dispatch({ type: SET_CART_LOADING, payload: false });
@@ -79,27 +47,13 @@ export const updateQuantity = (itemId, qty) => async (dispatch) => {
 export const removeFromCart = (itemId) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
-
         await axios.delete(`api/orders/cart/${itemId}`);
-
         // Fetch lại cart sau khi delete
-        const res = await axios.get('api/orders/cart');
-        console.log("Remove from cart - response:", res);
-
-        dispatch({
-            type: FETCH_CART,
-            payload: {
-                items: Array.isArray(res.items) ? res.items :
-                    Array.isArray(res) ? res : [],
-                count: res.itemCount
-            }
-        });
-
+        dispatch(fetchCart());
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {
         console.error("Error removing from cart:", err);
         dispatch({ type: SET_CART_ERROR, payload: err.message });
-
         // Fallback: remove from local state only
         dispatch({ type: REMOVE_FROM_CART, payload: itemId });
         dispatch({ type: SET_CART_LOADING, payload: false });
@@ -135,17 +89,19 @@ export const fetchCart = (voucherId) => async (dispatch) => {
         dispatch({ type: SET_CART_LOADING, payload: true });
 
         const res = await getCart(voucherId);
-        console.log("Fetched cart data:", res);
 
         // Đảm bảo data có đúng structure
         const cartData = res || {};
-        console.log("count cart",cartData.itemCount);
         dispatch({
             type: FETCH_CART,
             payload: {
                 items: Array.isArray(cartData.items) ? cartData.items :
                     Array.isArray(cartData) ? cartData : [],
-                count: cartData.itemCount
+                count: cartData.itemCount,
+                total: res.total,
+                finalTotal: res.finalTotal,
+                discount: res.discount,
+                appliedVoucher: res.appliedVoucher,
             }
         });
 
@@ -166,17 +122,15 @@ export const fetchCart = (voucherId) => async (dispatch) => {
 
 
 // Checkout COD
-export const checkoutCOD = (items) => async (dispatch) => {
+export const checkoutCOD = (voucherCode) => async (dispatch) => {
     try {
-        const res = await axios.post("api/orders/checkout/cod",
-            { items }
-        );
+        const res = await postCheckoutCOD(voucherCode);
 
         dispatch({
             type: "CHECKOUT_COD_SUCCESS",
             payload: res,
         });
-
+        dispatch(fetchCart());
         return res; // để component còn dùng tiếp
     } catch (err) {
         console.error("checkoutCOD error", err);

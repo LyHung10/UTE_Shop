@@ -10,6 +10,17 @@ class ProductController {
     }
   }
 
+  async getSimilar(req, res, next) {
+    try {
+      const { id } = req.params;
+      const limit = Number(req.query.limit || 12);
+      const items = await productService.getSimilarProducts(id, limit);
+      res.json({ success: true, items });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getTopDiscount(req, res, next) {
     try {
       const products = await productService.getTopDiscount();
@@ -126,6 +137,5 @@ class ProductController {
         .json({ error: err.message || "Internal Server Error" });
     }
   }
-
 }
 export default new ProductController();

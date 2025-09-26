@@ -20,6 +20,7 @@ router.get("/best-selling", productController.getBestSellingProducts);
 
 // Lấy chỉ số tương tác của sản phẩm
 router.get("/:id/stats",productController.getProductStats);
+router.get("/:id/similar", productController.getSimilar);
 
 // Route động theo slug + page
 router.get("/:slug/:page", productController.getProductsByCategorySlug);

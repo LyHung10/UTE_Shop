@@ -1,4 +1,6 @@
-const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User } = require('../models');
+import {sequelize} from "../config/configdb";
+
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
 
@@ -354,18 +356,7 @@ class OrderService {
         return { items: cartItems, totalAmount };
     }
 
-    static async getCartCount(userId) {
-        const order = await Order.findOne({
-            where: { user_id: userId, status: 'pending' },
-            include: [{ model: OrderItem }]
-        });
-
-        if (!order) return 0;
-
-        return order.OrderItems.reduce((sum, item) => sum + item.qty, 0);
-    }
-
-    static async checkoutCOD(userId) {
+    static async checkoutCOD(userId, voucherCode) {
         return await Order.sequelize.transaction(async (t) => {
             // Lấy giỏ hàng pending
             const order = await Order.findOne({
@@ -396,12 +387,34 @@ class OrderService {
                 await inv.save({ transaction: t });
             }
 
-            // Cập nhật status order
-            order.status = "CONFIRMED"; // chờ giao hàng
-            order.total_amount = order.OrderItems.reduce(
+            const total = order.OrderItems.reduce(
                 (sum, i) => sum + parseFloat(i.price) * i.qty,
                 0
             );
+
+            let discount = 0;
+            let appliedVoucher = null;
+
+            // Validate voucher nếu có
+            if (voucherCode) {
+                const result = await voucherService.validateVoucher(voucherCode, total, { transaction: t });
+                if (!result.valid) {
+                    throw new Error(result.message || "Mã giảm giá không hợp lệ.");
+                }
+                appliedVoucher = result.voucher;
+                discount = result.discount;
+                appliedVoucher.usage_limit -= 1;
+                appliedVoucher.used_count += 1;
+                await appliedVoucher.save({ transaction: t });
+            }
+
+            // Cập nhật status order
+            order.status = "CONFIRMED"; // chờ giao hàng
+            order.total_amount = total - discount;
+
+            if (appliedVoucher) {
+                order.voucher_id = appliedVoucher.id;
+            }
             await order.save({ transaction: t });
 
             // Tạo payment COD
@@ -412,9 +425,13 @@ class OrderService {
                 amount: order.total_amount
             }, { transaction: t });
 
-            return { order, payment };
+            return {
+                order,
+                payment,
+            };
         });
     }
+
 
     static async confirmCODPayment(orderId) {
         return await Order.sequelize.transaction(async (t) => {

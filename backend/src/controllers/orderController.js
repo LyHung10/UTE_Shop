@@ -140,31 +140,27 @@ class OrderController {
         }
     }
 
-
-    // xem số item in cart
-    static async getCartCount(req, res, next) {
-        try {
-            const userId = req.user.sub;
-            const count = await OrderService.getCartCount(userId);
-            return res.json({ count });
-        } catch (err) {
-            next(err);
-        }
-    }
-
     static async checkoutCOD(req, res) {
         try {
             const userId = req.user.sub;
-            const result = await OrderService.checkoutCOD(userId);
-            res.status(201).json({
+            const { voucherCode } = req.body;
+            const result = await OrderService.checkoutCOD(userId, voucherCode);
+
+            return res.status(201).json({
                 success: true,
-                message: "Checkout COD success",
+                message: "Checkout COD thành công.",
                 order: result.order,
-                payment: result.payment
+                payment: {
+                    method: "COD",
+                    status: "pending" // thanh toán khi nhận hàng
+                }
             });
         } catch (err) {
-            console.error(err);
-            res.status(400).json({ error: err.message });
+            console.error("Checkout COD error:", err);
+            return res.status(400).json({
+                success: false,
+                error: err.message || "Checkout thất bại."
+            });
         }
     }
 
