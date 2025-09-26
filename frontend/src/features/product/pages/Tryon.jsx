@@ -1,6 +1,7 @@
 // src/components/VirtualTryOn.jsx
-import React, { useState } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function VirtualTryOn() {
   const [personFile, setPersonFile] = useState(null);
@@ -8,7 +9,20 @@ export default function VirtualTryOn() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const location = useLocation();
 
+  useEffect(() => {
+    const clothUrl = location.state?.clothUrl;
+    if (clothUrl) {
+      // Fetch image và tạo File object để preview
+      fetch(clothUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "product.jpg", { type: blob.type });
+          setClothFile(file);
+        });
+    }
+  }, [location.state]);
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -44,7 +58,7 @@ export default function VirtualTryOn() {
         {
           headers: {
             "X-RapidAPI-Host": "try-on-diffusion.p.rapidapi.com",
-            "X-RapidAPI-Key": "1ee66f8e4bmsh76496bb819b2b81p105894jsn38f6549d7cb3", 
+            "X-RapidAPI-Key": "1ee66f8e4bmsh76496bb819b2b81p105894jsn38f6549d7cb3",
           },
           responseType: "arraybuffer", // lấy binary
         }

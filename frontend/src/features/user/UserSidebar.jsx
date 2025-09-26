@@ -19,7 +19,7 @@ const sections = [
         items: [
             { label: "Tài khoản của tôi", to: "/user/profile", icon: UserRound },
             { label: "Thông báo", to: "/user/notifications", icon: Bell },
-            { label: "Yêu thích", to: "/user/wishlist", icon: Heart },
+            { label: "Yêu thích", to: "/user/product-favorites", icon: Heart },
         ],
     },
     {

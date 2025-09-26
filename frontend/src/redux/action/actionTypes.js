@@ -21,3 +21,12 @@ export const RESET_CART = "RESET_CART";
 // Payment
 export const CREATE_VNPAY_ORDER_SUCCESS = "CREATE_VNPAY_ORDER_SUCCESS";
 export const CREATE_VNPAY_ORDER_FAIL = "CREATE_VNPAY_ORDER_FAIL";
+
+
+// src/redux/actions/favoriteActionTypes.js
+export const LOAD_FAVORITES = "LOAD_FAVORITES";
+export const ADD_FAVORITE = "ADD_FAVORITE";
+export const REMOVE_FAVORITE = "REMOVE_FAVORITE";
+export const CHECK_FAVORITE = "CHECK_FAVORITE";
+export const FAVORITE_ERROR = "FAVORITE_ERROR";
+export const FAVORITE_LOADING = "FAVORITE_LOADING";

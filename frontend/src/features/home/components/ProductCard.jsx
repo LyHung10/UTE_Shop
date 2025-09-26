@@ -4,8 +4,35 @@ import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Star, ShoppingCart, Heart } from "lucide-react"
 
+import { useSelector, useDispatch } from "react-redux"
+import { addFavorite, removeFavorite, checkFavorite } from "../../../redux/action/favoriteActions.jsx"
+import toast from "react-hot-toast";
+import { useEffect } from "react"
 const ProductCard = ({ product }) => {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  // xử lí nút tim
+  const favoriteMap = useSelector(state => state.favorite.favoriteMap)
+  const isFavorite = favoriteMap[product?.id] || false
+  const loading = useSelector((state) => state.favorite.loading);
+
+  useEffect(() => {
+    if (product?.id) {
+      dispatch(checkFavorite(product.id));
+    }
+  }, [dispatch, product?.id]);
+  const handleToggleFavorite = () => {
+    if (!product?.id) return
+
+    if (isFavorite) {
+      dispatch(removeFavorite(product.id))
+      toast.success("Removed from favorites")
+    } else {
+      dispatch(addFavorite(product.id))
+      toast.success("Added to favorites")
+    }
+  }
 
   return (
     <motion.div
@@ -30,7 +57,9 @@ const ProductCard = ({ product }) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
-                e.stopPropagation()
+                navigate(`/product/${product.id}`)
+
+                // e.stopPropagation()
                 // Add to cart logic
               }}
             >
@@ -38,16 +67,18 @@ const ProductCard = ({ product }) => {
             </motion.button>
 
             <motion.button
-              className="p-2 bg-white shadow-md rounded-full text-gray-700 hover:text-red-500 transition-colors"
+              className={`p-2 bg-white shadow-md rounded-full transition-colors ${isFavorite ? "text-red-500" : "text-gray-700 hover:text-red-500"
+                }`}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
-                e.stopPropagation()
-                // Add to wishlist logic
+                e.stopPropagation();
+                handleToggleFavorite();
               }}
             >
-              <Heart className="w-5 h-5" />
+              <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
             </motion.button>
+
           </div>
 
           {/* Discount badge */}

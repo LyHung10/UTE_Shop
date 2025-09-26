@@ -1,23 +1,26 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw } from "lucide-react"
+import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw, Eye, Sparkles } from "lucide-react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Navigation, Thumbs, Autoplay, EffectFade } from "swiper/modules"
-
-import ProductSlider from "@/features/home/components/ProductSlider.jsx"
+import ProductSlider from "../home/components/ProductSlider.jsx"
 import { getBestSellingProducts } from "../../services/productService.jsx"
 import "swiper/css"
 import "swiper/css/free-mode"
 import "swiper/css/navigation"
 import "swiper/css/thumbs"
 import "swiper/css/effect-fade"
+import "swiper/css/autoplay"
 import { useRef } from "react"
 import { useParams } from "react-router-dom"
 import { getProductById } from "../../services/productService.jsx"
-import { useDispatch } from "react-redux"
 import { addToCart } from "../../redux/action/cartAction.jsx"
 import axios from "../../utils/axiosCustomize.jsx"
 import { cartRef } from "../home/components/Header.jsx"
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux"
+import { addFavorite, removeFavorite, checkFavorite } from "../../redux/action/favoriteActions.jsx"
+import toast from "react-hot-toast";
 
 const ProductDetail = () => {
     const { id } = useParams()
@@ -27,7 +30,37 @@ const ProductDetail = () => {
     const [listBestSellingProducts, setListBestSellingProducts] = useState([])
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
     const [activeImageIndex, setActiveImageIndex] = useState(0)
+    const [isHovered, setIsHovered] = useState(false);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    //sản phẩm yêu thích
+    const favoriteMap = useSelector(state => state.favorite.favoriteMap);
+    const isFavorite = favoriteMap[product?.id] || false;
+    const loading = useSelector((state) => state.favorite.loading);
 
+    useEffect(() => {
+        if (product?.id) {
+            dispatch(checkFavorite(product.id));
+        }
+    }, [dispatch, product?.id]);
+
+    const handleToggleFavorite = () => {
+        if (!product?.id) return;
+
+        if (isFavorite) {
+            dispatch(removeFavorite(product.id));
+            toast.success("Removed from favorites");
+        } else {
+            dispatch(addFavorite(product.id));
+            toast.success("Added to favorites");
+        }
+    };
+
+
+    const handleTryOn = () => {
+        const clothUrl = product.images[0]?.url; // ảnh đầu tiên của sản phẩm
+        navigate("/tryon", { state: { clothUrl } });
+    };
     const fetchListBestSellingProducts = async () => {
         const data = await getBestSellingProducts()
         setListBestSellingProducts(data)
@@ -39,7 +72,6 @@ const ProductDetail = () => {
     const [selectedSize, setSelectedSize] = useState(null)
     const [quantity, setQuantity] = useState(1)
     const [visibleCount, setVisibleCount] = useState(4)
-    const [isWishlisted, setIsWishlisted] = useState(false)
 
     const colorMap = {
         Red: "bg-gradient-to-br from-red-400 to-red-600",
@@ -51,9 +83,6 @@ const ProductDetail = () => {
         Silver: "bg-gradient-to-br from-gray-300 to-gray-400",
         Gold: "bg-gradient-to-br from-yellow-300 to-yellow-500",
     }
-
-    const dispatch = useDispatch()
-
     const handleAddToCart = () => {
         if (!selectedSize || !selectedColor) {
             alert("Please choose size and color")
@@ -174,8 +203,9 @@ const ProductDetail = () => {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-12">
+            <div className="max-w-6xl mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    {/* Product Images */}
                     <div className="space-y-6">
                         {product && (
                             <div className="relative">
@@ -219,8 +249,8 @@ const ProductDetail = () => {
                                         <SwiperSlide key={img.id}>
                                             <div
                                                 className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${idx === activeImageIndex
-                                                        ? "ring-2 ring-orange-400 shadow-lg shadow-orange-400/25"
-                                                        : "ring-1 ring-gray-200 hover:ring-gray-300 shadow-md"
+                                                    ? "ring-2 ring-orange-400 shadow-lg shadow-orange-400/25"
+                                                    : "ring-1 ring-gray-200 hover:ring-gray-300 shadow-md"
                                                     }`}
                                             >
                                                 <img src={img.url || "/placeholder.svg"} alt={img.alt} className="w-full h-full object-cover" />
@@ -230,20 +260,83 @@ const ProductDetail = () => {
                                 </Swiper>
 
                                 <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                    {/* Favorite Button */}
                                     <button
-                                        onClick={() => setIsWishlisted(!isWishlisted)}
-                                        className={`p-3 rounded-full backdrop-blur-sm border transition-all duration-300 shadow-lg ${isWishlisted
+                                        onClick={handleToggleFavorite}
+                                        className={`p-3 rounded-full backdrop-blur-sm border transition-all duration-300 shadow-lg ${isFavorite
                                                 ? "bg-red-50 border-red-200 text-red-500 shadow-red-200"
                                                 : "bg-white/90 border-gray-200 text-gray-600 hover:bg-white hover:text-red-500"
                                             }`}
                                     >
-                                        <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
+                                        <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                                     </button>
+
+
                                     <button className="p-3 rounded-full backdrop-blur-sm bg-white/90 border border-gray-200 text-gray-600 hover:bg-white hover:text-blue-600 transition-all duration-300 shadow-lg">
                                         <Share2 className="w-5 h-5" />
                                     </button>
                                 </div>
+
+                                {/* Try On Button - Đặt xuống dưới Swiper */}
+                                {product?.tryon && (
+                                    <div className="mt-6 flex justify-center">
+                                        <button
+                                            onClick={handleTryOn}
+                                            onMouseEnter={() => setIsHovered(true)}
+                                            onMouseLeave={() => setIsHovered(false)}
+                                            className="cursor-pointer group relative overflow-hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[2px] rounded-2xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 transform hover:scale-105"
+                                        >
+                                            {/* Animated border gradient */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
+
+                                            {/* Inner button */}
+                                            <div className="relative bg-white rounded-2xl px-8 py-4 flex items-center gap-3 min-w-[200px] justify-center">
+                                                {/* Magic particles animation */}
+                                                <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                                                    {[...Array(6)].map((_, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className={`absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full transition-all duration-1000 ${isHovered ? 'animate-bounce' : 'opacity-0'
+                                                                }`}
+                                                            style={{
+                                                                left: `${20 + i * 12}%`,
+                                                                top: `${20 + (i % 2) * 40}%`,
+                                                                animationDelay: `${i * 0.1}s`,
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                {/* AI Eye icon with animation */}
+                                                <div className="relative">
+                                                    <div className={`absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-sm transition-all duration-300 ${isHovered ? 'scale-150 opacity-70' : 'scale-100 opacity-0'
+                                                        }`} />
+                                                    <Eye className={`relative w-5 h-5 text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text transition-transform duration-300 ${isHovered ? 'scale-110' : 'scale-100'
+                                                        }`} />
+                                                </div>
+
+                                                {/* Text with gradient */}
+                                                <span className="relative font-semibold text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text">
+                                                    Try On with AI
+                                                </span>
+
+                                                {/* Sparkles icon with rotation */}
+                                                <Sparkles className={`w-5 h-5 text-transparent bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text transition-transform duration-500 ${isHovered ? 'rotate-180 scale-110' : 'rotate-0 scale-100'
+                                                    }`} />
+
+                                                {/* Shimmer effect */}
+                                                <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 transform -translate-x-full transition-all duration-1000 ${isHovered ? 'translate-x-full opacity-30' : '-translate-x-full opacity-0'
+                                                    }`} />
+                                            </div>
+
+                                            {/* Glow effect */}
+                                            <div className={`absolute -inset-2 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-xl transition-all duration-500 ${isHovered ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                                                }`} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
+
                         )}
                     </div>
 
@@ -301,9 +394,9 @@ const ProductDetail = () => {
                                         <button
                                             key={index}
                                             onClick={() => setSelectedColor(color)}
-                                            className={`w-12 h-12 rounded-full ${colorMap[color.name]} transition-all duration-300 ${selectedColor?.name === color.name
-                                                    ? "ring-4 ring-orange-400 ring-offset-2 ring-offset-white shadow-lg shadow-orange-400/25 scale-110"
-                                                    : "hover:scale-105 shadow-lg ring-1 ring-gray-200"
+                                            className={` cursor-pointer w-12 h-12 rounded-full ${colorMap[color.name]} transition-all duration-300 ${selectedColor?.name === color.name
+                                                ? "ring-4 ring-orange-400 ring-offset-2 ring-offset-white shadow-lg shadow-orange-400/25 scale-110"
+                                                : "hover:scale-105 shadow-lg ring-1 ring-gray-200"
                                                 }`}
                                         />
                                     ))}
@@ -318,9 +411,9 @@ const ProductDetail = () => {
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
-                                            className={`px-6 py-3 text-sm font-medium border rounded-xl transition-all duration-300 ${selectedSize === size
-                                                    ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-lg shadow-orange-500/25"
-                                                    : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-100"
+                                            className={`cursor-pointer px-6 py-3 text-sm font-medium border rounded-xl transition-all duration-300 ${selectedSize === size
+                                                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-orange-400 shadow-lg shadow-orange-500/25"
+                                                : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-100"
                                                 }`}
                                         >
                                             {size}
@@ -333,14 +426,14 @@ const ProductDetail = () => {
                                 <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
                                     <button
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="p-4 hover:bg-gray-100 transition-colors text-gray-700"
+                                        className="cursor-pointer p-4 hover:bg-gray-100 transition-colors text-gray-700"
                                     >
                                         <Minus className="w-4 h-4" />
                                     </button>
-                                    <span className="px-6 py-4 min-w-[80px] text-center text-gray-900 font-medium">{quantity}</span>
+                                    <span className=" px-6 py-4 min-w-[80px] text-center text-gray-900 font-medium">{quantity}</span>
                                     <button
                                         onClick={() => setQuantity(quantity + 1)}
-                                        className="p-4 hover:bg-gray-100 transition-colors text-gray-700"
+                                        className="cursor-pointer p-4 hover:bg-gray-100 transition-colors text-gray-700"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </button>
@@ -349,13 +442,14 @@ const ProductDetail = () => {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={isAnimating}
-                                    className={`flex-1 py-4 px-8 rounded-xl font-semibold transition-all duration-300 ${isAnimating
-                                            ? "bg-gray-400 text-white cursor-not-allowed"
-                                            : "bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/25"
+                                    className={`cursor-pointer flex-1 py-4 px-8 rounded-xl font-semibold transition-all duration-300 ${isAnimating
+                                        ? "bg-gray-400 text-white cursor-not-allowed"
+                                        : "bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/25"
                                         }`}
                                 >
                                     {isAnimating ? "Adding to Cart..." : "Add to Cart"}
                                 </button>
+
                             </div>
 
                             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
@@ -387,8 +481,8 @@ const ProductDetail = () => {
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`px-8 py-6 text-sm font-medium border-b-2 transition-all duration-300 ${activeTab === tab.key
-                                        ? "border-orange-400 text-orange-500 bg-orange-50"
-                                        : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "border-orange-400 text-orange-500 bg-orange-50"
+                                    : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 {tab.label} {tab.count && `(${tab.count})`}

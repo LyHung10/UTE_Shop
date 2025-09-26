@@ -15,6 +15,7 @@ import paymentRoutes from './routes/paymentRoutes.js'
 import { errorHandler } from './middleware/errorHandler.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import voucherRoutes from "./routes/voucherRoutes";
+import favoriteProductRoute from "./routes/favoriteProductRoute.js";
 dotenv.config();
 
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/vouchers', voucherRoutes);
+app.use('/api/favorites', favoriteProductRoute);
 // Error handler
 app.use(errorHandler);
 

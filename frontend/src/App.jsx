@@ -19,6 +19,7 @@ import OrderHistory from "@/features/user/pages/OrderHistory.jsx";
 import OrderDetail from "@/features/user/pages/OrderDetail.jsx";
 import ReviewPage from "@/features/review/pages/ReviewPage.jsx";
 import TryOnPage from "@/features/product/pages/Tryon.jsx";
+import FavoritesPage from "./features/product/pages/FavoritesPage.jsx";
 function App() {
   return (
     <>
@@ -31,6 +32,7 @@ function App() {
             <Route path="my-orders" element={<OrderHistory />} />
             <Route path="order-detail/:id" element={<OrderDetail />} />
             <Route path="profile" element={<UserProfile />} />
+            <Route path="product-favorites" element={<FavoritesPage />} />
           </Route>
 
 
