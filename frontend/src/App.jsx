@@ -2,8 +2,6 @@ import Layout from "./Layout.jsx";
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./features/home/pages/HomePage.jsx";
 import Login from "./features/auth/pages/Login.jsx";
-import 'react-toastify/dist/ReactToastify.css';
-import { Bounce, ToastContainer } from "react-toastify";
 import SignUp from "./features/auth/pages/SignUp.jsx";
 import AuthOtp from "./features/auth/components/AuthOtp.jsx";
 import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
@@ -20,6 +18,11 @@ import OrderDetail from "@/features/user/pages/OrderDetail.jsx";
 import ReviewPage from "@/features/review/pages/ReviewPage.jsx";
 import TryOnPage from "@/features/product/pages/Tryon.jsx";
 import FavoritesPage from "./features/product/pages/FavoritesPage.jsx";
+import PrivateRoute from "./components/PrivateRoute.jsx";
+
+import { Bounce, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 function App() {
   return (
     <>
@@ -27,35 +30,42 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
 
-          <Route path="user" element={<UserLayout />}>
-            <Route index element={<UserProfile />} />
-            <Route path="my-orders" element={<OrderHistory />} />
-            <Route path="order-detail/:id" element={<OrderDetail />} />
-            <Route path="profile" element={<UserProfile />} />
-            <Route path="product-favorites" element={<FavoritesPage />} />
+          {/* Các route cần đăng nhập */}
+          <Route element={<PrivateRoute />}>
+            <Route path="user" element={<UserLayout />}>
+              <Route index element={<UserProfile />} />
+              <Route path="my-orders" element={<OrderHistory />} />
+              <Route path="order-detail/:id" element={<OrderDetail />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="product-favorites" element={<FavoritesPage />} />
+            </Route>
+
+            <Route path="cart" element={<ShoppingCart />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="payment/completed" element={<PaymentCompleted />} />
+            <Route path="review" element={<ReviewPage />} />
+            <Route path="/resetpassword" element={<ResetPassword />} />
           </Route>
 
-
+          {/* Route công khai */}
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path=":category" element={<ProductCategories />} />
-          <Route path="cart" element={<ShoppingCart />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="payment/completed" element={<PaymentCompleted />} />
-          <Route path="review" element={<ReviewPage />} />
           <Route path="tryon" element={<TryOnPage />} />
         </Route>
+
+        {/* Auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<AuthOtp />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
-        <Route path="/resetpassword" element={<ResetPassword />} />
       </Routes>
+
       <ToastContainer
         position="top-left"
-        autoClose={5000}
+        autoClose={3000}
         hideProgressBar={false}
         newestOnTop={false}
-        closeOnClick={false}
+        closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
@@ -67,4 +77,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
