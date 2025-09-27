@@ -4,7 +4,7 @@ import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Navigation, Thumbs, Autoplay, EffectFade } from "swiper/modules"
 import ProductSlider from "../home/components/ProductSlider.jsx"
-import { getBestSellingProducts } from "../../services/productService.jsx"
+import {getBestSellingProducts, getSimilarProducts} from "../../services/productService.jsx"
 import "swiper/css"
 import "swiper/css/free-mode"
 import "swiper/css/navigation"
@@ -27,7 +27,7 @@ const ProductDetail = () => {
     const [product, setProduct] = useState(null)
     const [reviews, setReviews] = useState([])
     const [loadingReviews, setLoadingReviews] = useState(false)
-    const [listBestSellingProducts, setListBestSellingProducts] = useState([])
+    const [listSimilarProducts, setListSimilarProducts] = useState([])
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
     const [activeImageIndex, setActiveImageIndex] = useState(0)
     const [isHovered, setIsHovered] = useState(false);
@@ -61,9 +61,12 @@ const ProductDetail = () => {
         const clothUrl = product.images[0]?.url; // ảnh đầu tiên của sản phẩm
         navigate("/tryon", { state: { clothUrl } });
     };
-    const fetchListBestSellingProducts = async () => {
-        const data = await getBestSellingProducts()
-        setListBestSellingProducts(data)
+    const fetchSimilarProducts= async () => {
+        const data = await getSimilarProducts(id);
+        if (data)
+        {
+            setListSimilarProducts(data.items);
+        }
     }
 
     const [relatedProducts] = useState([])
@@ -184,7 +187,7 @@ const ProductDetail = () => {
             setProduct(res)
         }
         fetchData()
-        fetchListBestSellingProducts()
+        fetchSimilarProducts()
     }, [id])
 
     return (
@@ -607,11 +610,9 @@ const ProductDetail = () => {
                 </div>
 
                 <div className="mt-20">
-                    <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
-                        YOU MIGHT ALSO LIKE
-                    </h2>
                     <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                        <ProductSlider listProducts={listBestSellingProducts} />
+                        <ProductSlider listProducts={listSimilarProducts }
+                                       nameTop="SIMILAR PRODUCTS"/>
                     </div>
                 </div>
             </div>

@@ -66,7 +66,7 @@ const PaymentMethodPage = () => {
             else if (selectedMethod === "vnpay") {
                 // ---------------- VNPay ----------------
                 // gọi API backend tạo order và lấy paymentUrl
-                const res = await axios.post("api/orders/checkout/vnpay", { items });
+                const res = await axios.post("api/orders/checkout/vnpay", cart.items);
                 const { orderId, paymentUrl } = res;
 
                 if (!paymentUrl) {
