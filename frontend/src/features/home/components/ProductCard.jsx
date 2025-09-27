@@ -101,8 +101,8 @@ const ProductCard = ({ product }) => {
                 <Star key={i} className="w-4 h-4 fill-current" />
               ))}
             </div>
-            <span className="text-sm text-gray-600 font-medium">5.0</span>
-            <span className="text-xs text-gray-400">(128 đánh giá)</span>
+            <span className="text-sm text-gray-600 font-medium">{product.avg_rating}</span>
+            <span className="text-xs text-gray-400">({product.review_count} đánh giá)</span>
           </div>
 
           {/* Price */}

@@ -1,6 +1,5 @@
 import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order } from "../models/index.js";
-import {Op} from "sequelize";
-
+import { Op, fn, col } from "sequelize";
 
 class ProductService {
     async getProductEngagement(productId) {
@@ -33,8 +32,17 @@ class ProductService {
     }
 
     // 1. Lấy 8 sản phẩm có view_count cao nhất
+
     async getMostViewed(limit = 8) {
         return await Product.findAll({
+            attributes: {
+                include: [
+                    // trung bình rating
+                    [fn("AVG", col("reviews.rating")), "avg_rating"],
+                    // tổng số review
+                    [fn("COUNT", col("reviews.id")), "review_count"],
+                ],
+            },
             order: [["view_count", "DESC"]],
             limit,
             include: [
@@ -42,15 +50,29 @@ class ProductService {
                     model: ProductImage,
                     as: "images",
                     attributes: ["id", "url", "alt", "sort_order"],
+                    separate: true, // để order trong include không bị lỗi khi group
                     order: [["sort_order", "ASC"]],
                 },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: [], // không lấy toàn bộ review, chỉ dùng để tính toán
+                },
             ],
+            group: ["Product.id"], // phải group theo Product.id để AVG, COUNT hoạt động
+            subQuery: false,
         });
     }
 
-    // 2. Lấy 4 sản phẩm có discount cao nhất
+    // 2. Lấy 6 sản phẩm có discount_percent cao nhất
     async getTopDiscount(limit = 6) {
         return await Product.findAll({
+            attributes: {
+                include: [
+                    [fn("AVG", col("reviews.rating")), "avg_rating"],    // trung bình rating
+                    [fn("COUNT", col("reviews.id")), "review_count"],   // số lượt review
+                ],
+            },
             order: [["discount_percent", "DESC"]],
             limit,
             include: [
@@ -58,12 +80,19 @@ class ProductService {
                     model: ProductImage,
                     as: "images",
                     attributes: ["id", "url", "alt", "sort_order"],
+                    separate: true, // tránh lỗi group khi có nhiều ảnh
                     order: [["sort_order", "ASC"]],
                 },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: [], // chỉ dùng để tính toán
+                },
             ],
+            group: ["Product.id"],
+            subQuery: false,
         });
     }
-
     // 3. Lấy toàn bộ sản phẩm có phân trang
     async getAllProducts(page = 1, size = 10) {
         const offset = (page - 1) * size;
@@ -78,7 +107,10 @@ class ProductService {
                     attributes: ["id", "url", "alt", "sort_order"],
                     order: [["sort_order", "ASC"]],
                 },
+                { model: Review, as: "reviews", attributes: [] },
+
             ],
+
         });
 
         return {
@@ -110,7 +142,7 @@ class ProductService {
                 {
                     model: Review,
                     as: "reviews",
-                    attributes: ["id", "user_id", "rating", "text", "created_at"],
+                    attributes: [],
                 },
             ],
         });
@@ -125,6 +157,12 @@ class ProductService {
 
     async getNewestProducts(limit = 8) {
         return await Product.findAll({
+            attributes: {
+                include: [
+                    [fn("AVG", col("reviews.rating")), "avg_rating"],    // trung bình rating
+                    [fn("COUNT", col("reviews.id")), "review_count"],   // số lượt review
+                ],
+            },
             order: [["created_at", "DESC"]],
             limit,
             include: [
@@ -132,14 +170,29 @@ class ProductService {
                     model: ProductImage,
                     as: "images",
                     attributes: ["id", "url", "alt", "sort_order"],
+                    separate: true,
                     order: [["sort_order", "ASC"]],
                 },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: [],
+                },
             ],
+            group: ["Product.id"],
+            subQuery: false,
         });
     }
 
+
     async getBestSellingProducts(limit = 6) {
         return await Product.findAll({
+            attributes: {
+                include: [
+                    [fn("AVG", col("reviews.rating")), "avg_rating"],
+                    [fn("COUNT", col("reviews.id")), "review_count"],
+                ],
+            },
             order: [["sale_count", "DESC"]],
             limit,
             include: [
@@ -147,11 +200,20 @@ class ProductService {
                     model: ProductImage,
                     as: "images",
                     attributes: ["id", "url", "alt", "sort_order"],
+                    separate: true,
                     order: [["sort_order", "ASC"]],
                 },
+                {
+                    model: Review,
+                    as: "reviews",
+                    attributes: [],
+                },
             ],
+            group: ["Product.id"],
+            subQuery: false,
         });
     }
+
     // 5. Thêm sản phẩm + ảnh cloud
     async createProductWithImages(productData, files = []) {
         // 1. Tạo product
@@ -226,7 +288,7 @@ class ProductService {
         // 1) Lấy sản phẩm gốc
         const base = await Product.findByPk(id, {
             attributes: [
-                "id", "category_id", "price","original_price","discount_percent", "colors", "sizes", "is_active", "featured",
+                "id", "category_id", "price", "original_price", "discount_percent", "colors", "sizes", "is_active", "featured",
                 "sale_count", "view_count"
             ],
             include: [{ model: Category, as: "category", attributes: ["id", "name", "slug"] }],
@@ -248,7 +310,7 @@ class ProductService {
                 price: { [Op.between]: [minPrice, maxPrice] },
             },
             attributes: [
-                "id","name","slug","price","original_price","discount_percent","colors","sizes","featured","sale_count","view_count"
+                "id", "name", "slug", "price", "original_price", "discount_percent", "colors", "sizes", "featured", "sale_count", "view_count"
             ],
             include: [{ model: ProductImage, as: "images", attributes: ["id", "url"], required: false }],
 
@@ -262,18 +324,18 @@ class ProductService {
 
         // 4) Chấm điểm nhẹ theo trùng màu/size + gần giá
         const baseColors = Array.isArray(base.colors) ? base.colors : [];
-        const baseSizes  = Array.isArray(base.sizes)  ? base.sizes  : [];
+        const baseSizes = Array.isArray(base.sizes) ? base.sizes : [];
 
         const scored = candidates.map(p => {
             const colors = Array.isArray(p.colors) ? p.colors : [];
-            const sizes  = Array.isArray(p.sizes)  ? p.sizes  : [];
+            const sizes = Array.isArray(p.sizes) ? p.sizes : [];
             const overlapColors = colors.filter(c => baseColors.includes(c)).length;
-            const overlapSizes  = sizes.filter(s => baseSizes.includes(s)).length;
+            const overlapSizes = sizes.filter(s => baseSizes.includes(s)).length;
             const priceDiff = Math.abs(Number(p.price || 0) - basePrice);
 
             const score =
                 overlapColors * 3 +
-                overlapSizes  * 2 +
+                overlapSizes * 2 +
                 (p.featured ? 1 : 0) +
                 Math.max(0, 2 - Math.floor(priceDiff / Math.max(1, basePrice * 0.1)));
 
@@ -293,7 +355,7 @@ class ProductService {
                     is_active: true,
                     category_id: base.category_id,
                 },
-                attributes: ["id","name","slug","price","original_price","discount_percent","colors","sizes","featured","sale_count","view_count"],
+                attributes: ["id", "name", "slug", "price", "original_price", "discount_percent", "colors", "sizes", "featured", "sale_count", "view_count"],
                 include: [{ model: ProductImage, as: "images", attributes: ["id", "url"], required: false }],
                 order: [
                     ["featured", "DESC"],
