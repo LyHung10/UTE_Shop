@@ -6,7 +6,7 @@ import { sendOtpMail } from './emailService';
 import { signAccessToken, signRefreshToken, persistRefreshToken } from './tokenService';
 import OTP_TYPES from '../enums/otpType';
 
-const { User, ResetToken } = db;
+const { User, ResetToken, } = db;
 
 export async function registerUser({ email, password, first_name, last_name }) {
   let user = await User.findOne({ where: { email } });
@@ -55,7 +55,7 @@ export async function loginUser({ email, password }, req) {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw { status: 401, message: 'Sai thông tin đăng nhập' };
 
-  const accessToken = signAccessToken({ sub: user.id, email: user.email });
+  const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role_id });
   const refreshToken = signRefreshToken({ sub: user.id });
   await persistRefreshToken(user.id, refreshToken, {
     userAgent: req.headers['user-agent'],

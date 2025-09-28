@@ -19,10 +19,9 @@ import ReviewPage from "@/features/review/pages/ReviewPage.jsx";
 import TryOnPage from "@/features/product/pages/Tryon.jsx";
 import FavoritesPage from "./features/product/pages/FavoritesPage.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
-
 import { Bounce, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import ChatAdminPanel from "./features/chat/ChatAdminPanel.jsx";
 function App() {
   return (
     <>
@@ -32,20 +31,23 @@ function App() {
 
           {/* Các route cần đăng nhập */}
           {/* <Route element={<PrivateRoute />}> */}
-            <Route path="user" element={<UserLayout />}>
-              <Route index element={<UserProfile />} />
-              <Route path="my-orders" element={<OrderHistory />} />
-              <Route path="order-detail/:id" element={<OrderDetail />} />
-              <Route path="profile" element={<UserProfile />} />
-              <Route path="product-favorites" element={<FavoritesPage />} />
-            </Route>
-
-            <Route path="cart" element={<ShoppingCart />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="payment/completed" element={<PaymentCompleted />} />
-            <Route path="review" element={<ReviewPage />} />
-            <Route path="/resetpassword" element={<ResetPassword />} />
+          <Route path="user" element={<UserLayout />}>
+            <Route index element={<UserProfile />} />
+            <Route path="my-orders" element={<OrderHistory />} />
+            <Route path="order-detail/:id" element={<OrderDetail />} />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="product-favorites" element={<FavoritesPage />} />
+          </Route>
+          <Route path="cart" element={<ShoppingCart />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="payment/completed" element={<PaymentCompleted />} />
+          <Route path="review" element={<ReviewPage />} />
+          <Route path="resetpassword" element={<ResetPassword />} />
           {/* </Route> */}
+
+          {/* Route Admin */}
+          <Route path="admin/chat" element={<ChatAdminPanel />} />
+
 
           {/* Route công khai */}
           <Route path="product/:id" element={<ProductDetail />} />

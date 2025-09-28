@@ -42,9 +42,30 @@ export function authenticateToken(req, res, next) {
       console.log("JWT verify error:", err);
       return res.status(401).json({ message: "Token is not valid" });
     }
-  console.log("Token received:", token);
+    console.log("Token received:", token);
 
     req.user = payload; // payload token
     next();
   });
+}
+
+// Middleware chỉ cho admin
+export function authAdmin(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+
+  if (!token) return res.status(401).json({ message: 'Missing token' });
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
+    if (payload.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    req.user = payload;
+    next();
+  } catch (e) {
+    return res.status(401).json({ message: 'Invalid/expired token' });
+  }
 }

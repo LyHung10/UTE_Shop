@@ -13,18 +13,18 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use(function (config) {
-    const access_token = store.getState().user.account.accessToken;
-    config.headers["Authorization"] = `Bearer ${access_token}`;
+    const user = store.getState().user;
+    const access_token = user?.account?.accessToken; // optional chaining
+    if (access_token) {
+        config.headers["Authorization"] = `Bearer ${access_token}`;
+    }
     NProgress.start();
-    // Do something before request is sent
-    // log đường dẫn thực sự mà axios sẽ gọi
     console.log(">>> Request URL:", config.baseURL + config.url);
-
     return config;
 }, function (error) {
-    // Do something with request error
     return Promise.reject(error);
 });
+
 
 // Add a response interceptor
 instance.interceptors.response.use(function (response) {

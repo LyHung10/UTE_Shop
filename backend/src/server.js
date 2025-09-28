@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
+import { createServer } from 'http';
 import { sequelize } from './config/configdb.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -16,12 +17,26 @@ import { errorHandler } from './middleware/errorHandler.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import voucherRoutes from "./routes/voucherRoutes";
 import favoriteProductRoute from "./routes/favoriteProductRoute.js";
+// import notificationRoutes from "./routes/notificationRoutes.js";
+import chatRoutes from './routes/chatRoutes.js';
+import SocketService from './services/socketService.js';
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
+const io = SocketService.init(server);
+
+//Middleware to attach io to req
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Middleware chung
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -46,6 +61,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/favorites', favoriteProductRoute);
+app.use('/api/chat', chatRoutes);
 // Error handler
 app.use(errorHandler);
 
@@ -55,8 +71,8 @@ app.use(errorHandler);
     await sequelize.authenticate();
     console.log('✅ Database connected!');
     await sequelize.sync();
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+    const PORT = process.env.PORT || 4000;
+    server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
   } catch (err) {
     console.error('❌ Failed to start server:', err);
   }
