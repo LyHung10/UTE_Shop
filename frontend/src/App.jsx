@@ -31,7 +31,7 @@ function App() {
           <Route index element={<HomePage />} />
 
           {/* Các route cần đăng nhập */}
-          <Route element={<PrivateRoute />}>
+          {/* <Route element={<PrivateRoute />}> */}
             <Route path="user" element={<UserLayout />}>
               <Route index element={<UserProfile />} />
               <Route path="my-orders" element={<OrderHistory />} />
@@ -45,7 +45,7 @@ function App() {
             <Route path="payment/completed" element={<PaymentCompleted />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="/resetpassword" element={<ResetPassword />} />
-          </Route>
+          {/* </Route> */}
 
           {/* Route công khai */}
           <Route path="product/:id" element={<ProductDetail />} />
