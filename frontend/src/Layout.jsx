@@ -8,8 +8,8 @@ const Layout = () => {
       <Header />
       <main className="mt-[120px]">
         <Outlet />
-        <ChatBox />
       </main>
+      <ChatBox apiUrl="http://localhost:4000" />
     </div>
   );
 };

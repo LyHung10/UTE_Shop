@@ -1,0 +1,60 @@
+UTE_SHOP
+├── backend
+│   ├── node_modules
+│   └── src
+│       ├── config
+│       ├── controllers
+│       │   ├── authController.js
+│       │   ├── categoryController.js
+│       │   ├── chatController.js
+│       │   ├── favoriteProductController.js
+│       │   ├── notificationController.js
+│       │   ├── orderController.js
+│       │   ├── paymentController.js
+│       │   ├── productController.js
+│       │   ├── reviewController.js
+│       │   ├── userController.js
+│       │   └── voucherController.js
+│       ├── enums
+│       ├── middleware
+│       ├── migrations
+│       ├── models
+│       ├── routes
+│       ├── seeders
+│       ├── services
+│       ├── templates
+│       ├── utils
+│       ├── views
+│       │   └── users
+│       │       └── crud.ejs
+│       └── server.js
+└── frontend
+    ├── public
+    ├── src
+    │   ├── assets
+    │   ├── components
+    │   │   ├── ui
+    │   │   ├── PrivateRoute.jsx
+    │   │   └── ScrollToTop.jsx
+    │   ├── features
+    │   │   ├── auth
+    │   │   ├── cart
+    │   │   ├── checkout
+    │   │   │   └── pages
+    │   │   ├── home
+    │   │   ├── product
+    │   │   ├── review
+    │   │   └── user
+    │   ├── redux
+    │   ├── services
+    │   ├── styles
+    │   ├── utils
+    │   ├── App.css
+    │   ├── App.jsx
+    │   ├── index.css
+    │   ├── Layout.jsx
+    │   ├── main.jsx
+    │   └── .gitignore
+    ├── .eslint.config.js
+    ├── index.html
+    └── package-lock.json
