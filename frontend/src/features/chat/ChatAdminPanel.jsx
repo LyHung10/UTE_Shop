@@ -1,291 +1,430 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    MessageSquare,
-    Send,
-    Search,
-    MoreVertical,
-    User,
-    CheckCircle,
-    Activity,
-    MessageCircle,
-    Phone
+    MessageCircle, Send, Search, Clock, CheckCircle, XCircle,
+    User, Filter, RefreshCw, Loader2, ArrowLeft, Settings
 } from 'lucide-react';
-import { io } from "socket.io-client";
-import axios from '../../utils/axiosCustomize';
+import { io } from 'socket.io-client';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 
-const ChatAdminPanel = ({ adminUser, apiUrl = 'http://localhost:4000' }) => {
+const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     const [sessions, setSessions] = useState([]);
     const [selectedSession, setSelectedSession] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [loading, setLoading] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [stats, setStats] = useState({ total: 0, active: 0, waiting: 0, closed: 0 });
+    const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
+    const hasJoinedRoomRef = useRef(false);
 
-    // Thiết lập axios với accessToken admin
-    useEffect(() => {
-        loadSessions();
-        loadStats();
-        connectWebSocket();
-    }, [adminUser?.accessToken, statusFilter]);
+    const user = useSelector((state) => state.user?.account);
+    const accessToken = user?.accessToken;
 
-    // Load sessions
-    const loadSessions = async () => {
-        try {
-            setLoading(true);
-            // Chỉ gửi status nếu khác 'all'
-            const params = {};
-            if (statusFilter !== 'all') params.status = statusFilter;
-
-            const response = await axios.get('api/chat/admin/sessions', { params });
-
-            if (response.success) setSessions(response.data); // nhớ dùng data.data vì API trả { success, data, pagination }
-        } catch (error) {
-            console.error('Failed to load sessions:', error);
-        } finally {
-            setLoading(false);
-        }
+    // Scroll to bottom
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // THÊM useEffect để tự động join room khi selectedSession thay đổi
+    useEffect(() => {
+        if (selectedSession && socketRef.current?.connected) {
+            socketRef.current.emit('join_chat', selectedSession.session_id);
+            hasJoinedRoomRef.current = true;
+            console.log('Auto-joined room:', selectedSession.session_id);
+        }
+    }, [selectedSession]);
+
+    // Load sessions với useCallback để tránh recreate function
+    const loadSessions = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`${apiUrl}/api/chat/admin/sessions`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                params: { status: filter === 'all' ? null : filter }
+            });
+
+            if (response.data.success) {
+                setSessions(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to load sessions:', error);
+            toast.error('Không thể tải danh sách chat!');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [apiUrl, accessToken, filter]);
 
     // Load stats
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
-            const response = await axios.get('api/chat/admin/stats');
-            if (response.data.success) setStats(response.data);
+            const response = await axios.get(`${apiUrl}/api/chat/admin/stats`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+
+            if (response.data.success) {
+                setStats(response.data.data);
+            }
         } catch (error) {
             console.error('Failed to load stats:', error);
         }
-    };
+    }, [apiUrl, accessToken]);
 
-    // Kết nối WebSocket
-    const connectWebSocket = () => {
-        if (!adminUser?.accessToken) return;
-
-        socketRef.current = io(apiUrl, {
-            transports: ["websocket"],
-            auth: { accessToken: adminUser.accessToken },
-        });
-
-        socketRef.current.on("connect", async () => {
-            console.log("Socket.IO connected");
-            await loadSessions();
-            await loadStats();
-        });
-
-        // THÊM: Listener cho tin nhắn từ cả user và admin
-        socketRef.current.on("new_message", (messageData) => {
-            console.log('Admin received message:', messageData);
-
-            // Cập nhật session list
-            loadSessions();
-
-            // Nếu đang xem session này, thêm vào danh sách tin nhắn
-            if (selectedSession?.session_id === messageData.session_id) {
-                setMessages(prev => [...prev, messageData]);
-                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-            }
-        });
-
-        // SỬA: data.sessionId thay vì data.session_id
-        socketRef.current.on("new_user_message", (data) => {
-            console.log('Admin received user message:', data);
-
-            // Cập nhật session list
-            loadSessions();
-
-            // SỬA: data.sessionId và data.message
-            if (selectedSession?.session_id === data.sessionId) {
-                setMessages(prev => [...prev, data.message]);
-                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-            }
-        });
-
-        socketRef.current.on("session_updated", (data) => {
-            setSessions(prev =>
-                prev.map(s => s.session_id === data.session.session_id ? data.session : s)
-            );
-        });
-
-        socketRef.current.on("disconnect", () => {
-            console.log("Socket.IO disconnected");
-        });
-    };
-
-    useEffect(() => {
-        connectWebSocket();
-        return () => {
-            socketRef.current?.disconnect();
-        };
-    }, [adminUser?.accessToken, statusFilter, selectedSession?.session_id]);
-
-    // Chọn session
-    const selectSession = async (session) => {
-        setSelectedSession(session);
+    // Load messages
+    const loadMessages = useCallback(async (sessionId) => {
         try {
-            const response = await axios.get(`api/chat/messages/${session.session_id}`);
-            console.log(response)
-            if (response.success) {
-                setMessages(response.data);
-                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+            const response = await axios.get(`${apiUrl}/api/chat/messages/${sessionId}`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+
+            if (response.data.success) {
+                setMessages(response.data.data);
             }
         } catch (error) {
             console.error('Failed to load messages:', error);
+            toast.error('Không thể tải tin nhắn!');
         }
-    };
+    }, [apiUrl, accessToken]);
 
-    // Gửi tin nhắn
-    const sendMessage = async () => {
-        if (!inputMessage.trim() || !selectedSession) return;
-        try {
-            const response = await axios.post('api/chat/admin/messages', {
-                sessionId: selectedSession.session_id,
-                message: inputMessage.trim()
-            });
-            console.log(response);
-            if (response.success) {
-                setInputMessage('');
-                setMessages(prev => [...prev, response.data]);
+    // Initialize socket connection - FIXED
+    useEffect(() => {
+        if (!accessToken) {
+            toast.error('Vui lòng đăng nhập với tài khoản admin!');
+            return;
+        }
+
+        // Clean up existing socket
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
+
+        socketRef.current = io(apiUrl, {
+            auth: { token: accessToken },
+            transports: ['websocket', 'polling']
+        });
+
+        const socket = socketRef.current;
+
+        const handleConnect = () => {
+            console.log('Admin socket connected');
+            setIsConnected(true);
+            socket.emit('join_admin');
+        };
+
+        const handleDisconnect = () => {
+            console.log('Admin socket disconnected');
+            setIsConnected(false);
+        };
+
+        const handleNewMessage = (message) => {
+            console.log('Admin received new message:', message);
+
+            // Only update if this is the selected session AND message doesn't exist
+            if (selectedSession && message.session_id === selectedSession.session_id) {
+                setMessages((prev) => {
+                    const messageExists = prev.some(m => m.id === message.id);
+                    if (messageExists) return prev;
+                    return [...prev, message];
+                });
             }
+        };
+
+        const handleNewUserMessage = ({ sessionId, message }) => {
+            console.log('New user message notification:', sessionId);
+            toast.success('Tin nhắn mới từ khách hàng!', {
+                icon: '💬',
+                duration: 3000
+            });
+            loadSessions();
+        };
+
+        const handleSessionUpdated = ({ session }) => {
+            console.log('Session updated:', session);
+            loadSessions();
+        };
+
+        const handleError = (error) => {
+            console.error('Admin socket error:', error);
+            toast.error('Lỗi kết nối. Vui lòng thử lại!');
+        };
+
+        // Add event listeners
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        socket.on('new_message', handleNewMessage);
+        socket.on('new_user_message', handleNewUserMessage);
+        socket.on('session_updated', handleSessionUpdated);
+        socket.on('error', handleError);
+
+        // Load initial data
+        loadSessions();
+        loadStats();
+
+        return () => {
+            // Remove all event listeners
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('new_message', handleNewMessage);
+            socket.off('new_user_message', handleNewUserMessage);
+            socket.off('session_updated', handleSessionUpdated);
+            socket.off('error', handleError);
+
+            socket.disconnect();
+            socketRef.current = null;
+            hasJoinedRoomRef.current = false;
+        };
+    }, [accessToken, apiUrl, loadSessions, loadStats, selectedSession]);
+
+    // Handle session selection
+    const handleSelectSession = useCallback(async (session) => {
+        setSelectedSession(session);
+        await loadMessages(session.session_id);
+
+        // Reset join room flag
+        hasJoinedRoomRef.current = false;
+
+        // Join socket room với debounce
+        if (socketRef.current && !hasJoinedRoomRef.current) {
+            socketRef.current.emit('join_chat', session.session_id);
+            hasJoinedRoomRef.current = true;
+            console.log('Joined room:', session.session_id);
+        }
+    }, [loadMessages]);
+
+    // Send message - FIXED
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim() || !selectedSession) return;
+
+        const messageText = inputMessage.trim();
+        setInputMessage('');
+
+        try {
+            // Optimistic update với ID tạm thời
+            const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const tempMessage = {
+                id: tempId,
+                message: messageText,
+                sender_type: 'admin',
+                created_at: new Date().toISOString(),
+                user: {
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    image: user.image
+                }
+            };
+
+            setMessages((prev) => [...prev, tempMessage]);
+
+            // Send via socket ONLY - remove HTTP call to avoid duplicates
+            socketRef.current?.emit('send_message', {
+                sessionId: selectedSession.session_id,
+                message: messageText,
+                messageType: 'text'
+            });
+
+            console.log('Message sent via socket:', messageText);
+
         } catch (error) {
             console.error('Failed to send message:', error);
+            toast.error('Không thể gửi tin nhắn!');
+            // Remove optimistic message on error
+            setMessages((prev) => prev.filter((m) => m.id === tempId));
         }
     };
 
-    // Cập nhật trạng thái session
-    const updateSessionStatus = async (sessionId, status, assignedTo = null) => {
+    // Update session status
+    const handleUpdateStatus = async (sessionId, status) => {
         try {
-            const response = await axios.put(`api/chat/admin/sessions/${sessionId}`, { status, assignedTo });
-            if (response.success) loadSessions();
+            await axios.put(
+                `${apiUrl}/api/chat/admin/sessions/${sessionId}`,
+                { status },
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                }
+            );
+
+            toast.success(`Đã ${status === 'closed' ? 'đóng' : 'cập nhật'} phiên chat!`);
+            loadSessions();
+
+            if (selectedSession?.session_id === sessionId) {
+                setSelectedSession((prev) => ({ ...prev, status }));
+            }
         } catch (error) {
-            console.error('Failed to update session:', error);
+            console.error('Failed to update status:', error);
+            toast.error('Không thể cập nhật trạng thái!');
         }
     };
 
-    // Lọc sessions
-    const filteredSessions = sessions.filter(session => {
-        const matchesSearch = !searchQuery ||
-            session.user?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            session.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            session.guest_info?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || session.status === statusFilter;
-        return matchesSearch && matchesStatus;
+    // Format time
+    const formatTime = (date) => {
+        return new Date(date).toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    // Filter sessions
+    const filteredSessions = sessions.filter((session) => {
+        const matchesSearch = searchTerm
+            ? (session.user?.first_name + ' ' + session.user?.last_name)
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            session.session_id.toLowerCase().includes(searchTerm.toLowerCase())
+            : true;
+        return matchesSearch;
     });
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'active': return 'text-green-600 bg-green-100';
-            case 'waiting': return 'text-yellow-600 bg-yellow-100';
-            case 'closed': return 'text-gray-600 bg-gray-100';
-            default: return 'text-gray-600 bg-gray-100';
-        }
-    };
-
-    const formatTime = (timestamp) => new Date(timestamp).toLocaleString();
-
     return (
-        <div className="flex h-screen bg-gray-50">
-            {/* Sidebar */}
-            <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="h-screen bg-gray-100 flex">
+            {/* Sidebar - Sessions List */}
+            <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+                {/* Header */}
                 <div className="p-4 border-b border-gray-200">
-                    <h1 className="text-lg font-semibold text-gray-900 mb-4">Chat Support Admin</h1>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                            <div className="flex items-center justify-between">
-                                <MessageCircle className="w-5 h-5 text-blue-600" />
-                                <span className="text-xs text-blue-600 font-medium">Tổng</span>
-                            </div>
-                            <div className="text-xl font-bold text-blue-600">{stats.total}</div>
-                        </div>
-                        <div className="bg-green-50 p-3 rounded-lg">
-                            <div className="flex items-center justify-between">
-                                <Activity className="w-5 h-5 text-green-600" />
-                                <span className="text-xs text-green-600 font-medium">Hoạt động</span>
-                            </div>
-                            <div className="text-xl font-bold text-green-600">{stats.active}</div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h1 className="text-xl font-bold text-gray-800">Admin Chat Panel</h1>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <span className="text-xs text-gray-500">
+                                {isConnected ? 'Connected' : 'Disconnected'}
+                            </span>
                         </div>
                     </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                        <div className="bg-blue-50 p-2 rounded-lg text-center">
+                            <p className="text-xs text-gray-600">Tổng</p>
+                            <p className="text-lg font-bold text-blue-600">{stats.total}</p>
+                        </div>
+                        <div className="bg-green-50 p-2 rounded-lg text-center">
+                            <p className="text-xs text-gray-600">Active</p>
+                            <p className="text-lg font-bold text-green-600">{stats.active}</p>
+                        </div>
+                        <div className="bg-yellow-50 p-2 rounded-lg text-center">
+                            <p className="text-xs text-gray-600">Waiting</p>
+                            <p className="text-lg font-bold text-yellow-600">{stats.waiting}</p>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-lg text-center">
+                            <p className="text-xs text-gray-600">Closed</p>
+                            <p className="text-lg font-bold text-gray-600">{stats.closed}</p>
+                        </div>
+                    </div>
+
+                    {/* Search */}
                     <div className="relative mb-3">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm khách hàng..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Tìm kiếm..."
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="all">Tất cả trạng thái</option>
-                        <option value="active">Đang hoạt động</option>
-                        <option value="waiting">Chờ phản hồi</option>
-                        <option value="closed">Đã đóng</option>
-                    </select>
+
+                    {/* Filter */}
+                    <div className="flex gap-2">
+                        {['all', 'active', 'waiting', 'closed'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setFilter(status)}
+                                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors ${filter === status
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                            >
+                                {status === 'all' ? 'Tất cả' : status.charAt(0).toUpperCase() + status.slice(1)}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
+                {/* Sessions List */}
                 <div className="flex-1 overflow-y-auto">
-                    {loading ? (
-                        <div className="p-4 text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-full">
+                            <Loader2 className="animate-spin text-blue-600" size={32} />
                         </div>
                     ) : filteredSessions.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500">Không có phiên chat nào</div>
+                        <div className="text-center text-gray-500 mt-8 px-4">
+                            <MessageCircle size={48} className="mx-auto mb-4 text-gray-300" />
+                            <p className="text-sm">Không có phiên chat nào</p>
+                        </div>
                     ) : (
                         filteredSessions.map((session) => (
                             <div
                                 key={session.id}
-                                onClick={() => selectSession(session)}
-                                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedSession?.id === session.id ? 'bg-blue-50 border-blue-200' : ''}`}
+                                onClick={() => handleSelectSession(session)}
+                                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedSession?.id === session.id ? 'bg-blue-50' : ''
+                                    }`}
                             >
-                                <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                                            {session.user ? (
-                                                session.user.image ? (
-                                                    <img src={session.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                                ) : (
-                                                    `${session.user.first_name?.[0] || ''}${session.user.last_name?.[0] || ''}`
-                                                )
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                        {session.user ? (
+                                            session.user.image ? (
+                                                <img src={session.user.image} alt="" className="w-full h-full rounded-full object-cover" />
                                             ) : (
-                                                <User className="w-5 h-5" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-900 text-sm">
-                                                {session.user
-                                                    ? `${session.user.first_name || ''} ${session.user.last_name || ''}`.trim()
-                                                    : session.guest_info?.name || 'Guest User'}
-                                            </h3>
-                                            <p className="text-xs text-gray-500">
-                                                {session.user?.email || 'Guest'}
-                                            </p>
-                                        </div>
+                                                `${session.user.first_name?.[0] || ''}${session.user.last_name?.[0] || ''}`
+                                            )
+                                        ) : (
+                                            <User size={20} />
+                                        )}
                                     </div>
-
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
-                                            {session.status === 'active' ? 'Hoạt động' :
-                                                session.status === 'waiting' ? 'Chờ' : 'Đóng'}
-                                        </span>
-                                        <span className="text-xs text-gray-400">
-                                            {formatTime(session.last_message_at)}
-                                        </span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <h3 className="font-semibold text-sm text-gray-800 truncate">
+                                                {session.user
+                                                    ? `${session.user.first_name || ''} ${session.user.last_name || ''}`
+                                                    : 'Guest User'}
+                                            </h3>
+                                            <span className="text-xs text-gray-500">
+                                                {formatTime(session.last_message_at)}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate mb-1">
+                                            {session.messages?.[0]?.message || 'Không có tin nhắn'}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`text-xs px-2 py-0.5 rounded-full ${session.status === 'active'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : session.status === 'waiting'
+                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                    }`}
+                                            >
+                                                {session.status}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                                {session.messages?.[0] && (
-                                    <p className="text-sm text-gray-600 truncate">{session.messages[0].message}</p>
-                                )}
                             </div>
                         ))
                     )}
+                </div>
+
+                {/* Refresh Button */}
+                <div className="p-3 border-t border-gray-200">
+                    <button
+                        onClick={() => {
+                            loadSessions();
+                            loadStats();
+                        }}
+                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
+                    >
+                        <RefreshCw size={16} />
+                        <span className="text-sm font-medium">Làm mới</span>
+                    </button>
                 </div>
             </div>
 
@@ -294,136 +433,172 @@ const ChatAdminPanel = ({ adminUser, apiUrl = 'http://localhost:4000' }) => {
                 {selectedSession ? (
                     <>
                         {/* Chat Header */}
-                        <div className="bg-white border-b border-gray-200 p-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                                        {selectedSession.user ? (
-                                            selectedSession.user.image ? (
-                                                <img src={selectedSession.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                `${selectedSession.user.first_name?.[0] || ''}${selectedSession.user.last_name?.[0] || ''}`
-                                            )
+                        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setSelectedSession(null)}
+                                    className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {selectedSession.user ? (
+                                        selectedSession.user.image ? (
+                                            <img src={selectedSession.user.image} alt="" className="w-full h-full rounded-full object-cover" />
                                         ) : (
-                                            <User className="w-5 h-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h2 className="font-semibold text-gray-900">
-                                            {selectedSession.user
-                                                ? `${selectedSession.user.first_name || ''} ${selectedSession.user.last_name || ''}`.trim()
-                                                : selectedSession.guest_info?.name || 'Guest User'}
-                                        </h2>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                            <span className={`w-2 h-2 rounded-full ${selectedSession.status === 'active' ? 'bg-green-400' : 'bg-gray-400'}`}></span>
-                                            <span>{selectedSession.user?.email || 'Guest'}</span>
-                                        </div>
-                                    </div>
+                                            `${selectedSession.user.first_name?.[0] || ''}${selectedSession.user.last_name?.[0] || ''}`
+                                        )
+                                    ) : (
+                                        <User size={20} />
+                                    )}
                                 </div>
-
-                                <div className="flex items-center gap-2">
-                                    <select
-                                        value={selectedSession.status}
-                                        onChange={(e) => updateSessionStatus(selectedSession.session_id, e.target.value)}
-                                        className="px-3 py-1 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                <div>
+                                    <h2 className="font-semibold text-gray-800">
+                                        {selectedSession.user
+                                            ? `${selectedSession.user.first_name || ''} ${selectedSession.user.last_name || ''}`
+                                            : 'Guest User'}
+                                    </h2>
+                                    <p className="text-xs text-gray-500">
+                                        Session: {selectedSession.session_id.slice(0, 12)}...
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span
+                                    className={`text-xs px-3 py-1 rounded-full font-medium ${selectedSession.status === 'active'
+                                        ? 'bg-green-100 text-green-700'
+                                        : selectedSession.status === 'waiting'
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : 'bg-gray-100 text-gray-700'
+                                        }`}
+                                >
+                                    {selectedSession.status}
+                                </span>
+                                {selectedSession.status !== 'closed' && (
+                                    <button
+                                        onClick={() => handleUpdateStatus(selectedSession.session_id, 'closed')}
+                                        className="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full hover:bg-red-200 transition-colors"
                                     >
-                                        <option value="active">Hoạt động</option>
-                                        <option value="waiting">Chờ</option>
-                                        <option value="closed">Đóng</option>
-                                    </select>
-
-                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                                        <Phone className="w-4 h-4" />
+                                        Đóng chat
                                     </button>
-                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                             {messages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                                    <MessageSquare className="w-12 h-12 mb-4" />
-                                    <p>Chưa có tin nhắn nào trong phiên chat này</p>
+                                <div className="text-center text-gray-500 mt-8">
+                                    <MessageCircle size={48} className="mx-auto mb-4 text-gray-300" />
+                                    <p className="text-sm">Chưa có tin nhắn nào</p>
                                 </div>
                             ) : (
-                                messages.map((message) => (
-                                    <div key={message.id} className={`mb-4 ${message.sender_type === 'admin' ? 'flex justify-end' : 'flex justify-start'}`}>
-                                        <div className={`max-w-[70%] ${message.sender_type === 'admin' ? 'order-2' : ''}`}>
-                                            <div className={`rounded-2xl px-4 py-2 ${message.sender_type === 'admin'
-                                                ? 'bg-blue-600 text-white'
-                                                : message.sender_type === 'bot'
-                                                    ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                                                    : 'bg-white text-gray-800 border border-gray-200'
-                                                }`}>
-                                                {message.sender_type === 'bot' && (
-                                                    <div className="flex items-center gap-2 text-xs text-purple-600 mb-1">
-                                                        <Activity className="w-3 h-3" />
-                                                        <span>Bot tự động</span>
-                                                    </div>
+                                messages.map((msg, index) => (
+                                    <div key={msg.id || index}>
+                                        <div
+                                            className={`flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'
+                                                }`}
+                                        >
+                                            <div
+                                                className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender_type === 'admin'
+                                                    ? 'bg-blue-600 text-white rounded-br-none'
+                                                    : msg.sender_type === 'bot'
+                                                        ? 'bg-gray-200 text-gray-800 rounded-bl-none'
+                                                        : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
+                                                    }`}
+                                            >
+                                                {msg.sender_type === 'user' && msg.user && (
+                                                    <p className="text-xs font-semibold text-blue-600 mb-1">
+                                                        {msg.user.first_name} {msg.user.last_name}
+                                                    </p>
                                                 )}
-                                                <p className="text-sm leading-relaxed">{message.message}</p>
-                                                {message.metadata?.quick_replies && (
-                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                        {message.metadata.quick_replies.map((reply, index) => (
-                                                            <span key={index} className="px-2 py-1 bg-purple-200 text-purple-700 text-xs rounded-full">
-                                                                {reply.title}
-                                                            </span>
-                                                        ))}
-                                                    </div>
+                                                {msg.sender_type === 'admin' && msg.user && (
+                                                    <p className="text-xs font-semibold text-blue-100 mb-1">
+                                                        You
+                                                    </p>
                                                 )}
-                                            </div>
-                                            <div className={`text-xs text-gray-500 mt-1 ${message.sender_type === 'admin' ? 'text-right' : ''}`}>
-                                                {formatTime(message.created_at)}
-                                                {message.sender_type === 'admin' && (
-                                                    <CheckCircle className="inline w-3 h-3 ml-1 text-green-500" />
-                                                )}
+                                                <p className="text-sm whitespace-pre-wrap break-words">
+                                                    {msg.message}
+                                                </p>
+                                                <p
+                                                    className={`text-xs mt-1 ${msg.sender_type === 'admin' ? 'text-blue-100' : 'text-gray-500'
+                                                        }`}
+                                                >
+                                                    {formatTime(msg.created_at)}
+                                                </p>
                                             </div>
                                         </div>
+
+                                        {/* Quick replies */}
+                                        {msg.metadata?.quick_replies && msg.sender_type !== 'admin' && (
+                                            <div className="flex flex-wrap gap-2 mt-2 ml-2">
+                                                {msg.metadata.quick_replies.map((reply, i) => (
+                                                    <button
+                                                        key={i}
+                                                        className="bg-white border border-blue-300 text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-50 transition-colors"
+                                                    >
+                                                        {reply.title}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Message Input */}
+                        {/* Input */}
                         <div className="bg-white border-t border-gray-200 p-4">
-                            <div className="flex items-end gap-3">
-                                <div className="flex-1">
-                                    <textarea
-                                        value={inputMessage}
-                                        onChange={(e) => setInputMessage(e.target.value)}
-                                        onKeyPress={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                sendMessage();
-                                            }
-                                        }}
-                                        placeholder="Nhập tin nhắn phản hồi..."
-                                        className="w-full resize-none border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        rows={3}
-                                    />
+                            {selectedSession.status === 'closed' ? (
+                                <div className="text-center py-4">
+                                    <p className="text-sm text-gray-500 mb-2">
+                                        Phiên chat này đã được đóng
+                                    </p>
+                                    <button
+                                        onClick={() => handleUpdateStatus(selectedSession.session_id, 'active')}
+                                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Mở lại phiên chat
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={sendMessage}
-                                    disabled={!inputMessage.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-                                >
-                                    <Send className="w-4 h-4" />
-                                    Gửi
-                                </button>
-                            </div>
+                            ) : (
+                                <div className="flex items-end gap-2">
+                                    <div className="flex-1">
+                                        <textarea
+                                            value={inputMessage}
+                                            onChange={(e) => setInputMessage(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleSendMessage();
+                                                }
+                                            }}
+                                            placeholder="Nhập tin nhắn... (Shift + Enter để xuống dòng)"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                            rows="2"
+                                            disabled={!isConnected}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSendMessage}
+                                        disabled={!inputMessage.trim() || !isConnected}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
+                                    >
+                                        <Send size={20} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                            <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                            <h2 className="text-lg font-medium text-gray-700 mb-2">Chọn một phiên chat để bắt đầu</h2>
-                            <p className="text-sm">Chọn một khách hàng từ danh sách bên trái để xem và trả lời tin nhắn</p>
+                    <div className="flex-1 flex items-center justify-center bg-gray-50">
+                        <div className="text-center text-gray-400">
+                            <MessageCircle size={64} className="mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Chọn một phiên chat</h3>
+                            <p className="text-sm">
+                                Chọn một phiên chat từ danh sách bên trái để bắt đầu
+                            </p>
                         </div>
                     </div>
                 )}

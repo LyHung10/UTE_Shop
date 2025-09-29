@@ -38,10 +38,13 @@ class ChatController {
                 metadata
             });
 
-            // Emit to socket room for real-time updates
+            // QUAN TRỌNG: Emit new_message đến cả session room VÀ admin room
             req.io.to(sessionId).emit('new_message', chatMessage);
 
-            // Notify admin room
+            // THÊM: Emit new_message đến admin room để cập nhật ô chat
+            req.io.to('admin_room').emit('new_message', chatMessage);
+
+            // Notify admin room về tin nhắn mới từ user (cho session list)
             req.io.to('admin_room').emit('new_user_message', {
                 sessionId,
                 message: chatMessage
@@ -143,6 +146,8 @@ class ChatController {
 
             // THAY ĐỔI: Gửi 'new_message' cho cả user và admin
             req.io.to(sessionId).emit('new_message', chatMessage);
+            req.io.to('admin_room').emit('new_message', chatMessage);
+
             // req.io.to('admin_room').emit('new_message', chatMessage);
             req.io.to('admin_room').emit('admin_message_sent', {
                 sessionId,

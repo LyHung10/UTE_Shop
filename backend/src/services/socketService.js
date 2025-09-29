@@ -7,6 +7,7 @@ dotenv.config();
 
 class SocketService {
     init(server) {
+        if (this.io) return this.io;
         this.io = new Server(server, {
             cors: {
                 origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -22,9 +23,10 @@ class SocketService {
                 if (token) {
                     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
                     socket.user = payload;
-                    console.log(`User authenticated via socket: ${payload.sub}`);
+                    console.log(`User authenticated via socket: ${payload.sub}, Role: ${payload.role || 'user'}`);
                 } else {
                     socket.user = null; // Guest user
+                    console.log('Guest user connected');
                 }
                 next();
             } catch (err) {
@@ -37,48 +39,125 @@ class SocketService {
         this.io.on('connection', (socket) => {
             console.log(`User connected: ${socket.id}, User ID: ${socket.user?.sub || 'Guest'}`);
 
-            // Join chat room
+            // Join chat room với flag để tránh duplicate
             socket.on('join_chat', (sessionId) => {
+                if (socket.rooms.has(sessionId)) {
+                    console.log(`User ${socket.id} already in room: ${sessionId}`);
+                    return;
+                }
                 socket.join(sessionId);
                 console.log(`User ${socket.id} joined chat room: ${sessionId}`);
+                
+                // Thêm: User cũng join vào user room để nhận thông báo
+                if (!socket.user?.role || socket.user.role === 'user') {
+                    const userRoom = `user_${socket.user?.sub || 'guest'}`;
+                    if (!socket.rooms.has(userRoom)) {
+                        socket.join(userRoom);
+                        console.log(`User ${socket.id} joined user room: ${userRoom}`);
+                    }
+                }
             });
 
             // Admin join admin room
             socket.on('join_admin', () => {
-                socket.join('admin_room');
-                console.log(`Admin ${socket.id} joined admin room`);
+                if (socket.user?.role === 'admin') {
+                    if (socket.rooms.has('admin_room')) {
+                        console.log(`Admin ${socket.id} already in admin room`);
+                        return;
+                    }
+                    socket.join('admin_room');
+                    console.log(`Admin ${socket.id} joined admin room`);
+
+                    // Send welcome message
+                    socket.emit('admin_connected', {
+                        message: 'Successfully connected to admin panel'
+                    });
+                } else {
+                    socket.emit('error', {
+                        message: 'Unauthorized: Admin access required'
+                    });
+                }
             });
 
-            // Real-time message (Socket.IO based sending)
+            // Real-time message (Socket.IO based sending) - FIXED
             socket.on('send_message', async (data) => {
                 try {
                     const { sessionId, message, messageType = 'text' } = data;
                     const userId = socket.user?.sub || null;
 
-                    console.log('Received message via socket:', { sessionId, message, userId });
+                    console.log('Received message via socket:', {
+                        sessionId,
+                        message: message.substring(0, 50) + '...',
+                        userId,
+                        senderRole: socket.user?.role
+                    });
+
+                    // Determine sender type
+                    let senderType = 'user';
+                    if (socket.user?.role === 'admin') {
+                        senderType = 'admin';
+                    }
 
                     const chatMessage = await chatService.sendMessage({
                         sessionId,
                         userId,
                         message,
-                        senderType: socket.user?.role === 'admin' ? 'admin' : 'user',
+                        senderType,
                         messageType
                     });
 
-                    console.log('Created message:', chatMessage);
+                    console.log('Created message:', {
+                        id: chatMessage.id,
+                        sender_type: chatMessage.sender_type,
+                        session_id: chatMessage.session_id
+                    });
 
-                    // Emit to all users in the session room
-                    this.io.to(sessionId).emit('new_message', chatMessage);
+                    // QUAN TRỌNG: Sửa logic emit để đảm bảo cả user và admin đều nhận được tin nhắn
+                    
+                    // Emit đến tất cả user trong session room (EXCLUDING sender)
+                    socket.to(sessionId).emit('new_message', chatMessage);
 
-                    // QUAN TRỌNG: Thêm dòng này để gửi đến admin room
-                    this.io.to('admin_room').emit('new_message', chatMessage);
+                    // Emit đến sender để xác nhận (với flag riêng)
+                    socket.emit('new_message', { ...chatMessage, isOwnMessage: true });
 
-                    // Notify admin room if user message
+                    // THÊM MỚI: Logic thông báo realtime cho cả user và admin
                     if (chatMessage.sender_type === 'user') {
-                        this.io.to('admin_room').emit('new_user_message', {
+                        // User gửi -> thông báo cho admin room
+                        socket.to('admin_room').emit('new_user_message', {
                             sessionId,
                             message: chatMessage
                         });
+                        
+                        // THÊM: Cập nhật session list cho admin
+                        socket.to('admin_room').emit('session_updated', {
+                            sessionId,
+                            action: 'new_message'
+                        });
+                    } else if (chatMessage.sender_type === 'admin') {
+                        // Admin gửi -> thông báo cho admin room để cập nhật UI
+                        socket.to('admin_room').emit('admin_message_sent', {
+                            sessionId,
+                            message: chatMessage
+                        });
+                        
+                        // THÊM QUAN TRỌNG: Gửi thông báo đến user room để cập nhật cả panel và chat
+                        // Lấy thông tin session để tìm user id
+                        try {
+                            const session = await chatService.getSession(sessionId);
+                            if (session && session.user_id) {
+                                const userRoom = `user_${session.user_id}`;
+                                // Emit đến user room để cập nhật cả panel (nếu có) và chat
+                                socket.to(userRoom).emit('admin_replied', {
+                                    sessionId,
+                                    message: chatMessage
+                                });
+                                
+                                // THÊM: Gửi đến session room để đảm bảo chat box nhận được
+                                socket.to(sessionId).emit('new_message', chatMessage);
+                            }
+                        } catch (err) {
+                            console.error('Error getting session for user room:', err);
+                        }
                     }
 
                 } catch (err) {
@@ -87,12 +166,24 @@ class SocketService {
                 }
             });
 
+            // THÊM MỚI: User join user room để nhận thông báo admin reply
+            socket.on('join_user_room', (userId) => {
+                const userRoom = `user_${userId}`;
+                if (socket.rooms.has(userRoom)) {
+                    console.log(`User ${socket.id} already in user room: ${userRoom}`);
+                    return;
+                }
+                socket.join(userRoom);
+                console.log(`User ${socket.id} joined user room: ${userRoom}`);
+            });
+
             // Typing indicator
             socket.on('typing', (data) => {
                 const { sessionId, isTyping } = data;
+                // Broadcast to others in the room
                 socket.to(sessionId).emit('user_typing', {
                     userId: socket.user?.sub,
-                    name: socket.user?.name || 'Guest',
+                    name: socket.user?.first_name || 'Guest',
                     isTyping
                 });
             });
@@ -100,16 +191,30 @@ class SocketService {
             // Mark messages as read
             socket.on('mark_read', async (data) => {
                 try {
-                    socket.to(data.sessionId).emit('messages_read', {
-                        userId: socket.user?.sub
+                    const { sessionId } = data;
+                    socket.to(sessionId).emit('messages_read', {
+                        userId: socket.user?.sub,
+                        sessionId
                     });
                 } catch (err) {
                     console.error('Mark read error:', err);
                 }
             });
 
+            // Admin requests session list update
+            socket.on('request_sessions_update', () => {
+                if (socket.user?.role === 'admin') {
+                    socket.emit('sessions_update_requested');
+                }
+            });
+
             socket.on('disconnect', () => {
                 console.log(`User disconnected: ${socket.id}`);
+            });
+
+            // Handle errors
+            socket.on('error', (error) => {
+                console.error(`Socket error for ${socket.id}:`, error);
             });
         });
 
@@ -117,7 +222,24 @@ class SocketService {
     }
 
     getIO() {
+        if (!this.io) {
+            throw new Error('Socket.io not initialized! Call init() first.');
+        }
         return this.io;
+    }
+
+    // Helper method to emit to specific room
+    emitToRoom(room, event, data) {
+        if (this.io) {
+            this.io.to(room).emit(event, data);
+        }
+    }
+
+    // Helper method to emit to specific socket
+    emitToSocket(socketId, event, data) {
+        if (this.io) {
+            this.io.to(socketId).emit(event, data);
+        }
     }
 }
 
