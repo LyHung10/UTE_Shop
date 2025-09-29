@@ -8,13 +8,16 @@ import {store, persistor} from "./redux/store.jsx";
 import {Provider} from "react-redux";
 import {PersistGate} from "redux-persist/integration/react";
 import ScrollToTop from "@/components/ScrollToTop.jsx";
+import AuthProvider from "@/app/providers/AuthProvider.jsx";
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
             {/*<StrictMode>*/}
                 <BrowserRouter>
-                    <ScrollToTop />
-                    <App />
+                    <AuthProvider>
+                        <ScrollToTop />
+                        <App />
+                    </AuthProvider>
                 </BrowserRouter>
             {/*</StrictMode>*/}
         </PersistGate>
