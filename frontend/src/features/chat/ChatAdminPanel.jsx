@@ -141,14 +141,19 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         };
 
         const handleNewMessage = (message) => {
-            console.log('Admin received new message:', {
-                id: message.id,
-                createdAt: message.createdAt, // 👈 THÊM createdAt
-                created_at: message.created_at, // 👈 VÀ created_at để so sánh
-                type: typeof message.createdAt,
-                display_time: message.display_time
-            });
-
+            // console.log('Admin received new message:', {
+            //     id: message.id,
+            //     createdAt: message.createdAt, // 👈 THÊM createdAt
+            //     created_at: message.created_at, // 👈 VÀ created_at để so sánh
+            //     type: typeof message.createdAt,
+            //     display_time: message.display_time,
+            //     sender_type: message.sender_type
+            // });
+            // QUAN TRỌNG: Bỏ qua tin nhắn của chính admin
+            if (message.sender_type === 'admin') {
+                console.log('Ignoring own admin message via socket');
+                return;
+            }
             // Only update if this is the selected session AND message doesn't exist
             if (selectedSession && message.session_id === selectedSession.session_id) {
                 setMessages((prev) => {
