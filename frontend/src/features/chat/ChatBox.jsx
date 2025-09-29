@@ -74,19 +74,32 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                 transports: ['websocket', 'polling']
             });
 
-            socketRef.current.on('connect', () => {
+            const socket = socketRef.current;
+
+            socket.on('connect', () => {
                 console.log('Socket connected');
                 setIsConnected(true);
             });
 
-            socketRef.current.on('disconnect', () => {
+            socket.on('disconnect', () => {
                 console.log('Socket disconnected');
                 setIsConnected(false);
             });
 
-            socketRef.current.on('new_message', (message) => {
-                console.log('Received new message:', message);
-                setMessages((prev) => [...prev, message]);
+            socket.on('new_message', (message) => {
+                console.log('User received new message:', message);
+
+                // QUAN TRỌNG: Bỏ qua tin nhắn của chính user
+                if (message.sender_type === 'user') {
+                    console.log('Ignoring own message via socket');
+                    return;
+                }
+
+                setMessages((prev) => {
+                    const messageExists = prev.some(m => m.id === message.id);
+                    if (messageExists) return prev;
+                    return [...prev, message];
+                });
 
                 // Stop typing indicator when bot/admin responds
                 if (message.sender_type !== 'user') {
@@ -94,13 +107,13 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                 }
             });
 
-            socketRef.current.on('user_typing', (data) => {
+            socket.on('user_typing', (data) => {
                 if (data.userId !== user?.id) {
                     setIsTyping(data.isTyping);
                 }
             });
 
-            socketRef.current.on('error', (error) => {
+            socket.on('error', (error) => {
                 console.error('Socket error:', error);
                 toast.error('Lỗi kết nối. Vui lòng thử lại!');
             });
@@ -130,55 +143,6 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
         }
     };
 
-    // Send message
-    //   const handleSendMessage = async () => {
-    //     if (!inputMessage.trim() || !sessionId) return;
-
-    //     const messageText = inputMessage.trim();
-    //     setInputMessage('');
-
-    //     try {
-    //       // Optimistic update
-    //       const tempMessage = {
-    //         id: Date.now(),
-    //         message: messageText,
-    //         sender_type: 'user',
-    //         created_at: new Date().toISOString(),
-    //         user: user ? {
-    //           first_name: user.first_name,
-    //           last_name: user.last_name,
-    //           image: user.image
-    //         } : null
-    //       };
-    //       setMessages((prev) => [...prev, tempMessage]);
-
-    //       // Send via socket for real-time
-    //       socketRef.current?.emit('send_message', {
-    //         sessionId,
-    //         message: messageText,
-    //         messageType: 'text'
-    //       });
-
-    //       // Also send via HTTP for reliability
-    //     //   await axios.post(
-    //     //     `${apiUrl}/api/chat/messages`,
-    //     //     {
-    //     //       sessionId,
-    //     //       message: messageText,
-    //     //       messageType: 'text'
-    //     //     },
-    //     //     {
-    //     //       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-    //     //     }
-    //     //   );
-    //     } catch (error) {
-    //       console.error('Failed to send message:', error);
-    //       toast.error('Không thể gửi tin nhắn. Vui lòng thử lại!');
-    //       // Remove optimistic message on error
-    //       setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
-    //     }
-    //   };
-
     // Send message - CHỈ DÙNG HTTP
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !sessionId) return;
@@ -187,22 +151,26 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
         setInputMessage('');
 
         try {
-            // Optimistic update với ID tạm thời
+            // Optimistic update với thời gian frontend
             const tempId = `temp-${Date.now()}`;
+            const now = new Date(); // 👈 DÙNG THỜI GIAN FRONTEND
+
             const tempMessage = {
                 id: tempId,
                 message: messageText,
                 sender_type: 'user',
-                created_at: new Date().toISOString(),
+                created_at: now.toISOString(), // ISO string
+                display_time: formatTime(now), // 👈 THÊM display_time đã format sẵn
                 user: user ? {
                     first_name: user.first_name,
                     last_name: user.last_name,
                     image: user.image
                 } : null
             };
+
             setMessages((prev) => [...prev, tempMessage]);
 
-            // CHỈ GỬI HTTP - backend sẽ tự trigger socket
+            // Gửi HTTP
             const response = await axios.post(
                 `${apiUrl}/api/chat/messages`,
                 {
@@ -215,11 +183,14 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                 }
             );
 
-            // Replace temporary message with real one from server
+            // Replace với data từ server
             if (response.data.success) {
                 setMessages((prev) =>
                     prev.map(msg =>
-                        msg.id === tempId ? response.data.data : msg
+                        msg.id === tempId ? {
+                            ...response.data.data,
+                            display_time: formatTime(response.data.data.created_at) // Format server time
+                        } : msg
                     )
                 );
             }
@@ -316,10 +287,10 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                             >
                                 <div
                                     className={`max-w-[75%] rounded-2xl px-4 py-2 ${msg.sender_type === 'user'
-                                            ? 'bg-blue-600 text-white rounded-br-none'
-                                            : msg.sender_type === 'bot'
-                                                ? 'bg-gray-200 text-gray-800 rounded-bl-none'
-                                                : 'bg-green-100 text-gray-800 rounded-bl-none'
+                                        ? 'bg-blue-600 text-white rounded-br-none'
+                                        : msg.sender_type === 'bot'
+                                            ? 'bg-gray-200 text-gray-800 rounded-bl-none'
+                                            : 'bg-green-100 text-gray-800 rounded-bl-none'
                                         }`}
                                 >
                                     {msg.sender_type === 'admin' && (

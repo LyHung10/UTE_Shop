@@ -40,7 +40,6 @@ class ChatController {
 
             // QUAN TRỌNG: Emit new_message đến cả session room VÀ admin room
             req.io.to(sessionId).emit('new_message', chatMessage);
-
             // THÊM: Emit new_message đến admin room để cập nhật ô chat
             req.io.to('admin_room').emit('new_message', chatMessage);
 

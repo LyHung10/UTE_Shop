@@ -62,30 +62,8 @@ class ChatService {
             }]
         });
         
-        // Tự động trả lời bot nếu cần (chỉ sau 1s để không spam)
-        // if (senderType === 'user') {
-        //     setTimeout(() => {
-        //         this.sendBotResponse(sessionId, message);
-        //     }, 1000);
-        // }
-        
         return messageWithUser;
     }
-    
-    // Bot auto response
-    // async sendBotResponse(sessionId, userMessage) {
-    //     const botResponses = this.getBotResponse(userMessage);
-        
-    //     for (const response of botResponses) {
-    //         await ChatMessage.create({
-    //             session_id: sessionId,
-    //             message: response.message,
-    //             sender_type: 'bot',
-    //             message_type: response.type || 'text',
-    //             metadata: response.metadata || null
-    //         });
-    //     }
-    // }
     
     // Lấy tin nhắn theo session
     async getMessages(sessionId, page = 1, limit = 50) {

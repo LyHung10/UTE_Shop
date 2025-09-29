@@ -266,11 +266,26 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     };
 
     // Format time
+    // Format time - FIXED với error handling
     const formatTime = (date) => {
-        return new Date(date).toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        try {
+            if (!date) return '--:--';
+
+            const dateObj = new Date(date);
+
+            // Kiểm tra nếu date không hợp lệ
+            if (isNaN(dateObj.getTime())) {
+                return '--:--';
+            }
+
+            return dateObj.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return '--:--';
+        }
     };
 
     // Filter sessions
