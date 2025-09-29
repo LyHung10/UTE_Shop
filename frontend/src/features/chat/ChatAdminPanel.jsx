@@ -80,6 +80,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     }, [apiUrl, accessToken]);
 
     // Load messages
+    // Load messages - DEBUG createdAt
     const loadMessages = useCallback(async (sessionId) => {
         try {
             const response = await axios.get(`${apiUrl}/api/chat/messages/${sessionId}`, {
@@ -87,6 +88,19 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
             });
 
             if (response.data.success) {
+                // DEBUG: Kiểm tra messages từ backend
+                console.log('Messages loaded from backend:', response.data.data);
+                if (response.data.data && response.data.data.length > 0) {
+                    response.data.data.forEach((msg, index) => {
+                        console.log(`Message ${index}:`, {
+                            id: msg.id,
+                            createdAt: msg.createdAt, // 👈 THÊM createdAt
+                            created_at: msg.created_at, // 👈 VÀ created_at
+                            type: typeof msg.createdAt
+                        });
+                    });
+                }
+
                 setMessages(response.data.data);
             }
         } catch (error) {
@@ -127,7 +141,13 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         };
 
         const handleNewMessage = (message) => {
-            console.log('Admin received new message:', message);
+            console.log('Admin received new message:', {
+                id: message.id,
+                createdAt: message.createdAt, // 👈 THÊM createdAt
+                created_at: message.created_at, // 👈 VÀ created_at để so sánh
+                type: typeof message.createdAt,
+                display_time: message.display_time
+            });
 
             // Only update if this is the selected session AND message doesn't exist
             if (selectedSession && message.session_id === selectedSession.session_id) {
@@ -201,7 +221,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         }
     }, [loadMessages]);
 
-    // Send message - FIXED
+    // Send message 
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !selectedSession) return;
 
@@ -211,11 +231,14 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         try {
             // Optimistic update với ID tạm thời
             const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const now = new Date();
+
             const tempMessage = {
                 id: tempId,
                 message: messageText,
                 sender_type: 'admin',
-                created_at: new Date().toISOString(),
+                createdAt: now.toISOString(),
+                display_time: formatTime(now), // 👈 LUÔN có display_time
                 user: {
                     first_name: user.first_name,
                     last_name: user.last_name,
@@ -225,7 +248,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
 
             setMessages((prev) => [...prev, tempMessage]);
 
-            // Send via socket ONLY - remove HTTP call to avoid duplicates
+            // Send via socket ONLY
             socketRef.current?.emit('send_message', {
                 sessionId: selectedSession.session_id,
                 message: messageText,
@@ -265,16 +288,35 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         }
     };
 
-    // Format time
-    // Format time - FIXED với error handling
+    // Format time - ULTRA SAFE VERSION
     const formatTime = (date) => {
         try {
-            if (!date) return '--:--';
+            console.log('Formatting date:', date, 'Type:', typeof date); // DEBUG
 
-            const dateObj = new Date(date);
+            if (!date) {
+                return '--:--';
+            }
 
-            // Kiểm tra nếu date không hợp lệ
+            // Xử lý nhiều định dạng
+            let dateObj;
+
+            if (date instanceof Date) {
+                dateObj = date;
+            } else if (typeof date === 'string') {
+                dateObj = new Date(date);
+
+                // Nếu không được, thử parse timestamp
+                if (isNaN(dateObj.getTime()) && !isNaN(date)) {
+                    dateObj = new Date(parseInt(date));
+                }
+            } else if (typeof date === 'number') {
+                dateObj = new Date(date);
+            } else {
+                return '--:--';
+            }
+
             if (isNaN(dateObj.getTime())) {
+                console.warn('Invalid date:', date);
                 return '--:--';
             }
 
@@ -283,7 +325,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 minute: '2-digit'
             });
         } catch (error) {
-            console.error('Date formatting error:', error);
+            console.error('Date formatting error:', error, 'Date:', date);
             return '--:--';
         }
     };
@@ -403,7 +445,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                                     : 'Guest User'}
                                             </h3>
                                             <span className="text-xs text-gray-500">
-                                                {formatTime(session.last_message_at)}
+                                                {session.last_message_at ? formatTime(session.last_message_at) : '--:--'}
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-500 truncate mb-1">
@@ -539,7 +581,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                                     className={`text-xs mt-1 ${msg.sender_type === 'admin' ? 'text-blue-100' : 'text-gray-500'
                                                         }`}
                                                 >
-                                                    {formatTime(msg.created_at)}
+                                                    {msg.display_time || formatTime(msg.createdAt)}
                                                 </p>
                                             </div>
                                         </div>

@@ -220,10 +220,18 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
 
     // Format time
     const formatTime = (date) => {
-        return new Date(date).toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        try {
+            const validDate = date ? new Date(date) : new Date();
+            return validDate.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return new Date().toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
     };
 
     if (!isOpen) {
@@ -303,7 +311,7 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                                         className={`text-xs mt-1 ${msg.sender_type === 'user' ? 'text-blue-100' : 'text-gray-500'
                                             }`}
                                     >
-                                        {formatTime(msg.created_at)}
+                                        {msg.display_time || formatTime(msg.created_at)}
                                     </p>
                                 </div>
                             </div>
