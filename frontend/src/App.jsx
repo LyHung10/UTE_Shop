@@ -45,11 +45,12 @@ function App() {
             <Route path="review" element={<ReviewPage />} />
             <Route path="resetpassword" element={<ResetPassword />} />
             <Route path="add/addresses" element={<AddAddress />} />
+            <Route path="admin/chat" element={<ChatAdminPanel />} />
+
 
           </Route>
 
           {/* Route Admin */}
-          <Route path="admin/chat" element={<ChatAdminPanel />} />
 
 
           {/* Route công khai */}
