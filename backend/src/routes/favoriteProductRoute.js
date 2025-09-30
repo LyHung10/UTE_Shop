@@ -3,9 +3,9 @@ import express from 'express';
 const router = express.Router();
 import favoriteController from '../controllers/favoriteProductController.js';
 import { authenticateToken } from '../middleware/auth';
-const authMiddleware = authenticateToken;
+
 // tất cả route đều cần auth
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 // thêm sản phẩm yêu thích
 router.post('/add', favoriteController.add);

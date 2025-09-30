@@ -41,16 +41,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Rate limit
-const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+// const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
+// const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 // Serve file tạm / output
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
-app.use('/api/auth/register', otpLimiter);
-app.use('/api/auth/forgot-password', otpLimiter);
-app.use('/api/auth/login', loginLimiter);
+// app.use('/api/auth/register', otpLimiter);
+// app.use('/api/auth/forgot-password', otpLimiter);
+// app.use('/api/auth/login', loginLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
