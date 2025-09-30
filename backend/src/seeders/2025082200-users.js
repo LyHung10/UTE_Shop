@@ -9,7 +9,6 @@ module.exports = {
         password: await hashPassword('103204'), // 🔒 hash password bằng hàm custom
         first_name: 'Nguyễn',
         last_name: 'Văn A',
-        address: 'Hà Nội',
         phone_number: '0123456789',
         gender: true,
         image: null,
@@ -24,7 +23,6 @@ module.exports = {
         password: await hashPassword('103204'), // 🔒 hash password bằng hàm custom
         first_name: 'Trần',
         last_name: 'Thị B',
-        address: 'Đà Nẵng',
         phone_number: '0987654321',
         gender: false,
         image: "https://t4.ftcdn.net/jpg/02/14/74/61/360_F_214746128_31JkeaP6rU0NzzzdFC4khGkmqc8noe6h.jpg",

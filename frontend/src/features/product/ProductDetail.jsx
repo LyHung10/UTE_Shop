@@ -4,7 +4,7 @@ import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Navigation, Thumbs, Autoplay, EffectFade } from "swiper/modules"
 import ProductSlider from "../home/components/ProductSlider.jsx"
-import {getBestSellingProducts, getSimilarProducts} from "../../services/productService.jsx"
+import { getBestSellingProducts, getSimilarProducts } from "../../services/productService.jsx"
 import "swiper/css"
 import "swiper/css/free-mode"
 import "swiper/css/navigation"
@@ -37,7 +37,62 @@ const ProductDetail = () => {
     const favoriteMap = useSelector(state => state.favorite.favoriteMap);
     const isFavorite = favoriteMap[product?.id] || false;
     const loading = useSelector((state) => state.favorite.loading);
+    // Hàm kiểm tra số lượng hợp lệ
+    const validateQuantity = (qty) => {
+        const availableStock = product?.inventory?.stock - product?.inventory?.reserved;
 
+        if (qty < 1) {
+            toast.error("Số lượng phải lớn hơn 0");
+            return false;
+        }
+
+        if (qty > availableStock) {
+            toast.error(`Số lượng vượt quá tồn kho. Chỉ còn ${availableStock} sản phẩm`);
+            return false;
+        }
+
+        return true;
+    };
+
+    // Hàm xử lý thay đổi số lượng từ input
+    const handleQuantityChange = (e) => {
+        const value = e.target.value;
+
+        // Cho phép input rỗng tạm thời
+        if (value === "") {
+            setQuantity("");
+            return;
+        }
+
+        // Chỉ cho phép nhập số
+        const numValue = parseInt(value, 10);
+        if (isNaN(numValue)) {
+            return;
+        }
+
+        setQuantity(numValue);
+    };
+
+    // Hàm xử lý khi blur khỏi input
+    const handleQuantityBlur = (e) => {
+        const value = e.target.value;
+
+        if (value === "") {
+            setQuantity(1);
+            return;
+        }
+
+        const numValue = parseInt(value, 10);
+        if (isNaN(numValue) || numValue < 1) {
+            setQuantity(1);
+            toast.error("Số lượng phải lớn hơn 0");
+        } else {
+            if (!validateQuantity(numValue)) {
+                const availableStock = product?.inventory?.stock - product?.inventory?.reserved;
+                setQuantity(availableStock || 1);
+            }
+        }
+    };
     useEffect(() => {
         if (product?.id) {
             dispatch(checkFavorite(product.id));
@@ -61,10 +116,9 @@ const ProductDetail = () => {
         const clothUrl = product.images[0]?.url; // ảnh đầu tiên của sản phẩm
         navigate("/tryon", { state: { clothUrl } });
     };
-    const fetchSimilarProducts= async () => {
+    const fetchSimilarProducts = async () => {
         const data = await getSimilarProducts(id);
-        if (data)
-        {
+        if (data) {
             setListSimilarProducts(data.items);
         }
     }
@@ -267,8 +321,8 @@ const ProductDetail = () => {
                                     <button
                                         onClick={handleToggleFavorite}
                                         className={`p-3 rounded-full backdrop-blur-sm border transition-all duration-300 shadow-lg ${isFavorite
-                                                ? "bg-red-50 border-red-200 text-red-500 shadow-red-200"
-                                                : "bg-white/90 border-gray-200 text-gray-600 hover:bg-white hover:text-red-500"
+                                            ? "bg-red-50 border-red-200 text-red-500 shadow-red-200"
+                                            : "bg-white/90 border-gray-200 text-gray-600 hover:bg-white hover:text-red-500"
                                             }`}
                                     >
                                         <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
@@ -428,14 +482,39 @@ const ProductDetail = () => {
                             <div className="flex gap-4">
                                 <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
                                     <button
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        onClick={() => {
+                                            const newQuantity = Math.max(1, quantity - 1);
+                                            if (validateQuantity(newQuantity)) {
+                                                setQuantity(newQuantity);
+                                            }
+                                        }}
                                         className="cursor-pointer p-4 hover:bg-gray-100 transition-colors text-gray-700"
                                     >
                                         <Minus className="w-4 h-4" />
                                     </button>
-                                    <span className=" px-6 py-4 min-w-[80px] text-center text-gray-900 font-medium">{quantity}</span>
+
+                                    {/* Input field để nhập số lượng trực tiếp */}
+                                    <input
+                                        type="text"
+                                        value={quantity}
+                                        onChange={handleQuantityChange}
+                                        onBlur={handleQuantityBlur}
+                                        onKeyPress={(e) => {
+                                            // Chỉ cho phép nhập số
+                                            if (!/[0-9]/.test(e.key)) {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                        className="w-16 px-2 py-4 text-center text-gray-900 font-medium bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-orange-400 rounded"
+                                    />
+
                                     <button
-                                        onClick={() => setQuantity(quantity + 1)}
+                                        onClick={() => {
+                                            const newQuantity = quantity + 1;
+                                            if (validateQuantity(newQuantity)) {
+                                                setQuantity(newQuantity);
+                                            }
+                                        }}
                                         className="cursor-pointer p-4 hover:bg-gray-100 transition-colors text-gray-700"
                                     >
                                         <Plus className="w-4 h-4" />
@@ -611,8 +690,8 @@ const ProductDetail = () => {
 
                 <div className="mt-20">
                     <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                        <ProductSlider listProducts={listSimilarProducts }
-                                       nameTop="SIMILAR PRODUCTS"/>
+                        <ProductSlider listProducts={listSimilarProducts}
+                            nameTop="SIMILAR PRODUCTS" />
                     </div>
                 </div>
             </div>

@@ -20,6 +20,9 @@ import favoriteProductRoute from "./routes/favoriteProductRoute.js";
 // import notificationRoutes from "./routes/notificationRoutes.js";
 import chatRoutes from './routes/chatRoutes.js';
 import SocketService from './services/socketService.js';
+import shippingRoutes from './routes/shippingRoutes.js';
+import addressRoutes from './routes/addressRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -62,6 +65,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/favorites', favoriteProductRoute);
 app.use('/api/chat', chatRoutes);
+app.use('/api/shipping', shippingRoutes);
+app.use('/api/address', addressRoutes);
 // Error handler
 app.use(errorHandler);
 

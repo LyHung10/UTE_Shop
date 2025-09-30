@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
 
       User.hasMany(models.Order, { foreignKey: 'user_id' });
       User.hasMany(models.Review, { foreignKey: 'user_id' });
-
+      User.hasMany(models.Address, { foreignKey: 'user_id', as: 'addresses' });
     }
   }
   User.init(
@@ -20,7 +20,6 @@ module.exports = (sequelize, DataTypes) => {
       password: DataTypes.STRING,
       first_name: DataTypes.STRING,
       last_name: DataTypes.STRING,
-      address: DataTypes.STRING,
       phone_number: DataTypes.STRING,
       gender: DataTypes.BOOLEAN,
       image: DataTypes.STRING,

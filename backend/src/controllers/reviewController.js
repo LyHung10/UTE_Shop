@@ -66,7 +66,11 @@ class ReviewController {
         try {
             const reviews = await Review.findAll({
                 where: { product_id: productId },
-                include: [{ model: User, attributes: ['first_name', 'last_name', 'image'] }]
+                order: [["created_at", "DESC"]],
+                include: [{
+                    model: User,
+                    attributes: ['first_name', 'last_name', 'image']
+                }]
             });
             return res.json(reviews);
         } catch (error) {

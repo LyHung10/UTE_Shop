@@ -22,6 +22,7 @@ import { Bounce, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ChatAdminPanel from "./features/chat/ChatAdminPanel.jsx";
 import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
+import AddAddress from "./features/address/AddAddress.jsx";
 import AppLayout from "@/admin/layout/AdminLayout.jsx";
 import Home from "@/admin/pages/Home.js";
 function App() {
@@ -53,12 +54,15 @@ function App() {
             <Route path="product/:id" element={<ProductDetail />} />
             <Route path="category/:category" element={<ProductCategories />} />
             <Route path="tryon" element={<TryOnPage />} />
+            <Route path="add/addresses" element={<AddAddress />} />
+
           </Route>
 
           {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
           <Route path="/admin" element={<AppLayout />}>
             <Route index element={<Home />} />
             <Route path="chat" element={<ChatAdminPanel />} />
+            <Route path="admin/chat" element={<ChatAdminPanel />} />
           </Route>
 
           {/* ===== AUTH (ngoài Layout) ===== */}
