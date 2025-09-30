@@ -22,60 +22,63 @@ import { Bounce, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ChatAdminPanel from "./features/chat/ChatAdminPanel.jsx";
 import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
+import AppLayout from "@/admin/layout/AdminLayout.jsx";
+import Home from "@/admin/pages/Home.js";
 function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
+      <>
+        <Routes>
 
-          {/* Các route cần đăng nhập */}
-          <Route element={<PrivateRoute />}>
-            <Route path="user" element={<UserLayout />}>
-              <Route index element={<UserProfile />} />
-              <Route path="my-orders" element={<OrderHistory />} />
-              <Route path="order-detail/:id" element={<OrderDetail />} />
-              <Route path="profile" element={<UserProfile />} />
-              <Route path="product-favorites" element={<FavoritesPage />} />
+          {/* ===== PUBLIC LAYOUT ===== */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<HomePage />} />
+
+            {/* Cần đăng nhập */}
+            <Route element={<PrivateRoute />}>
+              <Route path="user" element={<UserLayout />}>
+                <Route index element={<UserProfile />} />
+                <Route path="my-orders" element={<OrderHistory />} />
+                <Route path="order-detail/:id" element={<OrderDetail />} />
+                <Route path="profile" element={<UserProfile />} />
+                <Route path="product-favorites" element={<FavoritesPage />} />
+              </Route>
+              <Route path="cart" element={<ShoppingCart />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="payment/completed" element={<PaymentCompleted />} />
+              <Route path="review" element={<ReviewPage />} />
+              <Route path="resetpassword" element={<ResetPassword />} />
             </Route>
-            <Route path="cart" element={<ShoppingCart />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="payment/completed" element={<PaymentCompleted />} />
-            <Route path="review" element={<ReviewPage />} />
-            <Route path="resetpassword" element={<ResetPassword />} />
+
+            {/* Public pages */}
+            <Route path="product/:id" element={<ProductDetail />} />
+            <Route path="category/:category" element={<ProductCategories />} />
+            <Route path="tryon" element={<TryOnPage />} />
           </Route>
 
-          {/* Route Admin */}
-          <Route path="admin/chat" element={<ChatAdminPanel />} />
+          {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
+          <Route path="/admin" element={<AppLayout />}>
+            <Route index element={<Home />} />
+            <Route path="chat" element={<ChatAdminPanel />} />
+          </Route>
 
+          {/* ===== AUTH (ngoài Layout) ===== */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/otp" element={<AuthOtp />} />
+          <Route path="/forgotpassword" element={<ForgotPassword />} />
 
-          {/* Route công khai */}
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path=":category" element={<ProductCategories />} />
-          <Route path="tryon" element={<TryOnPage />} />
-        </Route>
+          {/* 404 */}
+          {/* <Route path="*" element={<NotFoundPage />} /> */}
 
-        {/* Auth routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/otp" element={<AuthOtp />} />
-        <Route path="/forgotpassword" element={<ForgotPassword />} />
-      </Routes>
+        </Routes>
 
-      <ToastContainer
-        position="top-left"
-        autoClose={1500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        transition={Bounce}
-      />
-    </>
+        <ToastContainer
+            position="top-left"
+            autoClose={1500}
+            theme="light"
+            transition={Bounce}
+        />
+      </>
   );
 }
 

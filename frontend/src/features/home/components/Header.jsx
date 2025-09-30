@@ -78,7 +78,7 @@ const Header = () => {
                                                 listCategories.map((item) => (
                                                     <motion.button
                                                         key={item.id}
-                                                        onClick={() => navigate(`/${item.slug}`)}
+                                                        onClick={() => navigate(`category/${item.slug}`)}
                                                         className="text-left p-3 rounded-lg hover:bg-blue-500/20 text-white hover:text-blue-300 transition-all duration-200"
                                                         whileHover={{ scale: 1.02, x: 5 }}
                                                     >
