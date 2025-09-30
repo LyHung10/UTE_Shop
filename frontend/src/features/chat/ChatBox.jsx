@@ -238,16 +238,15 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
         return (
             <button
                 onClick={handleOpen}
-                className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 z-50"
+                className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 z-50 animate-scale-in"
             >
                 <MessageCircle size={28} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     !
                 </span>
             </button>
         );
     }
-
     return (
         <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
             {/* Header */}
@@ -258,7 +257,7 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                             <MessageCircle className="text-blue-600" size={24} />
                         </div>
                         {isConnected && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-ping"></span>
                         )}
                     </div>
                     <div>
@@ -276,29 +275,30 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                 </button>
             </div>
 
+
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-scrollbar">
                 {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                         <Loader2 className="animate-spin text-blue-600" size={32} />
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="text-center text-gray-500 mt-8">
+                    <div className="text-center text-gray-500 mt-8 opacity-0 animate-in fade-in duration-500">
                         <MessageCircle size={48} className="mx-auto mb-4 text-gray-300" />
                         <p className="text-sm">Xin chào! Chúng tôi có thể giúp gì cho bạn?</p>
                     </div>
                 ) : (
                     messages.map((msg, index) => (
-                        <div key={msg.id || index}>
+                        <div key={msg.id || index} className="animate-fade-in">
                             <div
                                 className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${msg.sender_type === 'user'
-                                        ? 'bg-blue-600 text-white rounded-br-none'
+                                    className={`max-w-[75%] rounded-2xl px-4 py-2 transition-all duration-300 ${msg.sender_type === 'user'
+                                        ? 'bg-blue-600 text-white rounded-br-none shadow-lg'
                                         : msg.sender_type === 'bot'
-                                            ? 'bg-gray-200 text-gray-800 rounded-bl-none'
-                                            : 'bg-green-100 text-gray-800 rounded-bl-none'
+                                            ? 'bg-gray-200 text-gray-800 rounded-bl-none shadow-md'
+                                            : 'bg-green-100 text-gray-800 rounded-bl-none shadow-md'
                                         }`}
                                 >
                                     {msg.sender_type === 'admin' && (
@@ -318,12 +318,12 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
 
                             {/* Quick replies */}
                             {msg.metadata?.quick_replies && (
-                                <div className="flex flex-wrap gap-2 mt-2 ml-2">
+                                <div className="flex flex-wrap gap-2 mt-2 ml-2 animate-fade-in">
                                     {msg.metadata.quick_replies.map((reply, i) => (
                                         <button
                                             key={i}
                                             onClick={() => handleQuickReply(reply.title)}
-                                            className="bg-white border border-blue-300 text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-50 transition-colors"
+                                            className="bg-white border border-blue-300 text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-50 transition-all duration-200 hover:scale-105"
                                         >
                                             {reply.title}
                                         </button>
@@ -334,9 +334,10 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                     ))
                 )}
 
+                {/* 👇 THÊM TYPING INDICATOR Ở ĐÂY */}
                 {isTyping && (
-                    <div className="flex justify-start">
-                        <div className="bg-gray-200 rounded-2xl rounded-bl-none px-4 py-3">
+                    <div className="flex justify-start opacity-0 animate-in fade-in duration-500">
+                        <div className="bg-gray-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm">
                             <div className="flex gap-1">
                                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
                                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></span>
@@ -345,8 +346,8 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                         </div>
                     </div>
                 )}
-
                 <div ref={messagesEndRef} />
+
             </div>
 
             {/* Input */}
