@@ -99,64 +99,6 @@ export default function HomePage() {
       <ProductSlider listProducts={listBestSellingProducts} nameTop="BEST SELLERS" />
       <div className="border-t border-gray-200"></div>
 
-      {/* Brand Bar */}
-      <section className="bg-black py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center gap-12 flex-wrap">
-            <div className="text-white text-2xl font-bold">VERSACE</div>
-            <div className="text-white text-2xl font-bold">ZARA</div>
-            <div className="text-white text-2xl font-bold">GUCCI</div>
-            <div className="text-white text-2xl font-bold">PRADA</div>
-            <div className="text-white text-2xl font-bold">Calvin Klein</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Browse by Dress Style */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h3 className="text-3xl font-bold text-center mb-12 text-black">BROWSE BY DRESS STYLE</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="relative overflow-hidden h-64 border-0">
-              <CardContent className="p-0 h-full">
-                <img src={casualStyle} alt="Casual style" className="w-full h-full object-cover" />
-                <div className="absolute top-6 left-6">
-                  <h4 className="text-2xl font-bold text-black">Casual</h4>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden h-64 border-0">
-              <CardContent className="p-0 h-full">
-                <img src="/images/formal-style.png" alt="Formal style" className="w-full h-full object-cover" />
-                <div className="absolute top-6 left-6">
-                  <h4 className="text-2xl font-bold text-white">Formal</h4>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden h-64 border-0">
-              <CardContent className="p-0 h-full">
-                <img src="/images/party-style.png" alt="Party style" className="w-full h-full object-cover" />
-                <div className="absolute top-6 left-6">
-                  <h4 className="text-2xl font-bold text-black">Party</h4>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden h-64 border-0">
-              <CardContent className="p-0 h-full">
-                <img src="/images/gym-style.png" alt="Gym style" className="w-full h-full object-cover" />
-                <div className="absolute top-6 left-6">
-                  <h4 className="text-2xl font-bold text-white">Gym</h4>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Customer Reviews */}
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -226,27 +168,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="bg-black text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h3 className="text-3xl font-bold mb-4">STAY UPTO DATE ABOUT OUR LATEST OFFERS</h3>
-          <div className="max-w-md mx-auto">
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email address"
-                className="bg-white text-black rounded-full px-4 py-3"
-              />
-              <Button className="bg-white text-black px-6 py-3 rounded-full hover:bg-gray-100">
-                Subscribe to Newsletter
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="bg-gray-100 py-16">
+      {/* <footer className="bg-gray-100 py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div>
@@ -315,6 +238,8 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+       */}
+       
     </div>
   )
 }
