@@ -35,7 +35,7 @@ const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
             <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" />
           </motion.div>
 
-          <div className="relative max-w-6xl mx-auto">
+          <div className="relative max-w-7xl mx-auto">
             {/* Nút PREV/NEXT — luôn có sẵn trong DOM trước khi Swiper init */}
             <motion.button
                 className={`${prevClass} absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto`}
