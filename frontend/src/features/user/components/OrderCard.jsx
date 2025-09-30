@@ -3,9 +3,7 @@ import { Link } from "react-router-dom";
 import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
 import {useNavigate} from "react-router-dom";
 
-
-
-const  StatusBadge = ({ status }) => {
+const StatusBadge = ({ status }) => {
     const map = {
         PENDING: { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200", Icon: Clock },
         SHIPPING: { label: "Vận chuyển", cls: "bg-blue-50 text-blue-700 border-blue-200", Icon: Truck },
@@ -48,6 +46,23 @@ const OrderCard = (props) => {
                         <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 line-clamp-1">{it.product.name}</div>
                             <div className="mt-0.5 text-xs text-gray-500">{`${it.color}, ${it.size}`}</div>
+                            {/* Hiển thị trạng thái đánh giá cho sản phẩm */}
+                            {order.status === "COMPLETED" && (
+                                <div className="mt-1">
+                                    {it.status === "COMMENTED" ? (
+                                        <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            Đã đánh giá
+                                        </span>
+                                    ) : (
+                                        <Link to={`/review?orderId=${order.id}&productId=${it.product.id}`}>
+                                            <button className="inline-flex items-center gap-1 text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors">
+                                                Đánh giá sản phẩm
+                                            </button>
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="text-sm text-gray-600">x{it.qty}</div>
                         <div className="w-28 text-right text-sm font-semibold text-gray-900">{formatPrice(it?.product.price)}</div>
@@ -63,28 +78,16 @@ const OrderCard = (props) => {
                 </div>
                 <div className="flex items-center gap-3 md:gap-4">
                     <div className="text-sm">Tổng tiền: <span className="font-semibold text-gray-900">{formatPrice(order.total_amount)}</span></div>
-                    <button className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                            onClick={()=>navigate(`/user/order-detail/${order.id}`)}>
+                    <button 
+                        className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        onClick={() => navigate(`/user/order-detail/${order.id}`)}
+                    >
                         Xem chi tiết <ChevronRight className="h-4 w-4" />
                     </button>
-
-                    {order.status === "COMPLETED" &&
-                        order.items
-                            .filter(it => it.status !== "COMMENTED") // chỉ lấy sản phẩm chưa comment
-                            .map((it) => (
-                                <Link
-                                    key={it.product.id}
-                                    to={`/review?orderId=${order.id}&productId=${it.product.id}`}
-                                >
-                                    <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-                                        Đánh giá
-                                    </button>
-                                </Link>
-                            ))
-                    }   
                 </div>
             </div>
         </div>
     );
 }
+
 export default OrderCard;

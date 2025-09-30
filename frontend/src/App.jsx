@@ -22,6 +22,7 @@ import { Bounce, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ChatAdminPanel from "./features/chat/ChatAdminPanel.jsx";
 import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
+import AddAddress from "./features/address/AddAddress.jsx";
 function App() {
   return (
     <>
@@ -43,6 +44,8 @@ function App() {
             <Route path="payment/completed" element={<PaymentCompleted />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="resetpassword" element={<ResetPassword />} />
+            <Route path="add/addresses" element={<AddAddress />} />
+
           </Route>
 
           {/* Route Admin */}

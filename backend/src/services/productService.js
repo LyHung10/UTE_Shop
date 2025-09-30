@@ -1,5 +1,6 @@
-import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order } from "../models/index.js";
+import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order, User } from "../models/index.js";
 import { Op, fn, col } from "sequelize";
+import order from "../models/order.js";
 
 class ProductService {
     async getProductEngagement(productId) {
@@ -125,7 +126,7 @@ class ProductService {
     async getProductById(id) {
         const product = await Product.findByPk(id, {
             attributes: {
-                include: ['colors', 'sizes'] // đảm bảo Sequelize lấy 2 cột này
+                include: ['colors', 'sizes']
             },
             include: [
                 {
@@ -139,18 +140,29 @@ class ProductService {
                     as: "inventory",
                     attributes: ["stock", "reserved"],
                 },
-                {
-                    model: Review,
-                    as: "reviews",
-                    attributes: [],
-                },
+                // Bỏ reviews ở đây, sẽ query riêng
             ],
         });
         if (!product) return null;
 
+        // Query reviews riêng với order DESC (mới nhất lên đầu)
+        const reviews = await Review.findAll({
+            where: { product_id: id },
+            order: [["created_at", "DESC"]], 
+            include: [
+                {
+                    model: User,
+                    attributes: ["id", "first_name", "last_name", "image"]
+                }
+            ]
+        });
+
         // Tăng view_count
         product.view_count += 1;
         await product.save();
+
+        // Thêm reviews vào product
+        product.setDataValue('reviews', reviews);
 
         return product;
     }
