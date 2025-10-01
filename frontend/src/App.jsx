@@ -27,62 +27,62 @@ import AppLayout from "@/admin/layout/AdminLayout.jsx";
 import Home from "@/admin/pages/Home.js";
 function App() {
   return (
-      <>
-        <Routes>
+    <>
+      <Routes>
 
-          {/* ===== PUBLIC LAYOUT ===== */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
+        {/* ===== PUBLIC LAYOUT ===== */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
 
-            {/* Cần đăng nhập */}
-            <Route element={<PrivateRoute />}>
-              <Route path="user" element={<UserLayout />}>
-                <Route index element={<UserProfile />} />
-                <Route path="my-orders" element={<OrderHistory />} />
-                <Route path="order-detail/:id" element={<OrderDetail />} />
-                <Route path="profile" element={<UserProfile />} />
-                <Route path="product-favorites" element={<FavoritesPage />} />
-              </Route>
-              <Route path="cart" element={<ShoppingCart />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="payment/completed" element={<PaymentCompleted />} />
-              <Route path="review" element={<ReviewPage />} />
-              <Route path="resetpassword" element={<ResetPassword />} />
+          {/* Cần đăng nhập */}
+          <Route element={<PrivateRoute />}>
+            <Route path="user" element={<UserLayout />}>
+              <Route index element={<UserProfile />} />
+              <Route path="my-orders" element={<OrderHistory />} />
+              <Route path="order-detail/:id" element={<OrderDetail />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="product-favorites" element={<FavoritesPage />} />
             </Route>
-
-            {/* Public pages */}
-            <Route path="product/:id" element={<ProductDetail />} />
-            <Route path="category/:category" element={<ProductCategories />} />
-            <Route path="tryon" element={<TryOnPage />} />
+            <Route path="cart" element={<ShoppingCart />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="payment/completed" element={<PaymentCompleted />} />
+            <Route path="review" element={<ReviewPage />} />
+            <Route path="resetpassword" element={<ResetPassword />} />
             <Route path="add/addresses" element={<AddAddress />} />
-
           </Route>
 
-          {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
-          <Route path="/admin" element={<AppLayout />}>
-            <Route index element={<Home />} />
-            <Route path="chat" element={<ChatAdminPanel />} />
-            <Route path="admin/chat" element={<ChatAdminPanel />} />
-          </Route>
+          {/* Public pages */}
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="category/:category" element={<ProductCategories />} />
+          <Route path="tryon" element={<TryOnPage />} />
 
-          {/* ===== AUTH (ngoài Layout) ===== */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/otp" element={<AuthOtp />} />
-          <Route path="/forgotpassword" element={<ForgotPassword />} />
+        </Route>
 
-          {/* 404 */}
-          {/* <Route path="*" element={<NotFoundPage />} /> */}
+        {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
+        <Route path="/admin" element={<AppLayout />}>
+          <Route index element={<Home />} />
+          <Route path="chat" element={<ChatAdminPanel />} />
+          <Route path="admin/chat" element={<ChatAdminPanel />} />
+        </Route>
 
-        </Routes>
+        {/* ===== AUTH (ngoài Layout) ===== */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/otp" element={<AuthOtp />} />
+        <Route path="/forgotpassword" element={<ForgotPassword />} />
 
-        <ToastContainer
-            position="top-left"
-            autoClose={1500}
-            theme="light"
-            transition={Bounce}
-        />
-      </>
+        {/* 404 */}
+        {/* <Route path="*" element={<NotFoundPage />} /> */}
+
+      </Routes>
+
+      <ToastContainer
+        position="top-left"
+        autoClose={1500}
+        theme="light"
+        transition={Bounce}
+      />
+    </>
   );
 }
 
