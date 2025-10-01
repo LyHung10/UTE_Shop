@@ -158,7 +158,7 @@ const ShoppingCart = () => {
                                     </div>
                                     <p className="text-gray-600 mb-4">Bạn chưa có địa chỉ nào</p>
                                     <button
-                                        onClick={() => navigate('add/addresses')}
+                                        onClick={() => navigate('/add/addresses')}
                                         className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                                     >
                                         <PlusCircle className="w-5 h-5" />

@@ -25,67 +25,65 @@ import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
 import AddAddress from "./features/address/AddAddress.jsx";
 import AppLayout from "@/admin/layout/AdminLayout.jsx";
 import Home from "@/admin/pages/Home.js";
+import AdminNotificationSender from "./features/chat/NotificationSender.jsx";
 import NotFound from "@/NotFound.jsx";
 import SignIn from "@/features/auth/pages/SignIn.jsx";
-import SignUpAdmin from "@/features/auth/pages/SignUp_Admin.jsx";
-function App() {
+import SignUpAdmin from "@/features/auth/pages/SignUp_Admin.jsx";function App() {
   return (
-      <>
-        <Routes>
+    <>
+      <Routes>
+        {/* ===== PUBLIC LAYOUT ===== */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
 
-          {/* ===== PUBLIC LAYOUT ===== */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-
-            {/* Cần đăng nhập */}
-            <Route element={<PrivateRoute />}>
-              <Route path="user" element={<UserLayout />}>
-                <Route index element={<UserProfile />} />
-                <Route path="my-orders" element={<OrderHistory />} />
-                <Route path="order-detail/:id" element={<OrderDetail />} />
-                <Route path="profile" element={<UserProfile />} />
-                <Route path="product-favorites" element={<FavoritesPage />} />
-              </Route>
-              <Route path="cart" element={<ShoppingCart />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="payment/completed" element={<PaymentCompleted />} />
-              <Route path="review" element={<ReviewPage />} />
-              <Route path="resetpassword" element={<ResetPassword />} />
+          {/* Cần đăng nhập */}
+          <Route element={<PrivateRoute />}>
+            <Route path="user" element={<UserLayout />}>
+              <Route index element={<UserProfile />} />
+              <Route path="my-orders" element={<OrderHistory />} />
+              <Route path="order-detail/:id" element={<OrderDetail />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="product-favorites" element={<FavoritesPage />} />
             </Route>
-
-            {/* Public pages */}
-            <Route path="product/:id" element={<ProductDetail />} />
-            <Route path="category/:category" element={<ProductCategories />} />
-            <Route path="tryon" element={<TryOnPage />} />
+            <Route path="cart" element={<ShoppingCart />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="payment/completed" element={<PaymentCompleted />} />
+            <Route path="review" element={<ReviewPage />} />
+            <Route path="resetpassword" element={<ResetPassword />} />
             <Route path="add/addresses" element={<AddAddress />} />
-
           </Route>
 
-          {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
-          <Route path="/admin" element={<AppLayout />}>
-            <Route index element={<Home />} />
-            <Route path="chat" element={<ChatAdminPanel/>} />
-            <Route path="profile" element={<AdminProfile/>} />
-          </Route>
+          {/* Public pages */}
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="category/:category" element={<ProductCategories />} />
+          <Route path="tryon" element={<TryOnPage />} />
+        </Route>
 
-          {/* ===== AUTH (ngoài Layout) ===== */}
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/otp" element={<AuthOtp />} />
-          <Route path="/forgotpassword" element={<ForgotPassword />} />
-          <Route path="/login" element={<SignIn/>} />
-          <Route path="/signup-admin" element={<SignUpAdmin/>} />
-          {/* 404 */}
-           <Route path="*" element={<NotFound/>} />
+        {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
+        <Route path="/admin" element={<AppLayout />}>
+          <Route index element={<Home />} />
+          <Route path="chat" element={<ChatAdminPanel />} />
+          <Route path="notification" element={<AdminNotificationSender />} />
+          <Route path="profile" element={<AdminProfile/>} />
+        </Route>
 
-        </Routes>
+        {/* ===== AUTH (ngoài Layout) ===== */}
+        <Route path="/login" element={<SignIn/>} />
+        <Route path="/signup-admin" element={<SignUpAdmin/>} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/otp" element={<AuthOtp />} />
+        <Route path="/forgotpassword" element={<ForgotPassword />} />
+        {/* 404 */}
+        <Route path="*" element={<NotFound/>} />
+      </Routes>
 
-        <ToastContainer
-            position="top-left"
-            autoClose={1500}
-            theme="light"
-            transition={Bounce}
-        />
-      </>
+      <ToastContainer
+        position="top-left"
+        autoClose={1500}
+        theme="light"
+        transition={Bounce}
+      />
+    </>
   );
 }
 
