@@ -9,6 +9,8 @@ import { motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import { getCategories } from "@/services/categoryService.jsx"
 import { fetchCart } from "@/redux/action/cartAction.jsx"
+import NotificationBell from "./NotificationBell"
+
 export const cartRef = React.createRef()
 const Header = () => {
     const dispatch = useDispatch()
@@ -139,7 +141,9 @@ const Header = () => {
                                 </motion.span>
                             )}
                         </motion.div>
-
+                        <div>
+                            <NotificationBell />
+                        </div>
                         {isAuthenticated === false ? (
                             <motion.button
                                 onClick={() => navigate("/login")}

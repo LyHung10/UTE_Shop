@@ -25,6 +25,7 @@ import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
 import AddAddress from "./features/address/AddAddress.jsx";
 import AppLayout from "@/admin/layout/AdminLayout.jsx";
 import Home from "@/admin/pages/Home.js";
+import AdminNotificationSender from "./features/chat/NotificationSender.jsx";
 function App() {
   return (
     <>
@@ -55,14 +56,14 @@ function App() {
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="category/:category" element={<ProductCategories />} />
           <Route path="tryon" element={<TryOnPage />} />
-
         </Route>
 
         {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
         <Route path="/admin" element={<AppLayout />}>
           <Route index element={<Home />} />
           <Route path="chat" element={<ChatAdminPanel />} />
-          <Route path="admin/chat" element={<ChatAdminPanel />} />
+          <Route path="notification" element={<AdminNotificationSender />} />
+
         </Route>
 
         {/* ===== AUTH (ngoài Layout) ===== */}

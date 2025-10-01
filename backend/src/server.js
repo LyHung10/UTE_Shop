@@ -17,21 +17,28 @@ import { errorHandler } from './middleware/errorHandler.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import voucherRoutes from "./routes/voucherRoutes";
 import favoriteProductRoute from "./routes/favoriteProductRoute.js";
-// import notificationRoutes from "./routes/notificationRoutes.js";
 import chatRoutes from './routes/chatRoutes.js';
 import SocketService from './services/socketService.js';
 import shippingRoutes from './routes/shippingRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import { initializeNotificationSocket } from './socket/notificationHandlers.js';
 
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+// CHỈ DÙNG 1 SocketService DUY NHẤT
 const io = SocketService.init(server);
 
-//Middleware to attach io to req
+// KHỞI TẠO NOTIFICATION SOCKET TRÊN CÙNG IO INSTANCE
+const notificationNamespace = initializeNotificationSocket(io);
+
+// Middleware to attach io và notificationNamespace to req
 app.use((req, res, next) => {
   req.io = io;
+  req.notificationNamespace = notificationNamespace; // THÊM DÒNG NÀY
   next();
 });
 
@@ -43,17 +50,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Rate limit
-// const otpLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
-// const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
-
-// Serve file tạm / output
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
-// Routes
-// app.use('/api/auth/register', otpLimiter);
-// app.use('/api/auth/forgot-password', otpLimiter);
-// app.use('/api/auth/login', loginLimiter);
+// ... rest of your middleware and routes
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -67,8 +64,13 @@ app.use('/api/favorites', favoriteProductRoute);
 app.use('/api/chat', chatRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/address', addressRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 // Error handler
 app.use(errorHandler);
+
+// EXPORT CÁC BIẾN CẦN THIẾT
+export { io, notificationNamespace };
 
 // Start server
 (async () => {

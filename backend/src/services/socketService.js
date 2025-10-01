@@ -47,7 +47,7 @@ class SocketService {
                 }
                 socket.join(sessionId);
                 console.log(`User ${socket.id} joined chat room: ${sessionId}`);
-                
+
                 // Thêm: User cũng join vào user room để nhận thông báo
                 if (!socket.user?.role || socket.user.role === 'user') {
                     const userRoom = `user_${socket.user?.sub || 'guest'}`;
@@ -113,7 +113,7 @@ class SocketService {
                     });
 
                     // QUAN TRỌNG: Sửa logic emit để đảm bảo cả user và admin đều nhận được tin nhắn
-                    
+
                     // Emit đến tất cả user trong session room (EXCLUDING sender)
                     socket.to(sessionId).emit('new_message', chatMessage);
 
@@ -127,7 +127,7 @@ class SocketService {
                             sessionId,
                             message: chatMessage
                         });
-                        
+
                         // THÊM: Cập nhật session list cho admin
                         socket.to('admin_room').emit('session_updated', {
                             sessionId,
@@ -139,7 +139,7 @@ class SocketService {
                             sessionId,
                             message: chatMessage
                         });
-                        
+
                         // THÊM QUAN TRỌNG: Gửi thông báo đến user room để cập nhật cả panel và chat
                         // Lấy thông tin session để tìm user id
                         try {
@@ -151,7 +151,7 @@ class SocketService {
                                     sessionId,
                                     message: chatMessage
                                 });
-                                
+
                                 // THÊM: Gửi đến session room để đảm bảo chat box nhận được
                                 socket.to(sessionId).emit('new_message', chatMessage);
                             }
@@ -220,7 +220,7 @@ class SocketService {
 
         return this.io;
     }
-
+    // cho phan chat
     getIO() {
         if (!this.io) {
             throw new Error('Socket.io not initialized! Call init() first.');
@@ -240,6 +240,16 @@ class SocketService {
         if (this.io) {
             this.io.to(socketId).emit(event, data);
         }
+    }
+
+
+
+     // THÊM METHOD MỚI ĐỂ LẤY NOTIFICATION NAMESPACE
+    getNotificationNamespace() {
+        if (!this.io) {
+            throw new Error('Socket.io not initialized! Call init() first.');
+        }
+        return this.io.of('/notifications');
     }
 }
 

@@ -141,15 +141,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         };
 
         const handleNewMessage = (message) => {
-            // console.log('Admin received new message:', {
-            //     id: message.id,
-            //     createdAt: message.createdAt, // 👈 THÊM createdAt
-            //     created_at: message.created_at, // 👈 VÀ created_at để so sánh
-            //     type: typeof message.createdAt,
-            //     display_time: message.display_time,
-            //     sender_type: message.sender_type
-            // });
-            // QUAN TRỌNG: Bỏ qua tin nhắn của chính admin
             if (message.sender_type === 'admin') {
                 console.log('Ignoring own admin message via socket');
                 return;
@@ -347,6 +338,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     });
 
     return (
+        
         <div className="h-screen bg-gray-100 flex">
             {/* Sidebar - Sessions List */}
             <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
@@ -354,6 +346,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 <div className="p-4 border-b border-gray-200">
                     <div className="flex items-center justify-between mb-4">
                         <h1 className="text-xl font-bold text-gray-800">Admin Chat Panel</h1>
+
                         <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                             <span className="text-xs text-gray-500">
