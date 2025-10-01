@@ -1,23 +1,20 @@
-"use client"
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import { Navigation, Autoplay } from "swiper/modules";
+import { Button } from "@/components/ui/button.jsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import ProductCard from "./ProductCard.jsx";
+import { useRef } from "react";
 
-import { Swiper, SwiperSlide } from "swiper/react"
-import "swiper/css"
-import "swiper/css/navigation"
-import { Navigation, Autoplay } from "swiper/modules"
-import { Button } from "@/components/ui/button.jsx"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { motion } from "framer-motion"
-import { useNavigate } from "react-router-dom"
-import ProductCard from "./ProductCard.jsx"
-import { useId, useRef } from "react"
+const ProductSlider = ({ listProducts, nameTop, slidesPerViewDesktop = 4 }) => {
+  const navigate = useNavigate();
 
-const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
-  const navigate = useNavigate()
-
-  // ✅ id ổn định (không phụ thuộc Math.random) — an toàn với Next/SSR
-  const rid = useId().replace(/:/g, "")
-  const prevClass = `ps-${rid}-prev`
-  const nextClass = `ps-${rid}-next`
+  // refs cho nút prev/next — ổn định hơn selector class
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
 
   return (
       <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 grid-pattern">
@@ -36,21 +33,25 @@ const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
           </motion.div>
 
           <div className="relative max-w-7xl mx-auto">
-            {/* Nút PREV/NEXT — luôn có sẵn trong DOM trước khi Swiper init */}
+            {/* Nút PREV/NEXT có mặt trước khi Swiper init */}
             <motion.button
-                className={`${prevClass} absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto`}
+                ref={prevRef}
+                type="button"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                type="button"
+                aria-label="Previous"
             >
               <ChevronLeft className="w-6 h-6" />
             </motion.button>
 
             <motion.button
-                className={`${nextClass} absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto`}
+                ref={nextRef}
+                type="button"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-200 animate-glow pointer-events-auto"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                type="button"
+                aria-label="Next"
             >
               <ChevronRight className="w-6 h-6" />
             </motion.button>
@@ -62,26 +63,25 @@ const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
                 loop
                 speed={800}
                 autoplay={{ delay: 3000, disableOnInteraction: false }}
-                // ✅ dùng selector theo class
-                navigation={{ prevEl: `.${prevClass}`, nextEl: `.${nextClass}` }}
-                // ✅ giúp Swiper re-detect khi DOM/size thay đổi
                 observer
                 observeParents
                 watchOverflow
-                // ✅ rebind navigation sau khi Swiper thật sự init + DOM đã paint
+                // set prev/next trước khi init (tránh race)
+                onBeforeInit={(swiper) => {
+                  swiper.params.navigation = swiper.params.navigation || {};
+                  swiper.params.navigation.prevEl = prevRef.current;
+                  swiper.params.navigation.nextEl = nextRef.current;
+                }}
+                // đảm bảo init/update sau khi DOM/ref đã sẵn sàng
                 onInit={(swiper) => {
-                  const prevEl = document.querySelector(`.${prevClass}`)
-                  const nextEl = document.querySelector(`.${nextClass}`)
-                  if (prevEl && nextEl) {
-                    // give the browser a tick so Framer/DOM settle
-                    setTimeout(() => {
-                      swiper.params.navigation.prevEl = prevEl
-                      swiper.params.navigation.nextEl = nextEl
-                      swiper.navigation.destroy()
-                      swiper.navigation.init()
-                      swiper.navigation.update()
-                    }, 0)
-                  }
+                  // thêm 1 tick cho chắc (đặc biệt khi có motion)
+                  setTimeout(() => {
+                    if (swiper.navigation) {
+                      swiper.navigation.destroy?.();
+                      swiper.navigation.init?.();
+                      swiper.navigation.update?.();
+                    }
+                  }, 0);
                 }}
                 breakpoints={{
                   320: { slidesPerView: 1, spaceBetween: 16 },
@@ -105,7 +105,9 @@ const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
                       </SwiperSlide>
                   ))
               ) : (
-                  <div className="text-center text-slate-400 py-12">Không tìm thấy sản phẩm</div>
+                  <div className="text-center text-slate-400 py-12">
+                    Không tìm thấy sản phẩm
+                  </div>
               )}
             </Swiper>
           </div>
@@ -127,7 +129,7 @@ const ProductSlider = ({ listProducts, nameTop ,slidesPerViewDesktop=4}) => {
           </motion.div>
         </div>
       </section>
-  )
-}
+  );
+};
 
-export default ProductSlider
+export default ProductSlider;

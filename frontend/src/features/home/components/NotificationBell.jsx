@@ -1,5 +1,3 @@
-// frontend/src/components/NotificationBell.jsx
-"use client"
 import React, { useState, useEffect, useRef } from "react"
 import { Bell, Check, CheckCheck, Loader2 } from "lucide-react"
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react"
@@ -130,7 +128,7 @@ const NotificationBell = () => {
         
         // Emit qua NOTIFICATION socket (SỬA TÊN)
         if (notificationSocketRef.current) {
-          notificationSocketRef.current.emit('mark_as_read', { notificationId });
+          notificationSocketRef.current?.emit?.("mark_as_read", { notificationId });
         }
       }
     } catch (error) {
@@ -156,7 +154,7 @@ const NotificationBell = () => {
         
         // Emit qua NOTIFICATION socket (SỬA TÊN)
         if (notificationSocketRef.current) {
-          notificationSocketRef.current.emit('mark_all_read');
+          notificationSocketRef.current?.emit?.("mark_all_read");
         }
       }
     } catch (error) {
@@ -166,62 +164,80 @@ const NotificationBell = () => {
 
   // Initialize NOTIFICATION socket - SỬA LẠI QUAN TRỌNG
   useEffect(() => {
-    if (!isAuthenticated || !user?.accessToken) {
-      console.log('❌ Not authenticated or no token, skipping notification socket');
+    const token = user?.accessToken;
+    const userId = user?.id || user?.sub;
+
+    // Thiếu thông tin -> bỏ qua
+    if (!isAuthenticated || !token || !userId) {
+      console.log("❌ Missing auth info -> skip socket");
       return;
     }
 
-    console.log('🔄 Initializing NOTIFICATION socket connection...');
-    
-    // QUAN TRỌNG: Dùng connectNotification() thay vì connect()
-    const notificationSocket = socketService.connectNotification(user.accessToken, user.id || user.sub);
-    notificationSocketRef.current = notificationSocket;
+    console.log("🔄 Initializing NOTIFICATION socket...");
 
-    // Listen for new notifications
-    notificationSocket.on('new_notification', (data) => {
-      console.log('🎉 NEW REAL-TIME NOTIFICATION:', data);
-      // THÊM KIỂM TRA TRÙNG LẶP
-      setNotifications(prev => {
-        const exists = prev.find(notif => notif.id === data.id);
-        if (exists) return prev;
+    // thử connect
+    let socket;
+    try {
+      socket = socketService?.connectNotification?.(token, userId);
+    } catch (e) {
+      console.error("❌ connectNotification threw:", e);
+    }
+
+    // GUARD: chỉ bind nếu có socket và có .on
+    if (!socket || typeof socket.on !== "function") {
+      console.warn("⚠️ Notification socket not ready (no .on). Skip binding.");
+      // vẫn load dữ liệu qua API để UI có nội dung
+      fetchNotifications();
+      fetchUnreadCount();
+      return;
+    }
+
+    notificationSocketRef.current = socket;
+
+    // listeners (định nghĩa riêng để off đúng)
+    const onNew = (data) => {
+      console.log("🎉 NEW REAL-TIME NOTIFICATION:", data);
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === data.id)) return prev;
         return [data, ...prev];
       });
-      setUnreadCount(prev => prev + 1);
-    });
+      setUnreadCount((prev) => prev + 1);
+    };
 
-    // Listen for unread count updates
-    notificationSocket.on('unread_count_update', (data) => {
-      console.log('📊 Unread count updated:', data);
-      setUnreadCount(data.unread_count || 0);
-    });
+    const onUnreadUpdate = (data) => {
+      console.log("📊 Unread count updated:", data);
+      setUnreadCount(data?.unread_count ?? 0);
+    };
 
-    // Listen for socket errors
-    notificationSocket.on('connect_error', (error) => {
-      console.error('❌ Notification socket connection error:', error);
-    });
+    const onError = (err) => {
+      console.error("❌ Notification socket error:", err);
+    };
 
-    // Fetch initial data
-    console.log('📥 Fetching initial notification data...');
+    socket.on("new_notification", onNew);
+    socket.on("unread_count_update", onUnreadUpdate);
+    socket.on("connect_error", onError);
+
+    // fetch lần đầu
     fetchNotifications();
     fetchUnreadCount();
 
+    // cleanup
     return () => {
-      console.log('🧹 Cleaning up notification socket...');
-      if (notificationSocketRef.current) {
-        notificationSocketRef.current.off('new_notification');
-        notificationSocketRef.current.off('unread_count_update');
-        notificationSocketRef.current.off('connect_error');
-        // KHÔNG gọi socketService.disconnect() vì nó sẽ disconnect cả chat
+      console.log("🧹 Cleanup notification socket listeners...");
+      const s = notificationSocketRef.current;
+      if (s?.off) {
+        s.off("new_notification", onNew);
+        s.off("unread_count_update", onUnreadUpdate);
+        s.off("connect_error", onError);
       }
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.accessToken, user?.id, user?.sub]);
 
   // Reset khi logout
   useEffect(() => {
     if (!isAuthenticated) {
       setNotifications([]);
       setUnreadCount(0);
-      // Cleanup socket reference
       notificationSocketRef.current = null;
     }
   }, [isAuthenticated]);

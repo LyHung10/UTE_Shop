@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect } from "react"
 import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw, Eye, Sparkles } from "lucide-react"
 import { Swiper, SwiperSlide } from "swiper/react"
