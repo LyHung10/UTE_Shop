@@ -7,7 +7,7 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
+  ListIcon, MailIcon,
   PageIcon,
   PieChartIcon,
   PlugInIcon,
@@ -15,7 +15,6 @@ import {
   UserCircleIcon,
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
-import SidebarWidget from "./SidebarWidget.jsx";
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -25,62 +24,29 @@ const navItems = [
     path: "/admin",
   },
   {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
+    icon: <MailIcon />,
+    name: "Chat",
+    path: "/admin/chat",
   },
   {
     icon: <UserCircleIcon />,
     name: "User Profile",
-    path: "/profile",
+    path: "/admin/profile",
   },
   {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
+    icon: <CalenderIcon />,
+    name: "Calendar",
+    path: "/calendar",
   },
 ];
 
 const othersItems = [
   {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
     icon: <PlugInIcon />,
     name: "Authentication",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { name: "Sign In", path: "/signin-admin", pro: false },
+      { name: "Sign Up", path: "/signup-admin", pro: false },
     ],
   },
 ];
@@ -355,7 +321,6 @@ const AppSidebar = () => {
               </div>
             </div>
           </nav>
-          {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
         </div>
       </aside>
   );

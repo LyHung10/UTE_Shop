@@ -1,12 +1,12 @@
 import Layout from "./Layout.jsx";
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./features/home/pages/HomePage.jsx";
-import Login from "./features/auth/pages/Login.jsx";
 import SignUp from "./features/auth/pages/SignUp.jsx";
 import AuthOtp from "./features/auth/components/AuthOtp.jsx";
 import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
 import UserProfile from "@/features/user/pages/UserProfile.jsx";
+import AdminProfile from "@/admin/pages/UserProfiles.jsx";
 import ProductDetail from "@/features/product/ProductDetail.jsx";
 import ProductCategories from "@/features/product/pages/ProductCategories.jsx";
 import ShoppingCart from "@/features/cart/pages/ShoppingCart.jsx";
@@ -25,6 +25,9 @@ import PrivateRoute from "@/app/guards/PrivateRoute.jsx";
 import AddAddress from "./features/address/AddAddress.jsx";
 import AppLayout from "@/admin/layout/AdminLayout.jsx";
 import Home from "@/admin/pages/Home.js";
+import NotFound from "@/NotFound.jsx";
+import SignIn from "@/features/auth/pages/SignIn.jsx";
+import SignUpAdmin from "@/features/auth/pages/SignUp_Admin.jsx";
 function App() {
   return (
       <>
@@ -61,18 +64,18 @@ function App() {
           {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
           <Route path="/admin" element={<AppLayout />}>
             <Route index element={<Home />} />
-            <Route path="chat" element={<ChatAdminPanel />} />
-            <Route path="admin/chat" element={<ChatAdminPanel />} />
+            <Route path="chat" element={<ChatAdminPanel/>} />
+            <Route path="profile" element={<AdminProfile/>} />
           </Route>
 
           {/* ===== AUTH (ngoài Layout) ===== */}
-          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/otp" element={<AuthOtp />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
-
+          <Route path="/login" element={<SignIn/>} />
+          <Route path="/signup-admin" element={<SignUpAdmin/>} />
           {/* 404 */}
-          {/* <Route path="*" element={<NotFoundPage />} /> */}
+           <Route path="*" element={<NotFound/>} />
 
         </Routes>
 

@@ -7,16 +7,22 @@ import {BrowserRouter} from "react-router-dom";
 import {store, persistor} from "./redux/store.jsx";
 import {Provider} from "react-redux";
 import {PersistGate} from "redux-persist/integration/react";
-import ScrollToTop from "@/components/ScrollToTop.jsx";
+import ScrollToTop from "@/admin/components/common/ScrollToTop.jsx";
 import AuthProvider from "@/app/providers/AuthProvider.jsx";
+import {HelmetProvider} from "react-helmet-async";
+import {ThemeProvider} from "@/admin/context/ThemeContext.jsx";
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
             {/*<StrictMode>*/}
                 <BrowserRouter>
                     <AuthProvider>
-                        <ScrollToTop />
-                        <App />
+                        <HelmetProvider>
+                            <ThemeProvider>
+                                <ScrollToTop />
+                                <App />
+                            </ThemeProvider>
+                        </HelmetProvider>
                     </AuthProvider>
                 </BrowserRouter>
             {/*</StrictMode>*/}

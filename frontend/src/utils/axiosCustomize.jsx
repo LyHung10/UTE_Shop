@@ -11,6 +11,7 @@ NProgress.configure(
 );
 const instance = axios.create({
     baseURL: "http://localhost:4000/",
+    withCredentials: true,    // bật nếu dùng cookie/session
 });
 
 instance.interceptors.request.use(function (config) {

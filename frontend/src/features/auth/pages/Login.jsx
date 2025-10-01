@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUser, postLogin } from "../../../services/apiService.jsx";
+import { getUser, postLogin } from "@/services/apiService.jsx";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-import { doLogin } from "../../../redux/action/userAction.jsx";
+import { doLogin } from "@/redux/action/userAction.jsx";
 
 const Login = () => {
     const navigate = useNavigate();
