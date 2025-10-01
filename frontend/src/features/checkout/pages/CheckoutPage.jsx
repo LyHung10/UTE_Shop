@@ -57,7 +57,7 @@ const PaymentMethodPage = () => {
                 // ---------------- COD ----------------
                 const data = await dispatch(checkoutCOD(cart.appliedVoucher));
                 const orderId = data.order.id;
-                await dispatch(confirmCODPayment(orderId));
+                // await dispatch(confirmCODPayment(orderId));
                 alert(`Đặt hàng COD thành công! OrderID: ${orderId}`);
                 dispatch({ type: 'CLEAR_CART' });
                 dispatch({ type: 'SET_CART_COUNT', payload: 0 });

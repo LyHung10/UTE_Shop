@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', OrderController.getUserOrders);
-router.get('/:orderId/detail', OrderController.getDetailOrder);
+router.get('/:orderId/detail', authenticateToken,OrderController.getDetailOrder);
 router.post('/cart',OrderController.addToCart);
 router.get('/cart',OrderController.getCart);
 router.put('/cart',OrderController.updateQuantity);

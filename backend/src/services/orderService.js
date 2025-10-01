@@ -409,7 +409,7 @@ class OrderService {
             }
 
             // Cập nhật status order
-            order.status = "CONFIRMED"; // chờ giao hàng
+            order.status = "NEW"; // chờ giao hàng
             order.total_amount = total - discount;
 
             if (appliedVoucher) {

@@ -1,13 +1,13 @@
-import { CheckCircle2, ChevronRight, Clock, Package, Truck, XCircle } from "lucide-react";
+import {CheckCircle2, ChevronRight, Clock, Package, Truck, Warehouse, XCircle} from "lucide-react";
 import { Link } from "react-router-dom";
 import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
 import {useNavigate} from "react-router-dom";
 
 const StatusBadge = ({ status }) => {
     const map = {
-        PENDING: { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200", Icon: Clock },
-        SHIPPING: { label: "Vận chuyển", cls: "bg-blue-50 text-blue-700 border-blue-200", Icon: Truck },
-        OUT_FOR_DELIVERY: { label: "Chờ giao hàng", cls: "bg-cyan-50 text-cyan-700 border-cyan-200", Icon: Truck },
+        NEW: { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-700 border-amber-200", Icon: Clock },
+        PACKING: { label: "Chờ gói hàng", cls: "bg-blue-50 text-blue-700 border-blue-200", Icon: Warehouse },
+        SHIPPING: { label: "Chờ giao hàng", cls: "bg-cyan-50 text-cyan-700 border-cyan-200", Icon: Truck },
         COMPLETED: { label: "Hoàn thành", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: CheckCircle2 },
         CANCELLED: { label: "Đã hủy", cls: "bg-rose-50 text-rose-700 border-rose-200", Icon: XCircle },
     };

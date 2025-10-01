@@ -1,8 +1,9 @@
 import Steps from "rc-steps";
 import  "../../../styles/OrderProgress.css"
 import {
-    ReceiptText, Wallet, Truck, PackageCheck, Star, XCircle
+    ReceiptText, Wallet, Truck, PackageCheck, Star, XCircle, CheckCircle2, Warehouse
 } from "lucide-react";
+import {useEffect} from "react";
 const formatVN = (iso) =>
     iso
         ? new Date(iso).toLocaleString("vi-VN", {
@@ -15,10 +16,11 @@ export default function EnhancedOrderProgress(props) {
     const {
         currentStep = 1,
         status,
-        total,
         timeline = {},
     } = props
-    console.log(currentStep);
+    useEffect(() => {
+        console.log("Ngày đặt",timeline.placedAt);
+    }, []);
     const cancelled = String(status || "").toUpperCase() === "CANCELLED";
 
     if (cancelled) {
@@ -40,35 +42,35 @@ export default function EnhancedOrderProgress(props) {
         {
             title: (
                 <div className="text-sm font-medium">
-                    Đơn Hàng Đã Thanh Toán{total ? ` (${total.toLocaleString("vi-VN")}₫)` : ""}
+                    Đã xác nhận đơn hàng
                 </div>
             ),
             description: <div className="text-xs">{formatVN(timeline.paidAt)}</div>,
-            icon: <Wallet className="h-4 w-4" />,
+            icon: <PackageCheck className="h-4 w-4" />,
             status: currentStep >= 2 ? "finish" : "wait",
         },
         {
-            title: <div className="text-sm font-medium">Đã Giao Cho ĐVVC</div>,
+            title: <div className="text-sm font-medium">Người gửi đang chuẩn bị hàng</div>,
             description: <div className="text-xs">{formatVN(timeline.handedAt)}</div>,
-            icon: <Truck className="h-4 w-4" />,
+            icon: <Warehouse className="h-4 w-4" />,
             status: currentStep >= 3 ? "finish" : "wait",
         },
         {
-            title: <div className="text-sm font-medium">Đã Nhận Được Hàng</div>,
+            title: <div className="text-sm font-medium">Đang giao hàng</div>,
             description: <div className="text-xs">{formatVN(timeline.receivedAt)}</div>,
-            icon: <PackageCheck className="h-4 w-4" />,
+            icon: <Truck className="h-4 w-4" />,
             status: currentStep >= 4 ? "finish" : "wait",
         },
         {
-            title: <div className="text-sm font-medium">Đánh Giá</div>,
+            title: <div className="text-sm font-medium">Giao hàng thành công</div>,
             description: <div className="text-xs">{formatVN(timeline.reviewedAt)}</div>,
-            icon: <Star className="h-4 w-4" />,
+            icon: <CheckCircle2 className="h-4 w-4" />,
             status: currentStep >= 5 ? "finish" : "wait",
         },
     ];
 
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4" >
             <Steps className="!flex !items-start" current={currentStep} items={items} labelPlacement="vertical" />
         </div>
     );

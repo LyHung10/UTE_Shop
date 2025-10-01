@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Search, Package, Truck, Clock, CheckCircle2, XCircle } from "lucide-react";
+import {Search, Package, Truck, Clock, CheckCircle2, XCircle, Warehouse} from "lucide-react";
 import OrderCard from "@/features/user/components/OrderCard.jsx";
 import { getUserOrders } from "@/services/orderService.jsx";
 
 const TABS = [
     { key: "", label: "Tất cả", icon: Package },
-    { key: "PENDING", label: "Chờ xác nhận", icon: Clock },
-    { key: "SHIPPING", label: "Vận chuyển", icon: Truck },
-    { key: "OUT_FOR_DELIVERY", label: "Chờ giao hàng", icon: Truck },
+    { key: "NEW", label: "Chờ xác nhận", icon: Clock },
+    { key: "PACKING", label: "Chuẩn bị hàng", icon: Warehouse },
+    { key: "SHIPPING", label: "Chờ giao hàng", icon: Truck },
     { key: "COMPLETED", label: "Hoàn thành", icon: CheckCircle2 },
     { key: "CANCELLED", label: "Đã hủy", icon: XCircle },
 ];

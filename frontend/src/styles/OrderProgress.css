@@ -1,48 +1,69 @@
 @import "rc-steps/assets/index.css";
 
-/* màu chung */
-.rc-steps-item-finish .rc-steps-item-icon { background-color: #fff; border-color: #22c55e; color: #fff; }
-.rc-steps-item-wait .rc-steps-item-icon   { background-color: #fff; border-color: #d1d5db; color: #9ca3af; }
-.rc-steps-item-tail::after { background-color: #d1d5db; }
-
-/* nhấn mạnh step hiện tại (process) */
-.rc-steps-item-process .rc-steps-item-icon {
-    background-color: #3b82f6;   /* blue-500 */
-    border-color: #3b82f6;
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); /* vòng sáng */
-    transform: scale(1.06);
-}
-
-/* step đã hoàn thành */
-.rc-steps-item-finish .rc-steps-item-icon > .rc-steps-icon {
-    background-color: #fff;     /* nền trắng */
-    border-color: #22c55e;      /* viền xanh lá */
-    color: #22c55e;
-    stroke: #22c55e; /* lucide dùng stroke */
-}
-
-/* thanh nối: các đoạn trước process hiển thị xanh */
-.rc-steps-item-finish .rc-steps-item-tail::after { background-color: #22c55e; }
-.rc-steps-item-process .rc-steps-item-tail::after { background-color: #22c55e; }
-
-
-/* tiêu đề & mô tả */
-.rc-steps-item-title { color: #111827; }        /* gray-900 */
-.rc-steps-item-description { color: #6b7280; }  /* gray-500 */
-
-/* icon mặc định là 32px, bạn có thể tăng */
-.rc-steps-item-icon {
-    width: 50px;   /* tăng kích thước vòng tròn */
+/* ===== Scope theo wrapper để tránh rò style ===== */
+.order-steps .rc-steps-item-icon {
+    width: 50px;
     height: 50px;
-    font-size: 18px;  /* size chữ số trong vòng */
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    background: #fff;           /* vòng tròn nền trắng mặc định */
+    border: 2px solid #d1d5db;  /* gray-300 */
+    color: #9ca3af;             /* gray-400: ảnh hưởng currentColor của SVG */
+    box-shadow: none;
 }
 
-/* nếu bạn dùng custom icon (lucide-react), scale chúng to hơn */
-.rc-steps-item-icon svg {
+/* SVG icon (lucide dùng stroke theo currentColor) */
+.order-steps .rc-steps-item-icon svg {
     width: 30px;
     height: 30px;
+}
+
+/* Wait */
+.order-steps .rc-steps-item-wait .rc-steps-item-icon {
+    border-color: #d1d5db;
+    color: #9ca3af;
+}
+
+/* Process (đang ở bước này) – KHÔNG tô nền wrapper .rc-steps-icon */
+.order-steps .rc-steps-item-process .rc-steps-item-icon {
+    border-color: #3b82f6; /* blue-500 */
+    color: #3b82f6;        /* icon thành xanh */
+    background: #fff;      /* giữ nền trắng để icon nổi bật */
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+    transform: scale(1.06);
+}
+
+/* Finish (đã qua) */
+.order-steps .rc-steps-item-finish .rc-steps-item-icon {
+    border-color: #22c55e; /* green-500 */
+    color: #22c55e;        /* icon xanh lá */
+    background: #fff;
+}
+
+/* Error (ví dụ bước Hủy) */
+.order-steps .rc-steps-item-error .rc-steps-item-icon {
+    border-color: #ef4444;  /* red-500 */
+    color: #ef4444;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(239,68,68,0.15);
+}
+
+/* Thanh nối */
+.order-steps .rc-steps-item-tail::after { background-color: #d1d5db; }
+.order-steps .rc-steps-item-finish .rc-steps-item-tail::after { background-color: #22c55e; }
+.order-steps .rc-steps-item-process .rc-steps-item-tail::after { background-color: #22c55e; }
+
+/* Tiêu đề & mô tả */
+.order-steps .rc-steps-item-title { color: #111827; }      /* gray-900 */
+.order-steps .rc-steps-item-description { color: #6b7280; }/* gray-500 */
+
+/* Nếu dùng custom icon, rc-steps thêm class này.
+   Đảm bảo không tô nền wrapper .rc-steps-icon để icon không bị che. */
+.order-steps .rc-steps-item-custom .rc-steps-item-icon .rc-steps-icon {
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }

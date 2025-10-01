@@ -39,13 +39,13 @@ class OrderController {
             // Middleware auth đã gắn user vào req
             const userId = req.user?.sub;
             const orderId = req.params.orderId;
-            const order = await OrderService.getDetailOrder(userId, orderId);
 
+            const order = await OrderService.getDetailOrder(userId, orderId);
             const data = {
                 id: order.id,
                 status: order.status,
-                created_at: order.created_at,
-                updated_at: order.updated_at,
+                created_at: order.createdAt,
+                updated_at: order.updatedAt,
                 total_amount: Number(order.total_amount ?? 0),
 
                 // Nếu bảng Order có các field dưới thì trả ra (tùy schema của bạn)
@@ -150,10 +150,6 @@ class OrderController {
                 success: true,
                 message: "Checkout COD thành công.",
                 order: result.order,
-                payment: {
-                    method: "COD",
-                    status: "pending" // thanh toán khi nhận hàng
-                }
             });
         } catch (err) {
             console.error("Checkout COD error:", err);

@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-    Package, Truck, Clock, CheckCircle2, XCircle,
+    Truck, Clock, CheckCircle2, XCircle,
     MapPin, Phone, User as UserIcon, CreditCard,
-    MessageSquare, Repeat, Star
+    MessageSquare, Repeat, Star, PackageCheck, Warehouse
 } from "lucide-react";
 import EnhancedOrderProgress from "@/features/user/components/EnhancedOrderProgress.jsx";
 import { getOrderDetail } from "@/services/orderService.jsx";
@@ -13,12 +13,10 @@ import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
 // Map trạng thái -> badge + icon + step index cho progress
 const STATUS_MAP = {
     NEW:              { key: "PENDING",    label: "Mới tạo",         icon: Clock,        step: 1 },
-    CONFIRMED:        { key: "PENDING",    label: "Đã xác nhận",     icon: Clock,        step: 2 },
-    PACKING:          { key: "PENDING",    label: "Chuẩn bị hàng",   icon: Package,      step: 2 },
-    IN_TRANSIT:       { key: "SHIPPING",   label: "Đang vận chuyển", icon: Truck,        step: 3 },
-    OUT_FOR_DELIVERY: { key: "OFD",        label: "Chờ giao hàng",   icon: Truck,        step: 4 },
-    DELIVERED:        { key: "COMPLETED",  label: "Đã giao",         icon: CheckCircle2, step: 5 },
-    COMPLETED:        { key: "COMPLETED",  label: "Hoàn thành",      icon: CheckCircle2, step: 5 },
+    CONFIRMED:        { key: "PENDING",    label: "Đã xác nhận",     icon: PackageCheck, step: 2 },
+    PACKING:          { key: "PENDING",    label: "Chuẩn bị hàng",   icon: Warehouse,   step: 3 },
+    SHIPPING:         { key: "DELIVERING", label: "Chờ giao hàng",   icon: Truck,        step: 4 },
+    COMPLETED:        { key: "COMPLETED",  label: "Giao thành công", icon: CheckCircle2, step: 5 },
     CANCELLED:        { key: "CANCELLED",  label: "Đã hủy",          icon: XCircle,      step: 0 }
 };
 export default function OrderDetail() {
@@ -95,13 +93,8 @@ export default function OrderDetail() {
                     <EnhancedOrderProgress
                         status={data.status}
                         currentStep={statusMeta.step}
-                        total={data.total_amount}
                         timeline={{
                             placedAt: data.created_at,
-                            paidAt: data.paid_at,
-                            handedAt: data.carrier_handover_at,
-                            receivedAt: data.delivered_at,
-                            reviewedAt: data.reviewed_at
                         }}
                     />
                 </div>
