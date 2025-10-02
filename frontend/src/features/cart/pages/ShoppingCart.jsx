@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Minus, Plus, TicketPercent, Loader2, MapPin, ChevronDown, PlusCircle, ShoppingBag, Package } from 'lucide-react';
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch} from "react-redux";
 import { updateQuantity, removeFromCart, fetchCart } from "@/redux/action/cartAction.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from '@/utils/axiosCustomize';

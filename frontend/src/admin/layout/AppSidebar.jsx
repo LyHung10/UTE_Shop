@@ -8,6 +8,7 @@ import {
   GridIcon,
   HorizontaLDots, PaperPlaneIcon,
   UserCircleIcon, UserIcon,
+  SendNotificationIcon,
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
