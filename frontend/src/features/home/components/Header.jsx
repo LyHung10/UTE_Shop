@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from "react"
 import { getCategories } from "@/services/categoryService.jsx"
 import { fetchCart } from "@/redux/action/cartAction.jsx"
 import NotificationBell from "./NotificationBell"
+import {getCommunes} from "@/services/locationService.jsx";
+
 
 export const cartRef = React.createRef()
 const Header = () => {
@@ -25,6 +27,7 @@ const Header = () => {
 
     const [listCategories, setListCategories] = useState([])
     const fetchCategories = async () => {
+        const location = await getCommunes();
         const data = await getCategories()
         if (data) {
             setListCategories(data)

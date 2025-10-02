@@ -2,39 +2,41 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 // Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
-  CalenderIcon,
+  AlertIcon,
+  CalenderIcon, ChatIcon,
   ChevronDownIcon,
   GridIcon,
-  HorizontaLDots,
-  ListIcon, MailIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
-  UserCircleIcon,
+  HorizontaLDots, PaperPlaneIcon,
+  UserCircleIcon, UserIcon,
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
+import {BoxIcon, Package, User2Icon} from "lucide-react";
+
 
 const navItems = [
   {
-    icon: <GridIcon />,
+    icon: <GridIcon/>,
     name: "Dashboard",
     path: "/admin",
   },
   {
-    icon: <MailIcon />,
+    icon: <ChatIcon/>,
     name: "Chat",
     path: "/admin/chat",
   },
   {
-    icon: <UserCircleIcon />,
+    icon: <PaperPlaneIcon/>,
+    name: "Notifications",
+    path: "/admin/notification",
+  },
+  {
+    icon: <UserCircleIcon/>,
     name: "User Profile",
     path: "/admin/profile",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <CalenderIcon/>,
     name: "Calendar",
     path: "/calendar",
   },
@@ -42,12 +44,19 @@ const navItems = [
 
 const othersItems = [
   {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin-admin", pro: false },
-      { name: "Sign Up", path: "/signup-admin", pro: false },
-    ],
+    icon: <User2Icon/>,
+    name: "User",
+    path: "/admin/manage-users",
+  },
+  {
+    icon: <Package/>,
+    name: "Orders",
+    path: "/admin/manage-orders",
+  },
+  {
+    icon: <BoxIcon/>,
+    name: "Products",
+    path: "/admin/manage-products",
   },
 ];
 
@@ -312,7 +321,7 @@ const AppSidebar = () => {
                     }`}
                 >
                   {isExpanded || isHovered || isMobileOpen ? (
-                      "Others"
+                      "Manage"
                   ) : (
                       <HorizontaLDots />
                   )}
