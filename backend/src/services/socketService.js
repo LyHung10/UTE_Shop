@@ -85,13 +85,6 @@ class SocketService {
                     const { sessionId, message, messageType = 'text' } = data;
                     const userId = socket.user?.sub || null;
 
-                    console.log('Received message via socket:', {
-                        sessionId,
-                        message: message.substring(0, 50) + '...',
-                        userId,
-                        senderRole: socket.user?.role
-                    });
-
                     // Determine sender type
                     let senderType = 'user';
                     if (socket.user?.role === 'admin') {
@@ -100,7 +93,7 @@ class SocketService {
 
                     const chatMessage = await chatService.sendMessage({
                         sessionId,
-                        userId,
+                        userId: userId,
                         message,
                         senderType,
                         messageType

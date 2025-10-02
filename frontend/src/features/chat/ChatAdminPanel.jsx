@@ -7,7 +7,7 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-
+import UserAvatar from './UserAvatar';
 const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     const [sessions, setSessions] = useState([]);
     const [selectedSession, setSelectedSession] = useState(null);
@@ -218,6 +218,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     }, [loadMessages]);
 
     // Send message
+    // ChatAdminPanel.jsx - Sửa handleSendMessage
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !selectedSession) return;
 
@@ -233,12 +234,14 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 id: tempId,
                 message: messageText,
                 sender_type: 'admin',
-                createdAt: now.toISOString(),
-                display_time: formatTime(now), // 👈 LUÔN có display_time
+                created_at: now.toISOString(),
+                display_time: formatTime(now),
                 user: {
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    image: user.image
+                    id: user?.id || 'admin',
+                    first_name: user?.first_name || 'Admin',
+                    last_name: user?.last_name || '',
+                    image: user?.image || null,
+                    is_admin: true
                 }
             };
 
@@ -251,7 +254,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 messageType: 'text'
             });
 
-            console.log('Message sent via socket:', messageText);
+            console.log('✅ Admin message sent via socket:', messageText);
 
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -396,7 +399,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                 className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors ${filter === status
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                                    }`}
                             >
                                 {status === 'all' ? 'Tất cả' : status.charAt(0).toUpperCase() + status.slice(1)}
                             </button>
@@ -421,25 +424,19 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                 key={session.id}
                                 onClick={() => handleSelectSession(session)}
                                 className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedSession?.id === session.id ? 'bg-blue-50' : ''
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                                        {session.user ? (
-                                            session.user.image ? (
-                                                <img src={session.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                `${session.user.first_name?.[0] || ''}${session.user.last_name?.[0] || ''}`
-                                            )
-                                        ) : (
-                                            <User size={20} />
-                                        )}
-                                    </div>
+                                    <UserAvatar
+                                        user={session.display_user || { is_guest: true }}
+                                        senderType={session.display_user?.is_admin ? 'admin' : 'user'}
+                                        size={10}
+                                    />
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
                                             <h3 className="font-semibold text-sm text-gray-800 truncate">
-                                                {session.user
-                                                    ? `${session.user.first_name || ''} ${session.user.last_name || ''}`
+                                                {session.display_user
+                                                    ? `${session.display_user.first_name || ''} ${session.display_user.last_name || ''}`
                                                     : 'Guest User'}
                                             </h3>
                                             <span className="text-xs text-gray-500">
@@ -456,10 +453,27 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                                     : session.status === 'waiting'
                                                         ? 'bg-yellow-100 text-yellow-700'
                                                         : 'bg-gray-100 text-gray-700'
-                                                }`}
+                                                    }`}
                                             >
                                                 {session.status}
                                             </span>
+
+                                            {/* 👇 THÊM BADGE UNREAD */}
+                                            {session.unread_count > 0 && (
+                                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
+                                                    {session.unread_count} tin nhắn mới
+                                                </span>
+                                            )}
+
+                                            {/* 👇 HOẶC HIỂN THỊ TRẠNG THÁI ĐỌC */}
+                                            {session.last_message && (
+                                                <span className={`text-xs px-2 py-0.5 rounded-full ${session.last_message.is_read
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                    {session.last_message.is_read ? 'Đã đọc' : 'Chưa đọc'}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -496,25 +510,23 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {selectedSession.user ? (
-                                        selectedSession.user.image ? (
-                                            <img src={selectedSession.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                        ) : (
-                                            `${selectedSession.user.first_name?.[0] || ''}${selectedSession.user.last_name?.[0] || ''}`
-                                        )
-                                    ) : (
-                                        <User size={20} />
-                                    )}
-                                </div>
+
+                                {/* SỬA Ở ĐÂY - DÙNG display_user */}
+                                <UserAvatar
+                                    user={selectedSession.display_user || { is_guest: true }}
+                                    senderType={selectedSession.display_user?.is_admin ? 'admin' : 'user'}
+                                    size={10}
+                                />
+
                                 <div>
                                     <h2 className="font-semibold text-gray-800">
-                                        {selectedSession.user
-                                            ? `${selectedSession.user.first_name || ''} ${selectedSession.user.last_name || ''}`
+                                        {selectedSession.display_user
+                                            ? `${selectedSession.display_user.first_name || ''} ${selectedSession.display_user.last_name || ''}`
                                             : 'Guest User'}
                                     </h2>
                                     <p className="text-xs text-gray-500">
                                         Session: {selectedSession.session_id.slice(0, 12)}...
+                                        {!selectedSession.display_user && " • Guest"}
                                     </p>
                                 </div>
                             </div>
@@ -525,7 +537,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                         : selectedSession.status === 'waiting'
                                             ? 'bg-yellow-100 text-yellow-700'
                                             : 'bg-gray-100 text-gray-700'
-                                    }`}
+                                        }`}
                                 >
                                     {selectedSession.status}
                                 </span>
@@ -552,15 +564,25 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                     <div key={msg.id || index}>
                                         <div
                                             className={`flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'
-                                            }`}
+                                                }`}
                                         >
+                                            {/* THÊM AVATAR CHO USER MESSAGES */}
+                                            {msg.sender_type !== 'admin' && (
+                                                <UserAvatar
+                                                    user={msg.user}
+                                                    senderType={msg.sender_type}
+                                                    size={8}
+                                                    className="mr-2"
+                                                />
+                                            )}
+
                                             <div
                                                 className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender_type === 'admin'
                                                     ? 'bg-blue-600 text-white rounded-br-none'
                                                     : msg.sender_type === 'bot'
                                                         ? 'bg-gray-200 text-gray-800 rounded-bl-none'
                                                         : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
-                                                }`}
+                                                    }`}
                                             >
                                                 {msg.sender_type === 'user' && msg.user && (
                                                     <p className="text-xs font-semibold text-blue-600 mb-1">
@@ -577,11 +599,21 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                                 </p>
                                                 <p
                                                     className={`text-xs mt-1 ${msg.sender_type === 'admin' ? 'text-blue-100' : 'text-gray-500'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {msg.display_time || formatTime(msg.createdAt)}
                                                 </p>
                                             </div>
+
+                                            {/* THÊM AVATAR CHO ADMIN MESSAGES */}
+                                            {msg.sender_type === 'admin' && (
+                                                <UserAvatar
+                                                    user={msg.user}
+                                                    senderType={msg.sender_type}
+                                                    size={8}
+                                                    className="ml-2"
+                                                />
+                                            )}
                                         </div>
 
                                         {/* Quick replies */}

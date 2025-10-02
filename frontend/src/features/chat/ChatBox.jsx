@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
+import UserAvatar from './UserAvatar';
 
 const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -144,6 +145,65 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
     };
 
     // Send message - CHỈ DÙNG HTTP
+    // const handleSendMessage = async () => {
+    //     if (!inputMessage.trim() || !sessionId) return;
+
+    //     const messageText = inputMessage.trim();
+    //     setInputMessage('');
+
+    //     try {
+    //         // Optimistic update với thời gian frontend
+    //         const tempId = `temp-${Date.now()}`;
+    //         const now = new Date(); // 👈 DÙNG THỜI GIAN FRONTEND
+
+    //         const tempMessage = {
+    //             id: tempId,
+    //             message: messageText,
+    //             sender_type: 'user',
+    //             created_at: now.toISOString(), // ISO string
+    //             display_time: formatTime(now), // 👈 THÊM display_time đã format sẵn
+    //             user: user ? {
+    //                 first_name: user.first_name,
+    //                 last_name: user.last_name,
+    //                 image: user.image
+    //             } : null
+    //         };
+
+    //         setMessages((prev) => [...prev, tempMessage]);
+
+    //         // Gửi HTTP
+    //         const response = await axios.post(
+    //             `${apiUrl}/api/chat/messages`,
+    //             {
+    //                 sessionId,
+    //                 message: messageText,
+    //                 messageType: 'text'
+    //             },
+    //             {
+    //                 headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+    //             }
+    //         );
+
+    //         // Replace với data từ server
+    //         if (response.data.success) {
+    //             setMessages((prev) =>
+    //                 prev.map(msg =>
+    //                     msg.id === tempId ? {
+    //                         ...response.data.data,
+    //                         display_time: formatTime(response.data.data.created_at) // Format server time
+    //                     } : msg
+    //                 )
+    //             );
+    //         }
+
+    //     } catch (error) {
+    //         console.error('Failed to send message:', error);
+    //         toast.error('Không thể gửi tin nhắn. Vui lòng thử lại!');
+    //         setMessages((prev) => prev.filter((m) => m.id !== tempId));
+    //     }
+    // };
+
+    // ChatBox.jsx - Sửa handleSendMessage
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !sessionId) return;
 
@@ -153,46 +213,38 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
         try {
             // Optimistic update với thời gian frontend
             const tempId = `temp-${Date.now()}`;
-            const now = new Date(); // 👈 DÙNG THỜI GIAN FRONTEND
+            const now = new Date();
 
             const tempMessage = {
                 id: tempId,
                 message: messageText,
                 sender_type: 'user',
-                created_at: now.toISOString(), // ISO string
-                display_time: formatTime(now), // 👈 THÊM display_time đã format sẵn
+                created_at: now.toISOString(),
+                display_time: formatTime(now),
                 user: user ? {
                     first_name: user.first_name,
                     last_name: user.last_name,
                     image: user.image
-                } : null
+                } : {
+                    first_name: 'Khách',
+                    last_name: '',
+                    image: null,
+                    is_guest: true
+                }
             };
 
             setMessages((prev) => [...prev, tempMessage]);
 
-            // Gửi HTTP
-            const response = await axios.post(
-                `${apiUrl}/api/chat/messages`,
-                {
+            // 👇 QUAN TRỌNG: GỬI QUA SOCKET THAY VÌ HTTP
+            if (socketRef.current) {
+                socketRef.current.emit('send_message', {
                     sessionId,
                     message: messageText,
                     messageType: 'text'
-                },
-                {
-                    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-                }
-            );
-
-            // Replace với data từ server
-            if (response.data.success) {
-                setMessages((prev) =>
-                    prev.map(msg =>
-                        msg.id === tempId ? {
-                            ...response.data.data,
-                            display_time: formatTime(response.data.data.created_at) // Format server time
-                        } : msg
-                    )
-                );
+                });
+                console.log('✅ Message sent via socket');
+            } else {
+                throw new Error('Socket not connected');
             }
 
         } catch (error) {
@@ -288,22 +340,31 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                         <p className="text-sm">Xin chào! Chúng tôi có thể giúp gì cho bạn?</p>
                     </div>
                 ) : (
+                    // Thay thế phần hiển thị messages
                     messages.map((msg, index) => (
                         <div key={msg.id || index} className="animate-fade-in">
-                            <div
-                                className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
+                            <div className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+
+                                {/* Avatar cho admin/bot messages */}
+                                {msg.sender_type !== 'user' && (
+                                    <UserAvatar
+                                        user={msg.user}
+                                        senderType={msg.sender_type}
+                                        size={8}
+                                    />
+                                )}
+
                                 <div
                                     className={`max-w-[75%] rounded-2xl px-4 py-2 transition-all duration-300 ${msg.sender_type === 'user'
-                                        ? 'bg-blue-600 text-white rounded-br-none shadow-lg'
-                                        : msg.sender_type === 'bot'
-                                            ? 'bg-gray-200 text-gray-800 rounded-bl-none shadow-md'
-                                            : 'bg-green-100 text-gray-800 rounded-bl-none shadow-md'
+                                            ? 'bg-blue-600 text-white rounded-br-none shadow-lg'
+                                            : msg.sender_type === 'bot'
+                                                ? 'bg-gray-200 text-gray-800 rounded-bl-none shadow-md'
+                                                : 'bg-green-100 text-gray-800 rounded-bl-none shadow-md'
                                         }`}
                                 >
                                     {msg.sender_type === 'admin' && (
                                         <p className="text-xs font-semibold text-green-700 mb-1">
-                                            Admin
+                                            {msg.user?.name || 'Admin'}
                                         </p>
                                     )}
                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
@@ -314,22 +375,16 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                                         {msg.display_time || formatTime(msg.created_at)}
                                     </p>
                                 </div>
-                            </div>
 
-                            {/* Quick replies */}
-                            {msg.metadata?.quick_replies && (
-                                <div className="flex flex-wrap gap-2 mt-2 ml-2 animate-fade-in">
-                                    {msg.metadata.quick_replies.map((reply, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleQuickReply(reply.title)}
-                                            className="bg-white border border-blue-300 text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-50 transition-all duration-200 hover:scale-105"
-                                        >
-                                            {reply.title}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                                {/* Avatar cho user messages */}
+                                {msg.sender_type === 'user' && (
+                                    <UserAvatar
+                                        user={msg.user}
+                                        senderType={msg.sender_type}
+                                        size={8}
+                                    />
+                                )}
+                            </div>
                         </div>
                     ))
                 )}

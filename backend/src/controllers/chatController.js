@@ -23,27 +23,32 @@ class ChatController {
     async sendMessage(req, res) {
         try {
             const { sessionId, message, messageType = 'text', metadata } = req.body;
+
+            // 👇 QUAN TRỌNG: Lấy user_id từ JWT token
             const userId = req.user?.sub || null;
 
+            console.log('🔐 API user data:', req.user);
+            console.log('🔐 User ID from JWT:', userId);
+
             if (!sessionId || !message) {
-                return res.status(400).json({ success: false, error: 'Session ID and message are required' });
+                return res.status(400).json({
+                    success: false,
+                    error: 'Session ID and message are required'
+                });
             }
 
             const chatMessage = await chatService.sendMessage({
                 sessionId,
-                userId,
+                userId: userId, // 👈 TRUYỀN user_id
                 message,
                 senderType: 'user',
                 messageType,
                 metadata
             });
 
-            // QUAN TRỌNG: Emit new_message đến cả session room VÀ admin room
+            // Emit socket events
             req.io.to(sessionId).emit('new_message', chatMessage);
-            // THÊM: Emit new_message đến admin room để cập nhật ô chat
             req.io.to('admin_room').emit('new_message', chatMessage);
-
-            // Notify admin room về tin nhắn mới từ user (cho session list)
             req.io.to('admin_room').emit('new_user_message', {
                 sessionId,
                 message: chatMessage
