@@ -23,11 +23,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // mọi request bắt đầu bằng /api sẽ được forward tới backend
-      '/api': {
-        target: 'http://localhost:4000', // <-- ĐỔI thành URL backend của bạn
+      "/cas": {
+        target: "https://production.cas.so",
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/cas/, ""),
       },
     },
   },

@@ -1,7 +1,6 @@
 import Layout from "./Layout.jsx";
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./features/home/pages/HomePage.jsx";
-import SignUp from "./features/auth/pages/SignUp.jsx";
 import AuthOtp from "./features/auth/components/AuthOtp.jsx";
 import ForgotPassword from "./features/auth/components/ForgotPassword.jsx";
 import ResetPassword from "./features/auth/components/ResetPassword.jsx";
@@ -28,7 +27,12 @@ import Home from "@/admin/pages/Home.js";
 import AdminNotificationSender from "./features/chat/NotificationSender.jsx";
 import NotFound from "@/NotFound.jsx";
 import SignIn from "@/features/auth/pages/SignIn.jsx";
-import SignUpAdmin from "@/features/auth/pages/SignUp_Admin.jsx";function App() {
+import SignUp from "@/features/auth/pages/SignUp.jsx";
+import Orders from "@/admin/pages/Manage/Orders.jsx";
+import Products from "@/admin/pages/Manage/Products.jsx";
+import Users from "@/admin/pages/Manage/Users.jsx";
+
+function App() {
   return (
     <>
       <Routes>
@@ -65,12 +69,14 @@ import SignUpAdmin from "@/features/auth/pages/SignUp_Admin.jsx";function App() 
           <Route path="chat" element={<ChatAdminPanel />} />
           <Route path="notification" element={<AdminNotificationSender />} />
           <Route path="profile" element={<AdminProfile/>} />
+          <Route path="manage-orders" element={<Orders/>} />
+          <Route path="manage-products" element={<Products/>} />
+          <Route path="manage-users" element={<Users/>} />
         </Route>
 
         {/* ===== AUTH (ngoài Layout) ===== */}
         <Route path="/login" element={<SignIn/>} />
-        <Route path="/signup-admin" element={<SignUpAdmin/>} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signup" element={<SignUp/>} />
         <Route path="/otp" element={<AuthOtp />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         {/* 404 */}

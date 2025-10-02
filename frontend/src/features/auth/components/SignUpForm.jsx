@@ -1,12 +1,44 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {ChevronLeftIcon, EyeCloseIcon, EyeIcon} from "@/admin/icons/index.js";
 import Label from "@/admin/components/form/Label.jsx";
 import Input from "@/admin/components/form/input/InputField.jsx";
 import Checkbox from "@/admin/components/form/input/Checkbox.jsx";
+import {useDispatch} from "react-redux";
+import {postSignup} from "@/services/apiService.jsx";
+import {authOTP} from "@/redux/action/authOtpAction.jsx";
+import {toast} from "react-toastify";
 
 
 export default function SignUpForm() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [email,setEmail] = useState("");
+  const [confirmPassword,setConfirmPassword] = useState("");
+  const [password,setPassword] = useState("");
+  const handleCreateAccount = async() =>
+  {
+    if (password && confirmPassword && password===confirmPassword)
+    {
+      let data = await postSignup(email, password);
+      if (data.message==="Đã gửi OTP tới email" && data) {
+        dispatch(authOTP({email: email}));
+        toast.success(data.message);
+        navigate("/otp")
+      }
+      if (data && data.message!=="Đã gửi OTP tới email") {
+        toast.error(data.message);
+      }
+    }
+    else
+    {
+      toast.error("Mật khẩu chưa khớp hoặc chưa điền đầy đủ mật khẩu");
+    }
+
+  }
+
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   return (
@@ -83,7 +115,10 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateAccount(); // không cần truyền email, password vì bạn đã lấy từ state
+            }}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {/* <!-- First Name --> */}
@@ -119,6 +154,7 @@ export default function SignUpForm() {
                   <Input
                     type="email"
                     id="email"
+                    onChange={(event)=>setEmail(event.target.value)}
                     name="email"
                     placeholder="Enter your email"
                   />
@@ -131,6 +167,7 @@ export default function SignUpForm() {
                   <div className="relative">
                     <Input
                       placeholder="Enter your password"
+                      onChange={(event)=>setPassword(event.target.value)}
                       type={showPassword ? "text" : "password"}
                     />
                     <span
@@ -145,24 +182,47 @@ export default function SignUpForm() {
                     </span>
                   </div>
                 </div>
-                {/* <!-- Checkbox --> */}
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    className="w-5 h-5"
-                    checked={isChecked}
-                    onChange={setIsChecked}
-                  />
-                  <p className="inline-block font-normal text-gray-500 dark:text-gray-400">
-                    By creating an account means you agree to the{" "}
-                    <span className="text-gray-800 dark:text-white/90">
-                      Terms and Conditions,
-                    </span>{" "}
-                    and our{" "}
-                    <span className="text-gray-800 dark:text-white">
-                      Privacy Policy
+                {/* <!-- ConfirmPassword --> */}
+                <div>
+                  <Label>
+                    Password<span className="text-error-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                        placeholder="Enter your password"
+                        onChange={(event)=>setConfirmPassword(event.target.value)}
+                        type={showConfirmPassword ? "text" : "password"}
+                    />
+                    <span
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                    >
+                      {showConfirmPassword ? (
+                          <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      ) : (
+                          <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      )}
                     </span>
-                  </p>
+                  </div>
                 </div>
+                {/* <!-- Checkbox --> */}
+                {/*<div className="flex items-center gap-3">*/}
+                {/*  <Checkbox*/}
+                {/*    className="w-5 h-5"*/}
+                {/*    checked={isChecked}*/}
+                {/*    onChange={setIsChecked}*/}
+                {/*  />*/}
+                {/*  <p className="inline-block font-normal text-gray-500 dark:text-gray-400">*/}
+                {/*    By creating an account means you agree to the{" "}*/}
+                {/*    <span className="text-gray-800 dark:text-white/90">*/}
+                {/*      Terms and Conditions,*/}
+                {/*    </span>{" "}*/}
+                {/*    and our{" "}*/}
+                {/*    <span className="text-gray-800 dark:text-white">*/}
+                {/*      Privacy Policy*/}
+                {/*    </span>*/}
+                {/*  </p>*/}
+                {/*</div>*/}
                 {/* <!-- Button --> */}
                 <div>
                   <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
@@ -172,11 +232,11 @@ export default function SignUpForm() {
               </div>
             </form>
 
-            <div className="mt-5">
+            <div className="mt-5 mb-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                 Already have an account? {""}
                 <Link
-                  to="/signin"
+                  to="/signup"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
                   Sign In
