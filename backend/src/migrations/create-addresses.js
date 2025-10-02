@@ -15,10 +15,19 @@ module.exports = {
                 references: { model: 'users', key: 'id' },
                 onDelete: 'CASCADE'
             },
+            name_order: {
+                type: Sequelize.STRING,
+                allowNull: false
+            },
+            phone_order: {
+                type: Sequelize.STRING,
+                allowNull: false
+            },
             address_line: {
                 type: Sequelize.STRING,
                 allowNull: false
             },
+
             city: Sequelize.STRING,
             district: Sequelize.STRING,
             ward: Sequelize.STRING,

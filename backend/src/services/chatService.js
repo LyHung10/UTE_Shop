@@ -37,8 +37,10 @@ class ChatService {
     }
 
     // Gửi tin nhắn
-    // Gửi tin nhắn - THÊM format created_at
-    async sendMessage({ sessionId, userId = null, message, senderType = 'user', messageType = 'text', metadata = null }) {
+    // chatService.js - sendMessage method
+    async sendMessage({ sessionId, userId, message, senderType = 'user', messageType = 'text', metadata = null }) {
+        console.log('💬 Creating message with user_id:', userId);
+
         const chatMessage = await ChatMessage.create({
             user_id: userId,
             session_id: sessionId,
@@ -54,25 +56,48 @@ class ChatService {
             { where: { session_id: sessionId } }
         );
 
-        // Load message với thông tin user
-        const messageWithUser = await ChatMessage.findByPk(chatMessage.id, {
-            include: [{
-                model: User,
-                as: 'user',
-                attributes: ['id', 'first_name', 'last_name', 'image']
-            }]
-        });
+        // 👇 XỬ LÝ SPECIAL: Load message với user info (chỉ nếu có user_id)
+        let messageWithUser;
+        if (userId) {
+            // Có user_id -> join với bảng users
+            messageWithUser = await ChatMessage.findByPk(chatMessage.id, {
+                include: [{
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'first_name', 'last_name', 'image']
+                }]
+            });
+        } else {
+            // Guest user -> chỉ lấy message không có user
+            messageWithUser = await ChatMessage.findByPk(chatMessage.id);
+        }
 
-        // QUAN TRỌNG: Convert to JSON và format dates
         const result = messageWithUser.toJSON();
 
-        // Đảm bảo created_at là ISO string
+        // 👇 THÊM FALLBACK USER OBJECT CHO GUEST USERS
+        if (!result.user && result.sender_type === 'user') {
+            result.user = {
+                id: null,
+                first_name: 'Khách',
+                last_name: '',
+                image: null,
+                is_guest: true
+            };
+        }
+
+        // Format dates
         if (result.created_at instanceof Date) {
             result.created_at = result.created_at.toISOString();
         } else if (result.created_at) {
-            // Nếu là string, đảm bảo là ISO format
             result.created_at = new Date(result.created_at).toISOString();
         }
+
+        console.log('📦 Final message data:', {
+            id: result.id,
+            user_id: result.user_id,
+            has_user_object: !!result.user,
+            user: result.user
+        });
 
         return result;
     }
@@ -130,7 +155,26 @@ class ChatService {
                     as: 'messages',
                     limit: 1,
                     order: [['created_at', 'DESC']],
-                    separate: true // Important for proper ordering
+                    separate: true,
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: ['id', 'first_name', 'last_name', 'image'],
+                            required: false
+                        }
+                    ]
+                },
+                // THÊM: Đếm số tin nhắn chưa đọc từ user
+                {
+                    model: ChatMessage,
+                    as: 'unread_messages',
+                    where: {
+                        is_read: false,
+                        sender_type: 'user' // Chỉ đếm tin nhắn từ user (khách hàng)
+                    },
+                    required: false,
+                    attributes: ['id']
                 }
             ],
             order: [['last_message_at', 'DESC']],
@@ -138,9 +182,67 @@ class ChatService {
             offset
         });
 
-        return { sessions: rows, total: count };
+        // Transform data để có display_user và unread_count
+        const transformedSessions = rows.map(session => {
+            const sessionData = session.toJSON();
+
+            const lastMessage = sessionData.messages?.[0];
+            const messageUser = lastMessage?.user;
+
+            // Tính số tin nhắn chưa đọc
+            const unread_count = sessionData.unread_messages?.length || 0;
+
+            // Xác định display_user: ưu tiên session user -> message user -> guest
+            let display_user = sessionData.user || messageUser || null;
+
+            // Nếu display_user là admin và session không có user (guest session)
+            // thì hiển thị là guest (vì session thuộc về khách hàng)
+            if (display_user?.is_admin && !sessionData.user) {
+                display_user = {
+                    is_guest: true,
+                    first_name: 'Khách',
+                    last_name: ''
+                };
+            }
+
+            return {
+                ...sessionData,
+                display_user,
+                unread_count,
+                has_unread: unread_count > 0
+            };
+        });
+
+        return {
+            sessions: transformedSessions,
+            total: count
+        };
     }
 
+    async markMessagesAsRead(sessionId, adminId) {
+        await ChatMessage.update(
+            { is_read: true },
+            {
+                where: {
+                    session_id: sessionId,
+                    sender_type: 'user',
+                    is_read: false
+                }
+            }
+        );
+    }
+
+    // Lấy số tin nhắn chưa đọc của session
+    async getUnreadCount(sessionId) {
+        const count = await ChatMessage.count({
+            where: {
+                session_id: sessionId,
+                sender_type: 'user',
+                is_read: false
+            }
+        });
+        return count;
+    }
     // Cập nhật trạng thái session
     async updateSessionStatus(sessionId, status, assignedTo = null) {
         const updateData = { status };

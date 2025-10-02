@@ -85,13 +85,6 @@ class SocketService {
                     const { sessionId, message, messageType = 'text' } = data;
                     const userId = socket.user?.sub || null;
 
-                    console.log('Received message via socket:', {
-                        sessionId,
-                        message: message.substring(0, 50) + '...',
-                        userId,
-                        senderRole: socket.user?.role
-                    });
-
                     // Determine sender type
                     let senderType = 'user';
                     if (socket.user?.role === 'admin') {
@@ -100,7 +93,7 @@ class SocketService {
 
                     const chatMessage = await chatService.sendMessage({
                         sessionId,
-                        userId,
+                        userId: userId,
                         message,
                         senderType,
                         messageType
@@ -216,6 +209,12 @@ class SocketService {
             socket.on('error', (error) => {
                 console.error(`Socket error for ${socket.id}:`, error);
             });
+
+            // Trong backend socket handler
+            socket.on('test_connection', (data) => {
+                console.log('Test connection received:', data);
+                socket.emit('test_response', { message: 'Server is working', timestamp: new Date() });
+            });
         });
 
         return this.io;
@@ -244,7 +243,7 @@ class SocketService {
 
 
 
-     // THÊM METHOD MỚI ĐỂ LẤY NOTIFICATION NAMESPACE
+    // THÊM METHOD MỚI ĐỂ LẤY NOTIFICATION NAMESPACE
     getNotificationNamespace() {
         if (!this.io) {
             throw new Error('Socket.io not initialized! Call init() first.');

@@ -7,7 +7,7 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-
+import UserAvatar from './UserAvatar';
 const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     const [sessions, setSessions] = useState([]);
     const [selectedSession, setSelectedSession] = useState(null);
@@ -130,10 +130,19 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         const socket = socketRef.current;
 
         const handleConnect = () => {
-            console.log('Admin socket connected');
+            console.log('✅ Admin socket connected');
             setIsConnected(true);
             socket.emit('join_admin');
+            console.log('📢 Emitted join_admin event');
+
+            // Test socket connection
+            socket.emit('test_connection', { message: 'Admin connected' });
         };
+
+        // THÊM EVENT TEST
+        socket.on('test_response', (data) => {
+            console.log('✅ Socket test response:', data);
+        });
 
         const handleDisconnect = () => {
             console.log('Admin socket disconnected');
@@ -142,7 +151,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
 
         const handleNewMessage = (message) => {
             if (message.sender_type === 'admin') {
-                console.log('Ignoring own admin message via socket');
                 return;
             }
             // Only update if this is the selected session AND message doesn't exist
@@ -155,18 +163,60 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
             }
         };
 
-        const handleNewUserMessage = ({ sessionId, message }) => {
-            console.log('New user message notification:', sessionId);
+        // Trong handleNewUserMessage
+        const handleNewUserMessage = (data) => {
+            // KIỂM TRA DỮ LIỆU NHẬN ĐƯỢC
+            if (!data || !data.sessionId) {
+                console.error('❌ Invalid new_user_message data:', data);
+                return;
+            }
+
+            // 👇 KIỂM TRA: Nếu admin đang ở trong session này thì KHÔNG hiển thị unread
+            const isAdminInThisSession = selectedSession && selectedSession.session_id === data.sessionId;
+
+            if (isAdminInThisSession) {
+                console.log('👁️ Admin is in this session, skipping unread update');
+                return; // Không cập nhật unread count
+            }
+
+            // Cập nhật sessions list với unread count mới
+            setSessions(prev => {
+                const updated = prev.map(session =>
+                    session.session_id === data.sessionId
+                        ? {
+                            ...session,
+                            unread_count: data.unread_count || (session.unread_count + 1),
+                            has_unread: true,
+                            last_message_at: new Date().toISOString()
+                        }
+                        : session
+                );
+                console.log('🔄 Updated sessions with new message (admin not in session)');
+                return updated;
+            });
+
             toast.success('Tin nhắn mới từ khách hàng!', {
                 icon: '💬',
                 duration: 3000
             });
-            loadSessions();
         };
 
-        const handleSessionUpdated = ({ session }) => {
-            console.log('Session updated:', session);
-            loadSessions();
+        const handleSessionUpdated = (data) => {
+            // Nếu là update unread count
+            if (data.action === 'unread_updated') {
+                setSessions(prev => prev.map(session =>
+                    session.session_id === data.sessionId
+                        ? {
+                            ...session,
+                            unread_count: data.unread_count,
+                            has_unread: data.unread_count > 0
+                        }
+                        : session
+                ));
+            } else {
+                // Load lại toàn bộ sessions
+                loadSessions();
+            }
         };
 
         const handleError = (error) => {
@@ -181,7 +231,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         socket.on('new_user_message', handleNewUserMessage);
         socket.on('session_updated', handleSessionUpdated);
         socket.on('error', handleError);
-
         // Load initial data
         loadSessions();
         loadStats();
@@ -200,24 +249,54 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
             hasJoinedRoomRef.current = false;
         };
     }, [accessToken, apiUrl, loadSessions, loadStats, selectedSession]);
+    // THÊM HÀM markMessagesAsRead Ở NGOÀI useEffect
+    const markMessagesAsRead = async (sessionId) => {
+        try {
+
+            const response = await axios.post(
+                `${apiUrl}/api/chat/sessions/${sessionId}/read`, // 👈 SỬA THIẾU ${apiUrl}
+                {},
+                {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                }
+            );
+            // Cập nhật local state
+            setSessions(prev => prev.map(session =>
+                session.session_id === sessionId
+                    ? { ...session, unread_count: 0, has_unread: false }
+                    : session
+            ));
+
+        } catch (error) {
+            console.error('❌ Failed to mark messages as read:', error);
+            toast.error('Không thể đánh dấu tin nhắn đã đọc!');
+        }
+    };
+
 
     // Handle session selection
     const handleSelectSession = useCallback(async (session) => {
         setSelectedSession(session);
         await loadMessages(session.session_id);
 
+        // Đánh dấu đã đọc nếu có tin nhắn chưa đọc
+        if (session.has_unread) {
+            await markMessagesAsRead(session.session_id);
+        }
+
         // Reset join room flag
         hasJoinedRoomRef.current = false;
 
-        // Join socket room với debounce
+        // Join socket room
         if (socketRef.current && !hasJoinedRoomRef.current) {
             socketRef.current.emit('join_chat', session.session_id);
             hasJoinedRoomRef.current = true;
             console.log('Joined room:', session.session_id);
         }
-    }, [loadMessages]);
+    }, [loadMessages, markMessagesAsRead]); // 👈 THÊM markMessagesAsRead VÀO DEPENDENCY
 
     // Send message
+    // ChatAdminPanel.jsx - Sửa handleSendMessage
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !selectedSession) return;
 
@@ -233,12 +312,14 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 id: tempId,
                 message: messageText,
                 sender_type: 'admin',
-                createdAt: now.toISOString(),
-                display_time: formatTime(now), // 👈 LUÔN có display_time
+                created_at: now.toISOString(),
+                display_time: formatTime(now),
                 user: {
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    image: user.image
+                    id: user?.id || 'admin',
+                    first_name: user?.first_name || 'Admin',
+                    last_name: user?.last_name || '',
+                    image: user?.image || null,
+                    is_admin: true
                 }
             };
 
@@ -251,7 +332,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 messageType: 'text'
             });
 
-            console.log('Message sent via socket:', messageText);
+            console.log('✅ Admin message sent via socket:', messageText);
 
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -329,10 +410,11 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     // Filter sessions
     const filteredSessions = sessions.filter((session) => {
         const matchesSearch = searchTerm
-            ? (session.user?.first_name + ' ' + session.user?.last_name)
+            ? (session.display_user?.first_name + ' ' + session.display_user?.last_name)
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
-            session.session_id.toLowerCase().includes(searchTerm.toLowerCase())
+            session.session_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (session.has_unread && 'chưa đọc'.includes(searchTerm.toLowerCase()))
             : true;
         return matchesSearch;
     });
@@ -396,7 +478,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                 className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors ${filter === status
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                                    }`}
                             >
                                 {status === 'all' ? 'Tất cả' : status.charAt(0).toUpperCase() + status.slice(1)}
                             </button>
@@ -416,55 +498,81 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                             <p className="text-sm">Không có phiên chat nào</p>
                         </div>
                     ) : (
-                        filteredSessions.map((session) => (
-                            <div
-                                key={session.id}
-                                onClick={() => handleSelectSession(session)}
-                                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedSession?.id === session.id ? 'bg-blue-50' : ''
-                                }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                                        {session.user ? (
-                                            session.user.image ? (
-                                                <img src={session.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                `${session.user.first_name?.[0] || ''}${session.user.last_name?.[0] || ''}`
-                                            )
-                                        ) : (
-                                            <User size={20} />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <h3 className="font-semibold text-sm text-gray-800 truncate">
-                                                {session.user
-                                                    ? `${session.user.first_name || ''} ${session.user.last_name || ''}`
-                                                    : 'Guest User'}
-                                            </h3>
-                                            <span className="text-xs text-gray-500">
-                                                {session.last_message_at ? formatTime(session.last_message_at) : '--:--'}
-                                            </span>
+
+                        filteredSessions.map((session) => {
+                            // 👇 KIỂM TRA: Nếu admin đang ở trong session này thì ẩn unread
+                            const isCurrentSession = selectedSession && selectedSession.session_id === session.session_id;
+                            const showUnread = session.has_unread && !isCurrentSession;
+
+                            return (
+                                <div
+                                    key={session.id}
+                                    onClick={() => handleSelectSession(session)}
+                                    className={`p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${selectedSession?.id === session.id ? 'bg-blue-50 border-l-4 border-l-blue-500' :
+                                        showUnread ? 'bg-yellow-50 border-l-4 border-l-yellow-400 hover:bg-yellow-100' :
+                                            'hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="relative">
+                                            <UserAvatar
+                                                user={session.display_user || { is_guest: true }}
+                                                senderType={session.display_user?.is_admin ? 'admin' : 'user'}
+                                                size={10}
+                                            />
+                                            {/* UNREAD BADGE - CHỈ HIỆN KHI KHÔNG PHẢI SESSION HIỆN TẠI */}
+                                            {showUnread && (
+                                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                                                    {session.unread_count > 9 ? '9+' : session.unread_count}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-gray-500 truncate mb-1">
-                                            {session.messages?.[0]?.message || 'Không có tin nhắn'}
-                                        </p>
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className={`text-xs px-2 py-0.5 rounded-full ${session.status === 'active'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : session.status === 'waiting'
-                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                        : 'bg-gray-100 text-gray-700'
-                                                }`}
-                                            >
-                                                {session.status}
-                                            </span>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className={`font-semibold text-sm truncate ${showUnread ? 'text-gray-900 font-bold' : 'text-gray-800'
+                                                        }`}>
+                                                        {session.display_user
+                                                            ? `${session.display_user.first_name || ''} ${session.display_user.last_name || ''}`
+                                                            : 'Guest User'}
+                                                    </h3>
+                                                    {/* ONLINE INDICATOR (tuỳ chọn) */}
+                                                    {session.status === 'active' && (
+                                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                    )}
+                                                </div>
+                                                <span className="text-xs text-gray-500">
+                                                    {session.last_message_at ? formatTime(session.last_message_at) : '--:--'}
+                                                </span>
+                                            </div>
+                                            <p className={`text-xs truncate mb-1 ${showUnread ? 'text-gray-800 font-medium' : 'text-gray-500'
+                                                }`}>
+                                                {session.messages?.[0]?.message || 'Không có tin nhắn'}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`text-xs px-2 py-0.5 rounded-full ${session.status === 'active'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : session.status === 'waiting'
+                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                            : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    {session.status}
+                                                </span>
+                                                {/* UNREAD TEXT BADGE - CHỈ HIỆN KHI KHÔNG PHẢI SESSION HIỆN TẠI */}
+                                                {showUnread && (
+                                                    <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">
+                                                        {session.unread_count} tin nhắn mới
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
+
                     )}
                 </div>
 
@@ -496,25 +604,23 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {selectedSession.user ? (
-                                        selectedSession.user.image ? (
-                                            <img src={selectedSession.user.image} alt="" className="w-full h-full rounded-full object-cover" />
-                                        ) : (
-                                            `${selectedSession.user.first_name?.[0] || ''}${selectedSession.user.last_name?.[0] || ''}`
-                                        )
-                                    ) : (
-                                        <User size={20} />
-                                    )}
-                                </div>
+
+                                {/* SỬA Ở ĐÂY - DÙNG display_user */}
+                                <UserAvatar
+                                    user={selectedSession.display_user || { is_guest: true }}
+                                    senderType={selectedSession.display_user?.is_admin ? 'admin' : 'user'}
+                                    size={10}
+                                />
+
                                 <div>
                                     <h2 className="font-semibold text-gray-800">
-                                        {selectedSession.user
-                                            ? `${selectedSession.user.first_name || ''} ${selectedSession.user.last_name || ''}`
+                                        {selectedSession.display_user
+                                            ? `${selectedSession.display_user.first_name || ''} ${selectedSession.display_user.last_name || ''}`
                                             : 'Guest User'}
                                     </h2>
                                     <p className="text-xs text-gray-500">
                                         Session: {selectedSession.session_id.slice(0, 12)}...
+                                        {!selectedSession.display_user && " • Guest"}
                                     </p>
                                 </div>
                             </div>
@@ -525,7 +631,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                         : selectedSession.status === 'waiting'
                                             ? 'bg-yellow-100 text-yellow-700'
                                             : 'bg-gray-100 text-gray-700'
-                                    }`}
+                                        }`}
                                 >
                                     {selectedSession.status}
                                 </span>
@@ -552,15 +658,25 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                     <div key={msg.id || index}>
                                         <div
                                             className={`flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'
-                                            }`}
+                                                }`}
                                         >
+                                            {/* THÊM AVATAR CHO USER MESSAGES */}
+                                            {msg.sender_type !== 'admin' && (
+                                                <UserAvatar
+                                                    user={msg.user}
+                                                    senderType={msg.sender_type}
+                                                    size={8}
+                                                    className="mr-2"
+                                                />
+                                            )}
+
                                             <div
                                                 className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender_type === 'admin'
                                                     ? 'bg-blue-600 text-white rounded-br-none'
                                                     : msg.sender_type === 'bot'
                                                         ? 'bg-gray-200 text-gray-800 rounded-bl-none'
                                                         : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
-                                                }`}
+                                                    }`}
                                             >
                                                 {msg.sender_type === 'user' && msg.user && (
                                                     <p className="text-xs font-semibold text-blue-600 mb-1">
@@ -577,11 +693,21 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                                                 </p>
                                                 <p
                                                     className={`text-xs mt-1 ${msg.sender_type === 'admin' ? 'text-blue-100' : 'text-gray-500'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {msg.display_time || formatTime(msg.createdAt)}
                                                 </p>
                                             </div>
+
+                                            {/* THÊM AVATAR CHO ADMIN MESSAGES */}
+                                            {msg.sender_type === 'admin' && (
+                                                <UserAvatar
+                                                    user={msg.user}
+                                                    senderType={msg.sender_type}
+                                                    size={8}
+                                                    className="ml-2"
+                                                />
+                                            )}
                                         </div>
 
                                         {/* Quick replies */}

@@ -23,30 +23,37 @@ class ChatController {
     async sendMessage(req, res) {
         try {
             const { sessionId, message, messageType = 'text', metadata } = req.body;
+
+            // 👇 QUAN TRỌNG: Lấy user_id từ JWT token
             const userId = req.user?.sub || null;
 
+            console.log('🔐 API user data:', req.user);
+            console.log('🔐 User ID from JWT:', userId);
+
             if (!sessionId || !message) {
-                return res.status(400).json({ success: false, error: 'Session ID and message are required' });
+                return res.status(400).json({
+                    success: false,
+                    error: 'Session ID and message are required'
+                });
             }
 
             const chatMessage = await chatService.sendMessage({
                 sessionId,
-                userId,
+                userId: userId, // 👈 TRUYỀN user_id
                 message,
                 senderType: 'user',
                 messageType,
                 metadata
             });
+            const unreadCount = await chatService.getUnreadCount(sessionId);
 
-            // QUAN TRỌNG: Emit new_message đến cả session room VÀ admin room
+            // Emit socket events
             req.io.to(sessionId).emit('new_message', chatMessage);
-            // THÊM: Emit new_message đến admin room để cập nhật ô chat
             req.io.to('admin_room').emit('new_message', chatMessage);
-
-            // Notify admin room về tin nhắn mới từ user (cho session list)
             req.io.to('admin_room').emit('new_user_message', {
                 sessionId,
-                message: chatMessage
+                message: chatMessage,
+                unread_count: unreadCount
             });
 
             res.json({
@@ -104,6 +111,22 @@ class ChatController {
         }
     }
 
+    async markMessagesAsRead(req, res) {
+        try {
+            const { sessionId } = req.params;
+            const adminId = req.user?.sub;
+
+            await chatService.markMessagesAsRead(sessionId, adminId);
+
+            res.json({
+                success: true,
+                message: 'Messages marked as read'
+            });
+        } catch (err) {
+            console.error('Mark messages as read error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
     // Cập nhật trạng thái session
     async updateSession(req, res) {
         try {
@@ -142,6 +165,7 @@ class ChatController {
                 senderType: 'admin',
                 messageType
             });
+            const unreadCount = await chatService.getUnreadCount(sessionId);
 
             // THAY ĐỔI: Gửi 'new_message' cho cả user và admin
             req.io.to(sessionId).emit('new_message', chatMessage);
@@ -150,7 +174,9 @@ class ChatController {
             // req.io.to('admin_room').emit('new_message', chatMessage);
             req.io.to('admin_room').emit('admin_message_sent', {
                 sessionId,
-                message: chatMessage
+                message: chatMessage,
+                unread_count: unreadCount
+
             });
 
             res.json({

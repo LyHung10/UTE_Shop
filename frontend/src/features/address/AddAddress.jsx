@@ -116,6 +116,7 @@ const AddAddress = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+        
         setFormData({
             ...formData,
             [name]: type === 'checkbox' ? checked : value
@@ -168,6 +169,45 @@ const AddAddress = () => {
 
                     {/* Form Section */}
                     <form onSubmit={handleSubmit} className="p-8 space-y-6">
+
+                        {/* Tên người nhận */}
+                        <div className="group">
+                            <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                Họ và tên người nhận <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="name_order"
+                                value={formData.name_order}
+                                onChange={handleInputChange}
+                                required
+                                placeholder="Ví dụ: Nguyễn Văn A"
+                                className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl 
+               focus:outline-none focus:ring-4 focus:ring-indigo-100 
+               focus:border-indigo-400 transition-all text-gray-900 
+               placeholder-gray-400"
+                            />
+                        </div>
+
+                        {/* Số điện thoại người nhận */}
+                        <div className="group">
+                            <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                Số điện thoại <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="tel"
+                                name="phone_order"
+                                value={formData.phone_order}
+                                onChange={handleInputChange}
+                                required
+                                placeholder="Ví dụ: 0901234567"
+                                className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl 
+               focus:outline-none focus:ring-4 focus:ring-indigo-100 
+               focus:border-indigo-400 transition-all text-gray-900 
+               placeholder-gray-400"
+                            />
+                        </div>
+
                         {/* Địa chỉ cụ thể */}
                         <div className="group">
                             <label className="block text-sm font-semibold text-gray-900 mb-3">

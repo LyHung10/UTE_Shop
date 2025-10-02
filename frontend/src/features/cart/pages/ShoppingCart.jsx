@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Minus, Plus, TicketPercent, Loader2, MapPin, ChevronDown, PlusCircle, ShoppingBag, Package } from 'lucide-react';
-import { useSelector, useDispatch} from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { updateQuantity, removeFromCart, fetchCart } from "@/redux/action/cartAction.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from '@/utils/axiosCustomize';
+import FavoriteButton from "../../../components/ui/FavoriteButton"
 
 const ShoppingCart = () => {
     const dispatch = useDispatch();
@@ -113,7 +114,7 @@ const ShoppingCart = () => {
     const total = Math.max(0, subtotal - cart.discount + shippingFee + tax);
 
     const formatAddress = (address) => {
-        return ` ${[address.ward, address.district, address.city].filter(Boolean).join(', ')}`;
+        return `${[address.address_line, address.ward, address.district, address.city].filter(Boolean).join(', ')}`;
     };
 
     return (
@@ -182,7 +183,7 @@ const ShoppingCart = () => {
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-1.5">
                                                             <span className="font-semibold text-gray-900 truncate">
-                                                                {selectedAddress.address_line}
+                                                                {selectedAddress.name_order + " - " + selectedAddress.phone_order}
                                                             </span>
                                                             {selectedAddress.is_default && (
                                                                 <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs px-2.5 py-1 rounded-full shrink-0 font-medium">
@@ -199,9 +200,8 @@ const ShoppingCart = () => {
                                                 )}
                                             </div>
                                             <ChevronDown
-                                                className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
-                                                    isDropdownOpen ? 'rotate-180' : ''
-                                                }`}
+                                                className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''
+                                                    }`}
                                             />
                                         </button>
 
@@ -214,11 +214,10 @@ const ShoppingCart = () => {
                                                             key={address.id}
                                                             type="button"
                                                             onClick={() => handleAddressSelect(address)}
-                                                            className={`w-full text-left px-4 py-3.5 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all mb-1 ${
-                                                                selectedAddress?.id === address.id
+                                                            className={`w-full text-left px-4 py-3.5 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all mb-1 ${selectedAddress?.id === address.id
                                                                     ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200'
                                                                     : ''
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <div className="flex items-start justify-between">
                                                                 <div className="flex-1 min-w-0">
@@ -320,8 +319,8 @@ const ShoppingCart = () => {
                                                                 {Math.round(
                                                                     (1 -
                                                                         Number(item.price) /
-                                                                            Number(item.Product.original_price)) *
-                                                                        100
+                                                                        Number(item.Product.original_price)) *
+                                                                    100
                                                                 )}
                                                                 %
                                                             </span>
@@ -331,20 +330,22 @@ const ShoppingCart = () => {
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                <button
+                                                {/* <button
                                                     onClick={() => toggleFavorite(item.id)}
-                                                    className={`p-2.5 rounded-xl transition-all ${
-                                                        favorites.has(item.id)
+                                                    className={`p-2.5 rounded-xl transition-all ${favorites.has(item.id)
                                                             ? 'bg-red-50 text-red-500 hover:bg-red-100'
                                                             : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <Heart
                                                         className="w-5 h-5"
                                                         fill={favorites.has(item.id) ? 'currentColor' : 'none'}
                                                     />
-                                                </button>
-
+                                                </button> */}
+<FavoriteButton 
+    productId={item.Product?.id} 
+    size="small"
+/>
                                                 <button
                                                     onClick={() => dispatch(removeFromCart(item.id))}
                                                     className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"
@@ -455,7 +456,7 @@ const ShoppingCart = () => {
                                         <MapPin className="w-4 h-4 text-indigo-600" />
                                         Giao hàng đến:
                                     </h3>
-                                    <p className="text-sm text-gray-700 font-medium">{selectedAddress.address_line}</p>
+                                    <p className="text-sm text-gray-700 font-medium">{selectedAddress.name_order + " - " + selectedAddress.phone_order}</p>
                                     <p className="text-sm text-gray-600">{formatAddress(selectedAddress)}</p>
                                 </div>
                             )}
