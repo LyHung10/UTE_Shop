@@ -84,7 +84,7 @@ export const resetCart = () => ({
 });
 
 // Lấy giỏ hàng từ server
-export const fetchCart = (voucherId) => async (dispatch) => {
+export const fetchCart = (voucherId, addressId) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
 
@@ -100,6 +100,7 @@ export const fetchCart = (voucherId) => async (dispatch) => {
                 count: cartData.itemCount,
                 total: res.total,
                 finalTotal: res.finalTotal,
+                addressId: addressId,
                 discount: res.discount,
                 appliedVoucher: res.appliedVoucher,
             }
@@ -122,9 +123,9 @@ export const fetchCart = (voucherId) => async (dispatch) => {
 
 
 // Checkout COD
-export const checkoutCOD = (voucherCode) => async (dispatch) => {
+export const checkoutCOD = (voucherCode, addressId) => async (dispatch) => {
     try {
-        const res = await postCheckoutCOD(voucherCode);
+        const res = await postCheckoutCOD(voucherCode, addressId);
 
         dispatch({
             type: "CHECKOUT_COD_SUCCESS",

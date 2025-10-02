@@ -28,6 +28,7 @@ const ShoppingCart = () => {
     useEffect(() => {
         if (selectedAddress) {
             calculateShippingFee(selectedAddress.id);
+            dispatch(fetchCart(couponCode,selectedAddress.id));
         }
     }, [selectedAddress]);
 
@@ -104,7 +105,7 @@ const ShoppingCart = () => {
     };
 
     const handleApplyCoupon = () => {
-        dispatch(fetchCart(couponCode));
+        dispatch(fetchCart(couponCode,selectedAddress.id));
     };
 
     const subtotal = Number(cart.finalTotal || 0);

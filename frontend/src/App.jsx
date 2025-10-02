@@ -71,7 +71,7 @@ function App() {
           <Route path="profile" element={<AdminProfile/>} />
           <Route path="manage-orders" element={<Orders/>} />
           <Route path="manage-products" element={<Products/>} />
-          <Route path="manage-users" element={<Users/>} />
+          <Route path="manage-customers" element={<Users/>} />
         </Route>
 
         {/* ===== AUTH (ngoài Layout) ===== */}

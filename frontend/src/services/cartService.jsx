@@ -7,9 +7,9 @@ const getCart = (voucherCode) => {
     return axios.get(url);
 }
 
-const postCheckoutCOD = (voucherCode) => {
+const postCheckoutCOD = (voucherCode, addressId) => {
     const url = `api/orders/checkout/cod`;
-    const data = voucherCode ? { voucherCode: voucherCode } : {};
+    const data = voucherCode ? { voucherCode, addressId } : {addressId};
 
     return axios.post(url, data);
 };

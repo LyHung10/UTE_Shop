@@ -143,8 +143,8 @@ class OrderController {
     static async checkoutCOD(req, res) {
         try {
             const userId = req.user.sub;
-            const { voucherCode } = req.body;
-            const result = await OrderService.checkoutCOD(userId, voucherCode);
+            const { voucherCode, addressId } = req.body;
+            const result = await OrderService.checkoutCOD(userId, voucherCode, addressId);
 
             return res.status(201).json({
                 success: true,
@@ -210,6 +210,31 @@ class OrderController {
         } catch (err) {
             console.error(err);
             res.status(400).json({ error: err.message });
+        }
+    }
+
+    static async getAllOrders(req, res) {
+        try {
+            const data = await OrderService.getAllOrders();
+            return res.status(200).json({
+                data
+            });
+        } catch (err) {
+            console.error('getAllOrders error:', err);
+            return res.status(500).json({ message: err.message || 'Internal Server Error' });
+        }
+    }
+
+    static async confirmOrder(req, res) {
+        try {
+            const { id } = req.body;
+            const updatedOrder = await OrderService.updateOrderStatus(id);
+
+            return res.status(200).json({
+                message: `Xác nhận đơn hàng ${updatedOrder.orderId} thành công`,
+            });
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
         }
     }
 }
