@@ -25,11 +25,9 @@ export default defineConfig({
     proxy: {
       // mọi request bắt đầu bằng /api sẽ được forward tới backend
       '/api': {
-        target: 'http://localhost:3000', // <-- ĐỔI thành URL backend của bạn
+        target: 'http://localhost:4000', // <-- ĐỔI thành URL backend của bạn
         changeOrigin: true,
         secure: false,
-        // Nếu backend KHÔNG có prefix /api thì bật rewrite để bỏ /api khi chuyển tiếp:
-        // rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
