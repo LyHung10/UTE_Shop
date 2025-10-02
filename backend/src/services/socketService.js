@@ -209,6 +209,12 @@ class SocketService {
             socket.on('error', (error) => {
                 console.error(`Socket error for ${socket.id}:`, error);
             });
+
+            // Trong backend socket handler
+            socket.on('test_connection', (data) => {
+                console.log('Test connection received:', data);
+                socket.emit('test_response', { message: 'Server is working', timestamp: new Date() });
+            });
         });
 
         return this.io;
@@ -237,7 +243,7 @@ class SocketService {
 
 
 
-     // THÊM METHOD MỚI ĐỂ LẤY NOTIFICATION NAMESPACE
+    // THÊM METHOD MỚI ĐỂ LẤY NOTIFICATION NAMESPACE
     getNotificationNamespace() {
         if (!this.io) {
             throw new Error('Socket.io not initialized! Call init() first.');

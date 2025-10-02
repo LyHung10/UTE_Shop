@@ -14,6 +14,8 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false
             },
+            name_order: DataTypes.STRING,
+            phone_order: DataTypes.STRING,
             address_line: {
                 type: DataTypes.STRING,
                 allowNull: false

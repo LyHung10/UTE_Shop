@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux"
 import { addFavorite, removeFavorite, checkFavorite } from "../../redux/action/favoriteActions.jsx"
 import toast from "react-hot-toast";
+import FavoriteButton from "../../components/ui/FavoriteButton"
 
 const ProductDetail = () => {
     const { id } = useParams()
@@ -33,8 +34,8 @@ const ProductDetail = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     //sản phẩm yêu thích
-    const favoriteMap = useSelector(state => state.favorite.favoriteMap);
-    const isFavorite = favoriteMap[product?.id] || false;
+    // const favoriteMap = useSelector(state => state.favorite.favoriteMap);
+    // const isFavorite = favoriteMap[product?.id] || false;
     const loading = useSelector((state) => state.favorite.loading);
     // Hàm kiểm tra số lượng hợp lệ
     const validateQuantity = (qty) => {
@@ -97,19 +98,6 @@ const ProductDetail = () => {
             dispatch(checkFavorite(product.id));
         }
     }, [dispatch, product?.id]);
-
-    const handleToggleFavorite = () => {
-        if (!product?.id) return;
-
-        if (isFavorite) {
-            dispatch(removeFavorite(product.id));
-            toast.success("Removed from favorites");
-        } else {
-            dispatch(addFavorite(product.id));
-            toast.success("Added to favorites");
-        }
-    };
-
 
     const handleTryOn = () => {
         const clothUrl = product.images[0]?.url; // ảnh đầu tiên của sản phẩm
@@ -317,17 +305,10 @@ const ProductDetail = () => {
 
                                 <div className="absolute top-4 right-4 flex gap-2 z-10">
                                     {/* Favorite Button */}
-                                    <button
-                                        onClick={handleToggleFavorite}
-                                        className={`p-3 rounded-full backdrop-blur-sm border transition-all duration-300 shadow-lg ${isFavorite
-                                            ? "bg-red-50 border-red-200 text-red-500 shadow-red-200"
-                                            : "bg-white/90 border-gray-200 text-gray-600 hover:bg-white hover:text-red-500"
-                                            }`}
-                                    >
-                                        <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
-                                    </button>
-
-
+                                    <FavoriteButton
+                                        productId={product?.id}
+                                        size="large"
+                                    />
                                     <button className="p-3 rounded-full backdrop-blur-sm bg-white/90 border border-gray-200 text-gray-600 hover:bg-white hover:text-blue-600 transition-all duration-300 shadow-lg">
                                         <Share2 className="w-5 h-5" />
                                     </button>

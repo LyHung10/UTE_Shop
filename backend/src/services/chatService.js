@@ -156,14 +156,25 @@ class ChatService {
                     limit: 1,
                     order: [['created_at', 'DESC']],
                     separate: true,
-                    include: [ // 👈 THÊM INCLUDE USER CHO MESSAGES
+                    include: [
                         {
                             model: User,
-                            as: 'user', // 👈 QUAN TRỌNG: alias phải khớp với association trong ChatMessage
+                            as: 'user',
                             attributes: ['id', 'first_name', 'last_name', 'image'],
                             required: false
                         }
                     ]
+                },
+                // THÊM: Đếm số tin nhắn chưa đọc từ user
+                {
+                    model: ChatMessage,
+                    as: 'unread_messages',
+                    where: {
+                        is_read: false,
+                        sender_type: 'user' // Chỉ đếm tin nhắn từ user (khách hàng)
+                    },
+                    required: false,
+                    attributes: ['id']
                 }
             ],
             order: [['last_message_at', 'DESC']],
@@ -171,35 +182,67 @@ class ChatService {
             offset
         });
 
-        // 👇 TRANSFORM DATA: Ưu tiên user từ message nếu session không có user
+        // Transform data để có display_user và unread_count
         const transformedSessions = rows.map(session => {
             const sessionData = session.toJSON();
 
             const lastMessage = sessionData.messages?.[0];
             const messageUser = lastMessage?.user;
 
-            // QUY TẮC HIỂN THỊ:
-            // 1. Nếu session có user -> hiển thị user đó (khách hàng)
-            // 2. Nếu không có user, nhưng message có user -> hiển thị user của message
-            // 3. Nếu là admin message -> vẫn hiển thị khách hàng (vì session thuộc về khách hàng)
+            // Tính số tin nhắn chưa đọc
+            const unread_count = sessionData.unread_messages?.length || 0;
 
+            // Xác định display_user: ưu tiên session user -> message user -> guest
             let display_user = sessionData.user || messageUser || null;
 
-            // Nếu display_user là admin và đây là session của khách hàng, 
-            // thì vẫn hiển thị là Guest (vì session thuộc về khách hàng)
+            // Nếu display_user là admin và session không có user (guest session)
+            // thì hiển thị là guest (vì session thuộc về khách hàng)
             if (display_user?.is_admin && !sessionData.user) {
-                display_user = { is_guest: true }; // Hiển thị là Guest
+                display_user = {
+                    is_guest: true,
+                    first_name: 'Khách',
+                    last_name: ''
+                };
             }
 
             return {
                 ...sessionData,
-                display_user
+                display_user,
+                unread_count,
+                has_unread: unread_count > 0
             };
         });
 
-        return { sessions: transformedSessions, total: count };
+        return {
+            sessions: transformedSessions,
+            total: count
+        };
     }
 
+    async markMessagesAsRead(sessionId, adminId) {
+        await ChatMessage.update(
+            { is_read: true },
+            {
+                where: {
+                    session_id: sessionId,
+                    sender_type: 'user',
+                    is_read: false
+                }
+            }
+        );
+    }
+
+    // Lấy số tin nhắn chưa đọc của session
+    async getUnreadCount(sessionId) {
+        const count = await ChatMessage.count({
+            where: {
+                session_id: sessionId,
+                sender_type: 'user',
+                is_read: false
+            }
+        });
+        return count;
+    }
     // Cập nhật trạng thái session
     async updateSessionStatus(sessionId, status, assignedTo = null) {
         const updateData = { status };

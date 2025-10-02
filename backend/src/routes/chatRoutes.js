@@ -15,5 +15,5 @@ router.get('/admin/sessions', authAdmin, ChatController.getSessions);
 router.get('/admin/stats', authAdmin, ChatController.getStats);
 router.put('/admin/sessions/:sessionId', authAdmin, ChatController.updateSession);
 router.post('/admin/messages', authAdmin, ChatController.sendAdminMessage);
-
+router.post('/sessions/:sessionId/read', authAdmin, ChatController.markMessagesAsRead);
 export default router;

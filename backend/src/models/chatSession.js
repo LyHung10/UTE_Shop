@@ -14,6 +14,12 @@ module.exports = (sequelize, DataTypes) => {
                 sourceKey: 'session_id',
                 as: 'messages'
             });
+
+            ChatSession.hasMany(models.ChatMessage, {
+                foreignKey: 'session_id',
+                sourceKey: 'session_id',
+                as: 'unread_messages'
+            });
         }
     }
 

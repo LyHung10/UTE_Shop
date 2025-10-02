@@ -4,8 +4,10 @@ import { geocodeAddress } from "../services/geocodingService.js";
 
 export const createAddress = async (req, res) => {
     try {
-        const userId = req.user.sub; 
+        const userId = req.user.sub;
         const {
+            name_order,
+            phone_order,
             address_line,
             city,
             district,
@@ -27,6 +29,8 @@ export const createAddress = async (req, res) => {
 
         const address = await db.Address.create({
             user_id: userId,
+            name_order,
+            phone_order,
             address_line,
             city,
             district,
