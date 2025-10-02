@@ -20,19 +20,52 @@ const NotificationBell = () => {
   const formatTime = (dateString) => {
     if (!dateString) return 'Vừa xong';
 
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMs = now - date;
 
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now - date) / (1000 * 60))
-      return diffInMinutes < 1 ? 'Vừa xong' : `${diffInMinutes} phút trước`
-    } else if (diffInHours < 24) {
-      return `${diffInHours} giờ trước`
-    } else {
-      return date.toLocaleDateString('vi-VN')
+      // Kiểm tra date có hợp lệ không
+      if (isNaN(date.getTime())) {
+        return 'Vừa xong';
+      }
+
+      const diffInSeconds = Math.floor(diffInMs / 1000);
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      const diffInMonths = Math.floor(diffInDays / 30);
+
+      if (diffInSeconds < 60) {
+        return 'Vừa xong';
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} phút trước`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours} giờ trước`;
+      } else if (diffInDays === 1) {
+        return 'Hôm qua';
+      } else if (diffInDays < 7) {
+        return `${diffInDays} ngày trước`;
+      } else if (diffInWeeks < 4) {
+        return `${diffInWeeks} tuần trước`;
+      } else if (diffInMonths < 12) {
+        return `${diffInMonths} tháng trước`;
+      } else {
+        // Hiển thị đầy đủ ngày tháng năm
+        return date.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return 'Vừa xong';
     }
-  }
+  };
 
   // Lấy màu sắc theo type
   const getTypeColor = (type) => {
@@ -344,7 +377,7 @@ const NotificationBell = () => {
                                       {notification.title}
                                     </h4>
                                     <span className="flex-shrink-0 text-xs text-gray-500 mt-0.5">
-                                      {formatTime(notification.created_at)}
+                                      {formatTime(notification.createdAt)}
                                     </span>
                                   </div>
 

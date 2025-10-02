@@ -13,6 +13,7 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  SendNotificationIcon,
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
@@ -27,6 +28,11 @@ const navItems = [
     icon: <MailIcon />,
     name: "Chat",
     path: "/admin/chat",
+  },
+  {
+    icon: <SendNotificationIcon />,
+    name: "Send Notifications",
+    path: "/admin/notification",
   },
   {
     icon: <UserCircleIcon />,
