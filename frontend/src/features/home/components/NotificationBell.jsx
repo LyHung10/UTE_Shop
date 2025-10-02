@@ -9,21 +9,21 @@ import socketService from "@/services/socketService"
 const NotificationBell = () => {
   const user = useSelector((state) => state.user.account)
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated)
-  
+
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  
-  const notificationSocketRef = useRef(null) // ĐỔI TÊN CHO RÕ
 
+  const notificationSocketRef = useRef(null) // ĐỔI TÊN CHO RÕ
+  const hasSetupSocketRef = useRef(false)
   // Format thời gian
   const formatTime = (dateString) => {
     if (!dateString) return 'Vừa xong';
-    
+
     const date = new Date(dateString)
     const now = new Date()
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now - date) / (1000 * 60))
       return diffInMinutes < 1 ? 'Vừa xong' : `${diffInMinutes} phút trước`
@@ -62,13 +62,13 @@ const NotificationBell = () => {
       console.log('Not authenticated, skipping fetch');
       return;
     }
-    
+
     try {
       console.log('🔄 Fetching notifications...');
       setIsLoading(true);
       const response = await notificationService.getNotifications(1, 10);
       console.log('📨 Notifications response:', response);
-      
+
       if (response && response.success) {
         setNotifications(response.data.notifications || []);
         console.log('✅ Notifications loaded:', response.data.notifications?.length);
@@ -87,12 +87,12 @@ const NotificationBell = () => {
   // Fetch unread count
   const fetchUnreadCount = async () => {
     if (!isAuthenticated) return
-    
+
     try {
       console.log('🔄 Fetching unread count...');
       const response = await notificationService.getUnreadCount();
       console.log('📊 Unread count response:', response);
-      
+
       if (response && response.success) {
         setUnreadCount(response.data.unread_count || 0);
         console.log('✅ Unread count:', response.data.unread_count);
@@ -112,23 +112,24 @@ const NotificationBell = () => {
       console.log('📝 Marking as read:', notificationId);
       const response = await notificationService.markAsRead(notificationId);
       console.log('✅ Mark as read response:', response);
-      
+
       if (response && response.success) {
         // Update local state
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif.id === notificationId 
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id === notificationId
               ? { ...notif, is_read: true }
               : notif
           )
         );
-        
+
         // Update unread count
         setUnreadCount(prev => Math.max(0, prev - 1));
-        
+
         // Emit qua NOTIFICATION socket (SỬA TÊN)
-        if (notificationSocketRef.current) {
-          notificationSocketRef.current?.emit?.("mark_as_read", { notificationId });
+        const socket = socketService.getNotificationSocket();
+        if (socket && socketService.isNotificationSocketConnected()) {
+          socket.emit('mark_as_read', { notificationId });
         }
       }
     } catch (error) {
@@ -142,19 +143,20 @@ const NotificationBell = () => {
       console.log('📝 Marking all as read');
       const response = await notificationService.markAllAsRead();
       console.log('✅ Mark all read response:', response);
-      
+
       if (response && response.success) {
         // Update local state
-        setNotifications(prev => 
+        setNotifications(prev =>
           prev.map(notif => ({ ...notif, is_read: true }))
         );
-        
+
         // Reset unread count
         setUnreadCount(0);
-        
-        // Emit qua NOTIFICATION socket (SỬA TÊN)
-        if (notificationSocketRef.current) {
-          notificationSocketRef.current?.emit?.("mark_all_read");
+
+        // Emit qua socket nếu có kết nối
+        const socket = socketService.getNotificationSocket();
+        if (socket && socketService.isNotificationSocketConnected()) {
+          socket.emit('mark_all_read');
         }
       }
     } catch (error) {
@@ -162,83 +164,87 @@ const NotificationBell = () => {
     }
   };
 
-  // Initialize NOTIFICATION socket - SỬA LẠI QUAN TRỌNG
+  // Setup socket connection và listeners - CHỈ CHẠY 1 LẦN
   useEffect(() => {
     const token = user?.accessToken;
     const userId = user?.id || user?.sub;
 
-    // Thiếu thông tin -> bỏ qua
     if (!isAuthenticated || !token || !userId) {
       console.log("❌ Missing auth info -> skip socket");
       return;
     }
 
-    console.log("🔄 Initializing NOTIFICATION socket...");
-
-    // thử connect
-    let socket;
-    try {
-      socket = socketService?.connectNotification?.(token, userId);
-    } catch (e) {
-      console.error("❌ connectNotification threw:", e);
-    }
-
-    // GUARD: chỉ bind nếu có socket và có .on
-    if (!socket || typeof socket.on !== "function") {
-      console.warn("⚠️ Notification socket not ready (no .on). Skip binding.");
-      // vẫn load dữ liệu qua API để UI có nội dung
-      fetchNotifications();
-      fetchUnreadCount();
+    // Chỉ setup socket một lần
+    if (hasSetupSocketRef.current) {
+      console.log("✅ Socket already setup, skipping...");
       return;
     }
 
-    notificationSocketRef.current = socket;
+    console.log("🔄 Setting up notification socket for the first time...");
 
-    // listeners (định nghĩa riêng để off đúng)
-    const onNew = (data) => {
+    // Kết nối socket
+    const socket = socketService.connectNotification(token, userId);
+
+    if (!socket) {
+      console.error("❌ Failed to connect notification socket");
+      return;
+    }
+
+    // Định nghĩa listeners
+    const onNewNotification = (data) => {
       console.log("🎉 NEW REAL-TIME NOTIFICATION:", data);
-      setNotifications((prev) => {
-        if (prev.some((n) => n.id === data.id)) return prev;
+      setNotifications(prev => {
+        const exists = prev.find(n => n.id === data.id);
+        if (exists) return prev;
         return [data, ...prev];
       });
-      setUnreadCount((prev) => prev + 1);
+      setUnreadCount(prev => prev + 1);
     };
 
-    const onUnreadUpdate = (data) => {
+    const onUnreadCountUpdate = (data) => {
       console.log("📊 Unread count updated:", data);
       setUnreadCount(data?.unread_count ?? 0);
     };
 
-    const onError = (err) => {
-      console.error("❌ Notification socket error:", err);
+    const onConnectError = (error) => {
+      console.error("❌ Notification socket error:", error);
     };
 
-    socket.on("new_notification", onNew);
-    socket.on("unread_count_update", onUnreadUpdate);
-    socket.on("connect_error", onError);
+    // Thêm listeners qua service
+    socketService.addNotificationListener('new_notification', onNewNotification);
+    socketService.addNotificationListener('unread_count_update', onUnreadCountUpdate);
+    socketService.addNotificationListener('connect_error', onConnectError);
 
-    // fetch lần đầu
+    // Fetch data ban đầu
     fetchNotifications();
     fetchUnreadCount();
 
-    // cleanup
+    // Đánh dấu đã setup
+    hasSetupSocketRef.current = true;
+
+    // Cleanup - chỉ remove listeners, không disconnect socket
     return () => {
-      console.log("🧹 Cleanup notification socket listeners...");
-      const s = notificationSocketRef.current;
-      if (s?.off) {
-        s.off("new_notification", onNew);
-        s.off("unread_count_update", onUnreadUpdate);
-        s.off("connect_error", onError);
-      }
+      console.log("🧹 Cleaning up notification listeners (but keeping socket connection)...");
+      socketService.removeNotificationListener('new_notification');
+      socketService.removeNotificationListener('unread_count_update');
+      socketService.removeNotificationListener('connect_error');
     };
   }, [isAuthenticated, user?.accessToken, user?.id, user?.sub]);
 
   // Reset khi logout
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
+      console.log("🔄 Auth changed, fetching notification data...");
+      fetchNotifications();
+      fetchUnreadCount();
+    } else {
+      console.log("🔄 User logged out, clearing notifications...");
       setNotifications([]);
       setUnreadCount(0);
-      notificationSocketRef.current = null;
+      hasSetupSocketRef.current = false;
+
+      // Disconnect socket khi logout
+      socketService.disconnectNotification();
     }
   }, [isAuthenticated]);
 
@@ -246,29 +252,28 @@ const NotificationBell = () => {
     return null;
   }
 
-  console.log('🔔 Rendering NotificationBell:', { 
-    notificationsCount: notifications.length, 
+  console.log('🔔 Rendering NotificationBell:', {
+    notificationsCount: notifications.length,
     unreadCount,
-    isLoading 
+    isLoading
   });
 
   return (
     <Menu as="div" className="relative">
       {({ open }) => (
         <>
-          <MenuButton 
+          <MenuButton
             className="relative p-2 rounded-full hover:bg-white/10 transition-all duration-200 group"
           >
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Bell className={`w-6 h-6 transition-colors ${
-                open 
-                  ? "text-orange-400" 
-                  : "text-white group-hover:text-orange-300"
-              }`} />
-              
+              <Bell className={`w-6 h-6 transition-colors ${open
+                ? "text-orange-400"
+                : "text-white group-hover:text-orange-300"
+                }`} />
+
               {unreadCount > 0 && (
                 <motion.span
                   className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-slate-900"
@@ -284,7 +289,7 @@ const NotificationBell = () => {
 
           <AnimatePresence>
             {open && (
-              <MenuItems 
+              <MenuItems
                 static
                 as={motion.div}
                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -321,11 +326,9 @@ const NotificationBell = () => {
                         <MenuItem key={notification.id} as="div">
                           {({ active }) => (
                             <div
-                              className={`p-4 transition-colors ${
-                                active ? 'bg-gray-50' : 'bg-white'
-                              } ${
-                                !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                              }`}
+                              className={`p-4 transition-colors ${active ? 'bg-gray-50' : 'bg-white'
+                                } ${!notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                                }`}
                             >
                               <div className="flex gap-3">
                                 <div className="flex-shrink-0">
@@ -333,28 +336,27 @@ const NotificationBell = () => {
                                     {getTypeIcon(notification.type)}
                                   </span>
                                 </div>
-                                
+
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2">
-                                    <h4 className={`text-sm font-medium ${
-                                      notification.is_read ? 'text-gray-700' : 'text-gray-900'
-                                    }`}>
+                                    <h4 className={`text-sm font-medium ${notification.is_read ? 'text-gray-700' : 'text-gray-900'
+                                      }`}>
                                       {notification.title}
                                     </h4>
                                     <span className="flex-shrink-0 text-xs text-gray-500 mt-0.5">
                                       {formatTime(notification.created_at)}
                                     </span>
                                   </div>
-                                  
+
                                   <p className="text-sm text-gray-600 mt-1 leading-relaxed">
                                     {notification.message}
                                   </p>
-                                  
+
                                   <div className="flex items-center justify-between mt-2">
                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getTypeColor(notification.type)}`}>
                                       {notification.type}
                                     </span>
-                                    
+
                                     {!notification.is_read && (
                                       <button
                                         onClick={(e) => {

@@ -61,17 +61,23 @@ const AdminNotificationSender = () => {
   // Handle user selection
   const handleUserSelect = (user) => {
     if (sendOption === 'user') {
-      setFormData(prev => ({ ...prev, user_id: user.id }))
-      setSearchTerm(`${user.first_name} ${user.last_name} (${user.email})`)
-      setUsers([])
+      // QUAN TRỌNG: set user_id là number, không phải object
+      setFormData(prev => ({
+        ...prev,
+        user_id: user.id // Đây phải là number (ví dụ: 1, 2, 3...)
+      }));
+      setSearchTerm(`${user.first_name} ${user.last_name} (${user.email})`);
+      setUsers([]);
+
+      console.log('✅ User selected:', { id: user.id, name: `${user.first_name} ${user.last_name}` });
     } else if (sendOption === 'multiple') {
       if (!selectedUsers.find(u => u.id === user.id)) {
-        setSelectedUsers(prev => [...prev, user])
+        setSelectedUsers(prev => [...prev, user]);
       }
-      setSearchTerm('')
-      setUsers([])
+      setSearchTerm('');
+      setUsers([]);
     }
-  }
+  };
 
   // Remove selected user (multiple mode)
   const removeSelectedUser = (userId) => {
@@ -79,6 +85,7 @@ const AdminNotificationSender = () => {
   }
 
   // Trong handleSend function - THÊM DEBUG LOGS
+  // Trong handleSend function - SỬA PHẦN GỬI ĐẾN 1 USER
   const handleSend = async (e) => {
     e.preventDefault()
 
@@ -104,53 +111,78 @@ const AdminNotificationSender = () => {
       console.log('🔄 Sending notification...', {
         sendOption,
         formData,
-        selectedUsers: selectedUsers.map(u => u.id)
+        selectedUsers: selectedUsers.map(u => ({ id: u.id, name: u.first_name }))
       });
 
       let result
 
+      // CHUẨN BỊ DỮ LIỆU CHUNG
+      const baseData = {
+        title: formData.title.trim(),
+        message: formData.message.trim(),
+        type: formData.type,
+        related_entity: formData.related_entity || null,
+        entity_id: formData.entity_id ? parseInt(formData.entity_id) : null
+      };
+
+      console.log('📦 Base data to send:', baseData);
+
       if (sendOption === 'broadcast') {
         // Gửi đến tất cả users
         console.log('📢 Broadcasting to all users');
-        result = await adminNotificationService.broadcast(formData)
+        result = await adminNotificationService.broadcast(baseData);
       } else if (sendOption === 'user') {
-        // Gửi đến user cụ thể
+        // Gửi đến user cụ thể - SỬA QUAN TRỌNG
         console.log('👤 Sending to single user:', formData.user_id);
-        result = await adminNotificationService.sendToUser(formData)
+
+        // ĐẢM BẢO user_id là NUMBER
+        const userId = parseInt(formData.user_id);
+        if (isNaN(userId)) {
+          throw new Error('User ID không hợp lệ');
+        }
+
+        result = await adminNotificationService.sendToUser({
+          ...baseData,
+          user_id: userId // PHẢI CÓ user_id và phải là number
+        });
       } else if (sendOption === 'multiple') {
         // Gửi đến nhiều users
-        const userIds = selectedUsers.map(user => user.id)
+        const userIds = selectedUsers.map(user => user.id);
         console.log('👥 Sending to multiple users:', userIds);
-        result = await adminNotificationService.sendToUsers(userIds, formData)
+        result = await adminNotificationService.sendToUsers(userIds, baseData);
       }
 
       console.log('✅ Send notification result:', result);
 
-      setMessage({
-        type: 'success',
-        text: `Đã gửi thông báo thành công đến ${getRecipientCount()} người nhận`
-      })
+      if (result && result.success) {
+        setMessage({
+          type: 'success',
+          text: `Đã gửi thông báo thành công đến ${getRecipientCount()} người nhận`
+        });
 
-      // Reset form
-      setFormData({
-        user_id: '',
-        title: '',
-        message: '',
-        type: 'info',
-        related_entity: '',
-        entity_id: ''
-      })
-      setSelectedUsers([])
-      setSearchTerm('')
+        // Reset form
+        setFormData({
+          user_id: '',
+          title: '',
+          message: '',
+          type: 'info',
+          related_entity: '',
+          entity_id: ''
+        });
+        setSelectedUsers([]);
+        setSearchTerm('');
+      } else {
+        throw new Error(result?.message || 'Failed to send notification');
+      }
 
     } catch (error) {
       console.error('❌ Error sending notification:', error);
       setMessage({
         type: 'error',
         text: `Lỗi khi gửi thông báo: ${error.message}`
-      })
+      });
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
   }
 
@@ -208,8 +240,8 @@ const AdminNotificationSender = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${message.type === 'success'
-                      ? 'bg-green-50 border border-green-200 text-green-800'
-                      : 'bg-red-50 border border-red-200 text-red-800'
+                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    : 'bg-red-50 border border-red-200 text-red-800'
                     }`}
                 >
                   {message.type === 'success' ? (
@@ -239,8 +271,8 @@ const AdminNotificationSender = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setSendOption(option.value)}
                         className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${sendOption === option.value
-                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                           }`}
                       >
                         <Icon className={`w-5 h-5 mb-2 ${sendOption === option.value ? 'text-blue-600' : 'text-gray-400'
@@ -431,9 +463,9 @@ const AdminNotificationSender = () => {
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <h4 className="font-medium text-gray-700 mb-3">Xem trước thông báo:</h4>
                   <div className={`p-4 rounded-lg border-l-4 ${formData.type === 'info' ? 'bg-blue-50 border-blue-400' :
-                      formData.type === 'success' ? 'bg-green-50 border-green-400' :
-                        formData.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
-                          'bg-red-50 border-red-400'
+                    formData.type === 'success' ? 'bg-green-50 border-green-400' :
+                      formData.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                        'bg-red-50 border-red-400'
                     }`}>
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-lg">
@@ -456,8 +488,8 @@ const AdminNotificationSender = () => {
                   whileHover={{ scale: isSending ? 1 : 1.02 }}
                   whileTap={{ scale: isSending ? 1 : 0.98 }}
                   className={`px-8 py-3 rounded-lg font-medium text-white transition-all flex items-center gap-2 ${isSending
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg'
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg'
                     }`}
                 >
                   {isSending ? (

@@ -22,6 +22,8 @@ import SocketService from './services/socketService.js';
 import shippingRoutes from './routes/shippingRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+
 import { initializeNotificationSocket } from './socket/notificationHandlers.js';
 
 dotenv.config();
@@ -65,11 +67,12 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handler
 app.use(errorHandler);
 
-// EXPORT CÁC BIẾN CẦN THIẾT
+// EXPORT CÁC BIẾN CẦN THIẾTa
 export { io, notificationNamespace };
 
 // Start server
