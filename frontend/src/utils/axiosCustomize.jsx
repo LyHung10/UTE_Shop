@@ -16,7 +16,6 @@ const instance = axios.create({
     withCredentials: true,    // bật nếu dùng cookie/session
 });
 
-const token = store.getState().authStatus;
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -28,24 +27,11 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
-instance.interceptors.request.use(function (config) {
-    const access_token = token?.token?.accessToken; // optional chaining
-    if (access_token && token.isAuthenticated===true) {
-        config.headers["Authorization"] = `Bearer ${access_token}`;
-    }
-    NProgress.start();
-    // console.log(">>> Request URL:", config.baseURL + config.url);
-    return config;
-}, function (error) {
-    return Promise.reject(error);
-});
 
-
-// Add a response interceptor
 instance.interceptors.request.use(
     function (config) {
-        const state = store.getState(); // 💡 Lấy redux state mỗi lần request
-        const access_token = state.authStatus?.token?.accessToken;
+        const state = store.getState();
+        const access_token = state.authStatus?.accessToken;
         const isAuthenticated = state.authStatus?.isAuthenticated;
 
         if (access_token && isAuthenticated) {
@@ -68,7 +54,7 @@ instance.interceptors.response.use(
     async (error) => {
         NProgress.done();
         const originalRequest = error.config;
-        const state = store.getState(); // 💡 Đọc lại redux state mỗi lần response
+        const state = store.getState();
         const token = state.authStatus;
 
         if (error.response && error.response.status === 401 && !originalRequest._retry && token.isAuthenticated) {
@@ -87,19 +73,19 @@ instance.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const res = await refreshToken(token?.token?.refreshToken);
+                const res = await refreshToken(token?.refreshToken);
                 const newAccessToken = res.accessToken; // ⚠️ Đảm bảo res có đúng field
 
                 // ✅ Lưu token mới vào Redux
                 store.dispatch(
                     doLogin({
                         accessToken: newAccessToken,
-                        refreshToken: token?.token?.refreshToken, // Giữ refresh token cũ
+                        refreshToken: token?.refreshToken, // Giữ refresh token cũ
+                        role: token?.role, // Giữ refresh token cũ
                     })
                 );
 
                 processQueue(null, newAccessToken);
-
                 // ✅ Retry lại request ban đầu
                 originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
                 return instance(originalRequest);

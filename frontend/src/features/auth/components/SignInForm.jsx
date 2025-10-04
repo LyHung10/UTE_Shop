@@ -9,6 +9,7 @@ import {useDispatch} from "react-redux";
 import {postLogin} from "@/services/authService.jsx";
 import {doLogin} from "@/redux/action/authAction.jsx";
 import {toast} from "react-toastify";
+import {fetchUser} from "@/redux/action/userAction.jsx";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -26,10 +27,16 @@ export default function SignInForm() {
       dispatch(doLogin({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
+        role: data.role
       }));
-
       toast.success("Đăng nhập thành công");
-      navigate("/");
+      if (data.role === "admin")
+      {
+        navigate("/admin")
+      }
+      else{
+        navigate("/")
+      }
     }
 
     if (data && data.message) {

@@ -66,11 +66,7 @@ export async function loginUser({ email, password }, req) {
   return {
     accessToken,
     refreshToken,
-    user: {
-      email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name
-    }
+    role: user.role_id,
   };
 }
 

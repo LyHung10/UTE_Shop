@@ -33,7 +33,6 @@ const Header = () => {
     }
 
     useEffect(() => {
-        dispatch(fetchUser())
         dispatch(fetchCart())
     }, [dispatch])
 
