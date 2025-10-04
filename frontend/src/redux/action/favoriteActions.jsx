@@ -50,7 +50,6 @@ export const checkFavorite = (productId) => async (dispatch) => {
     dispatch({ type: FAVORITE_LOADING });
     try {
         const res = await axios.get(`${API_BASE}/check`, { params: { productId } });
-        console.log("Check favorite response:", res);
         dispatch({ type: CHECK_FAVORITE, payload: { productId, isFavorite: res.isFavorite } });
     } catch (err) {
         dispatch({ type: FAVORITE_ERROR, payload: err.response?.error || err.message });

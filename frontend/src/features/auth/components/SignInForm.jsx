@@ -6,13 +6,12 @@ import Input from "@/admin/components/form/input/InputField.jsx";
 import Button from "@/admin/ui/Button.jsx";
 import Checkbox from "@/admin/components/form/input/Checkbox.jsx";
 import {useDispatch} from "react-redux";
-import {getUser, postLogin} from "@/services/apiService.jsx";
-import {doLogin} from "@/redux/action/userAction.jsx";
+import {postLogin} from "@/services/authService.jsx";
+import {doLogin} from "@/redux/action/authAction.jsx";
 import {toast} from "react-toastify";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  // const [isChecked, setIsChecked] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,11 +29,6 @@ export default function SignInForm() {
       }));
 
       toast.success("Đăng nhập thành công");
-
-      // B2: Lấy thông tin user
-      const user = await getUser();
-      dispatch(doLogin(user)); // chỉ update profile thôi
-
       navigate("/");
     }
 

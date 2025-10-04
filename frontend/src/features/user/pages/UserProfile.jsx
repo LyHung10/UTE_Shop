@@ -4,7 +4,7 @@ import { RxCross2 } from "react-icons/rx";
 import {useSelector} from "react-redux";
 
 export default function ProfilePage() {
-    const user = useSelector(state => state.user.account);
+    const user = useSelector(state => state.user);
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Section */}

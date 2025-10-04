@@ -5,6 +5,7 @@ import { createOtp, verifyOtp } from './otpService';
 import { sendOtpMail } from './emailService';
 import { signAccessToken, signRefreshToken, persistRefreshToken } from './tokenService';
 import OTP_TYPES from '../enums/otpType';
+import {Model as RefreshToken} from "sequelize";
 
 const { User, ResetToken, } = db;
 

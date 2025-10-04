@@ -1,6 +1,7 @@
 // controllers/authController.js
 import { validationResult } from 'express-validator';
 import * as authService from '../services/authService.js';
+import {handleRefreshToken} from "../services/tokenService";
 
 export async function register(req, res, next) {
   try {
@@ -59,5 +60,28 @@ export async function resetPassword(req, res, next) {
     res.json(result);
   } catch (err) {
     next(err);
+  }
+}
+
+export async function refreshToken(req, res) {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    // Gọi service xử lý logic
+    const result = await handleRefreshToken(refreshToken);
+
+    return res.status(200).json({
+      message: "Access token refreshed successfully",
+      accessToken: result.accessToken,
+    });
+  } catch (error) {
+    console.error("Refresh token controller error:", error);
+    return res.status(403).json({
+      message: error.message || "Invalid or expired refresh token",
+    });
   }
 }

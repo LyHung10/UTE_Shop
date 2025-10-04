@@ -5,7 +5,7 @@ import Label from "@/admin/components/form/Label.jsx";
 import Input from "@/admin/components/form/input/InputField.jsx";
 import Checkbox from "@/admin/components/form/input/Checkbox.jsx";
 import {useDispatch} from "react-redux";
-import {postSignup} from "@/services/apiService.jsx";
+import {postSignup} from "@/services/authService.jsx";
 import {authOTP} from "@/redux/action/authOtpAction.jsx";
 import {toast} from "react-toastify";
 

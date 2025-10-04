@@ -1,7 +1,8 @@
 // redux/action/actionTypes.js
 export const FETCH_USER_LOGIN_SUCCESS = "FETCH_USER_LOGIN_SUCCESS";
 export const USER_LOGOUT_SUCCESS = "USER_LOGOUT_SUCCESS";
-
+//User
+export const GET_PROFILE_USER = "GET_PROFILE_USER";
 
 // Cart
 export const ADD_TO_CART = "ADD_TO_CART";
