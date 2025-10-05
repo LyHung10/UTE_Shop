@@ -23,7 +23,9 @@ router.get("/:id/stats",productController.getProductStats);
 router.get("/:id/similar", productController.getSimilar);
 
 // Route động theo slug + page
+// router.get("/:slug/:page", productController.getProductsByCategorySlug);
 router.get("/:slug/:page", productController.getProductsByCategorySlug);
+
 
 // Xem chi tiết sản phẩm + tăng view_count
 router.get("/:id", productController.getProductById);

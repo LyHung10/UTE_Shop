@@ -24,8 +24,23 @@ const getProductById = (id) => {
     return axios.get(`api/products/${id}`);
 };
 
-const getProductsByCategorySlug = (category,page) => {
-    return axios.get(`api/products/${category}/${page}`);
+const getProductsByCategorySlug = (
+    category,      // slug danh mục
+    page = 1,      // trang hiện tại
+    params = {}    // { sizes, colors, sort, limit }
+) => {
+    const { sizes, colors, sort } = params;
+
+    // chuẩn hóa tham số, vì backend chấp nhận dạng "M,L" hoặc mảng
+    const toCSV = (v) => Array.isArray(v) ? v.join(",") : v;
+
+    return axios.get(`/api/products/${category}/${page}`, {
+        params: {
+            sizes: toCSV(sizes),
+            colors: toCSV(colors),
+            sort,
+        },
+    });
 };
 
 const getSimilarProducts = (productId) => {

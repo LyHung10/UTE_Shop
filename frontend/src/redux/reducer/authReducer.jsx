@@ -4,6 +4,7 @@ const INITIAL_STATE = {
     accessToken: '',
     refreshToken: '',
     role: null,
+    id: '',
     isAuthenticated: false,
 };
 
@@ -15,6 +16,7 @@ const authReducer = (state = INITIAL_STATE, action) => {
                 accessToken: action.payload.accessToken,
                 refreshToken: action.payload.refreshToken,
                 role: action.payload.role,
+                id: action.payload.id,
                 isAuthenticated: true,
             };
 

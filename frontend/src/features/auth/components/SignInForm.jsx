@@ -27,9 +27,11 @@ export default function SignInForm() {
       dispatch(doLogin({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
-        role: data.role
+        role: data.role,
+        id: data.id
       }));
       toast.success("Đăng nhập thành công");
+      dispatch(fetchUser());
       if (data.role === "admin")
       {
         navigate("/admin")

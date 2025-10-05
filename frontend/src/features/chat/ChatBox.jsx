@@ -19,8 +19,9 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
-    const user = useSelector((state) => state.user?.account);
-    const accessToken = user?.accessToken;
+    const user = useSelector((state) => state.user);
+    const authStatus = useSelector((state) => state.authStatus);
+    const accessToken = authStatus?.accessToken;
 
     // Scroll to bottom
     const scrollToBottom = () => {
@@ -109,7 +110,7 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
             });
 
             socket.on('user_typing', (data) => {
-                if (data.userId !== user?.id) {
+                if (data.userId !== authStatus?.id) {
                     setIsTyping(data.isTyping);
                 }
             });
@@ -126,7 +127,7 @@ const ChatBox = ({ apiUrl = 'http://localhost:4000' }) => {
                 socketRef.current = null;
             }
         };
-    }, [isOpen, apiUrl, accessToken, user?.id]);
+    }, [isOpen, apiUrl, accessToken, authStatus?.id]);
 
     // Join chat room when session is ready
     useEffect(() => {
