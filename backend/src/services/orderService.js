@@ -3,6 +3,7 @@ import {sequelize} from "../config/configdb";
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher,Address } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
+import {implodeEntry} from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
 
 class OrderService {
     static async getUserOrders(userId, options = {}) {
@@ -144,14 +145,27 @@ class OrderService {
     }
 
     static async addToCart(userId, productId, qty, color, size) {
-        if (qty <= 0) throw new Error('Quantity must be greater than 0');
+        if (qty <= 0) return { success: false, message: 'Số lượng không hợp lệ' };
+        if (qty > 10) return { success: false, message: 'Số lượng không vượt quá 10' };
 
         const product = await Product.findByPk(productId);
-        if (!product) throw new Error('Product not found');
+        if (!product) return { success: false, message: 'Sản phẩm không tồn tại' };
+
+        // ✅ Kiểm tra tồn kho trước khi thêm
+        const inventory = await Inventory.findOne({ where: { product_id: productId } });
+        if (!inventory) {
+            return { success: false, message: 'Sản phẩm này hiện chưa có trong kho' };
+        }
+        if (inventory.stock <= 0) {
+            return { success: false, message: 'Sản phẩm đã hết hàng' };
+        }
+        if (qty > inventory.stock - inventory.reserved) {
+            return { success: false, message: `Chỉ còn ${inventory.stock - inventory.reserved} sản phẩm trong kho` };
+        }
 
         // Kiểm tra size
         if (size && product.sizes && !product.sizes.includes(size)) {
-            throw new Error(`Invalid size selected. Available sizes: ${product.sizes.join(', ')}`);
+            return { success: false, message: `Kích thước không hợp lệ. Kích thước hợp lệ: ${product.sizes.join(', ')}` };
         }
 
         // Kiểm tra color
@@ -159,11 +173,11 @@ class OrderService {
             const colorNames = typeof product.colors[0] === 'object'
                 ? product.colors.map(c => c.name)
                 : product.colors;
-
             if (!colorNames.some(c => c.toLowerCase() === color.toLowerCase())) {
-                throw new Error(`Invalid color selected. Available colors: ${colorNames.join(', ')}`);
+                return { success: false, message: `Màu không hợp lệ. Màu hợp lệ: ${colorNames.join(', ')}` };
             }
         }
+
         // Tìm order pending
         let order = await Order.findOne({ where: { user_id: userId, status: 'pending' } });
         if (!order) {
@@ -181,9 +195,24 @@ class OrderService {
         let item = await OrderItem.findOne({ where: whereCondition });
 
         if (item) {
-            item.qty += qty;
+            const newQty = item.qty + qty;
+
+            // ✅ Kiểm tra tổng số lượng không vượt quá tồn kho
+            if (newQty > inventory.stock - inventory.reserved) {
+                return { success: false, message: `Chỉ còn ${inventory.stock - inventory.reserved} sản phẩm trong kho` };
+            }
+
+            if (newQty > 10) {
+                return { success: false, message: 'Số lượng không vượt quá 10' };
+            }
+
+            item.qty = newQty;
             await item.save();
         } else {
+            if (qty > inventory.stock - inventory.reserved) {
+                return { success: false, message: `Chỉ còn ${inventory.stock - inventory.reserved} sản phẩm trong kho` };
+            }
+
             item = await OrderItem.create({
                 order_id: order.id,
                 product_id: product.id,
@@ -194,7 +223,7 @@ class OrderService {
             });
         }
 
-        // Trả về item vừa thêm kèm product info
+        // Lấy lại thông tin product kèm ảnh
         const productWithImage = await Product.findByPk(item.product_id, {
             attributes: ['id', 'name', 'price', 'original_price', 'discount_percent', 'colors', 'sizes'],
             include: [
@@ -202,30 +231,33 @@ class OrderService {
                     model: ProductImage,
                     as: 'images',
                     attributes: ['url'],
-                    limit: 1 // lấy 1 ảnh đầu tiên
+                    limit: 1
                 }
             ]
         });
 
         return {
-            id: item.id,
-            order_id: item.order_id,
-            product_id: item.product_id,
-            qty: item.qty,
-            price: item.price,
-            color: item.color,
-            size: item.size,
-            status: item.status,
-            product: {
-                id: productWithImage.id,
-                name: productWithImage.name,
-                price: productWithImage.price,
-                original_price: productWithImage.original_price,
-                discount_percent: productWithImage.discount_percent,
-                image: productWithImage.images.length > 0 ? productWithImage.images[0].url : null
+            success: true,
+            message: 'Thêm sản phẩm thành công',
+            data: {
+                id: item.id,
+                order_id: item.order_id,
+                product_id: item.product_id,
+                qty: item.qty,
+                price: item.price,
+                color: item.color,
+                size: item.size,
+                status: item.status,
+                product: {
+                    id: productWithImage.id,
+                    name: productWithImage.name,
+                    price: productWithImage.price,
+                    original_price: productWithImage.original_price,
+                    discount_percent: productWithImage.discount_percent,
+                    image: productWithImage.images.length > 0 ? productWithImage.images[0].url : null
+                }
             }
         };
-
     }
 
     static async getCart(userId, voucherCode = null) {
@@ -273,9 +305,16 @@ class OrderService {
 
 
     static async updateQuantity(userId, itemId, qty) {
-        if (!itemId || qty < 1) throw new Error('Invalid itemId or quantity');
+        if (!itemId || qty < 1) return {
+            success: false,
+            message: 'Số lượng không hợp lệ'
+        };
 
-        // Cập nhật qty
+        if (qty > 10) return {
+            success: false,
+            message: 'Số lượng không vượt quá 10'
+        };
+
         const orderItem = await OrderItem.findOne({
             where: { id: itemId },
             include: [
@@ -283,15 +322,18 @@ class OrderService {
             ]
         });
 
-        if (!orderItem) throw new Error('Cart item not found');
+        if (!orderItem) return {
+            success: false,
+            message: 'Sản phẩm không tồn tại'
+        };
 
         orderItem.qty = qty;
         await orderItem.save();
 
-        // Lấy lại toàn bộ cart với Product + images + tính tiền
-        const cart = await OrderService.getCart(userId);
-
-        return cart;
+        return {
+            success: true,
+            message: 'Cập nhật sản phẩm thành công'
+        };
     }
 
 

@@ -85,12 +85,17 @@ class OrderController {
 
     static async addToCart(req, res) {
         try {
-            const userId = req.user.sub; // Giả sử middleware auth gắn user vào req
+            const userId = req.user.sub; // middleware auth
             const { productId, qty, color, size } = req.body;
-            const order = await OrderService.addToCart(userId, productId, qty, color, size);
-            res.json(order);
+
+            const result = await OrderService.addToCart(userId, productId, qty, color, size);
+
+            res.status(200).json(result);
         } catch (err) {
-            res.status(400).json({ error: err.message });
+            res.status(400).json({
+                success: false,
+                error: err.message
+            });
         }
     }
 
@@ -109,8 +114,8 @@ class OrderController {
         try {
             const userId = req.user.sub;
             const { itemId, qty } = req.body;
-            const cart = await OrderService.updateQuantity(userId, itemId, qty);
-            res.json({ success: true, message: 'Cart updated', ...cart });
+            const result = await OrderService.updateQuantity(userId, itemId, qty);
+            res.status(200).json(result);
         } catch (err) {
             console.error(err);
             res.status(400).json({ error: 'Failed to update cart', message: err.message });
