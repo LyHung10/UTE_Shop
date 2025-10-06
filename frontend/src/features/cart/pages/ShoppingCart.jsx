@@ -341,7 +341,7 @@ const ShoppingCart = () => {
                                                         fill={favorites.has(item.id) ? 'currentColor' : 'none'}
                                                     />
                                                 </button> */}
-<FavoriteButton 
+                                                    <FavoriteButton 
     productId={item.Product?.id} 
     size="small"
 />
