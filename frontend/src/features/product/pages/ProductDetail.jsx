@@ -3,23 +3,23 @@ import { Star, ChevronDown, Plus, Minus, Heart, Share2, Shield, Truck, RotateCcw
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Navigation, Thumbs, Autoplay, EffectFade } from "swiper/modules"
 import ProductSlider from "../../home/components/ProductSlider.jsx"
-import { getBestSellingProducts, getSimilarProducts } from "../../../services/productService.jsx"
+import { getSimilarProducts } from "@/services/productService.jsx"
 import "swiper/css"
 import "swiper/css/free-mode"
 import "swiper/css/navigation"
 import "swiper/css/thumbs"
 import "swiper/css/effect-fade"
 import "swiper/css/autoplay"
+import {toast} from "react-toastify";
 import { useRef } from "react"
 import { useParams } from "react-router-dom"
-import { getProductById } from "../../../services/productService.jsx"
-import { addToCart } from "../../../redux/action/cartAction.jsx"
+import { getProductById } from "@/services/productService.jsx"
+import {addToCart} from "@/redux/action/cartAction.jsx"
 import axios from "../../../utils/axiosCustomize.jsx"
 import { cartRef } from "../../home/components/Header.jsx"
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux"
-import { addFavorite, removeFavorite, checkFavorite } from "../../../redux/action/favoriteActions.jsx"
-import toast from "react-hot-toast";
+import { checkFavorite } from "@/redux/action/favoriteActions.jsx"
 import FavoriteButton from "../../../components/ui/FavoriteButton.jsx"
 
 const ProductDetail = () => {
@@ -127,13 +127,20 @@ const ProductDetail = () => {
         Silver: "bg-gradient-to-br from-gray-300 to-gray-400",
         Gold: "bg-gradient-to-br from-yellow-300 to-yellow-500",
     }
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (!selectedSize || !selectedColor) {
-            alert("Please choose size and color")
+            toast.error("Please choose size and color")
             return
         }
-        animateAddToCart()
-        dispatch(addToCart(product.id, quantity, selectedColor.name, selectedSize))
+        const result = await dispatch(addToCart(product.id, quantity, selectedColor.name, selectedSize))
+        if (result.success)
+        {
+            toast.success(result.message);
+            animateAddToCart()
+        }
+        else{
+            toast.error(result.message);
+        }
     }
 
     const [isAnimating, setIsAnimating] = useState(false)

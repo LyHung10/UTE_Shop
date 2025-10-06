@@ -10,7 +10,7 @@ import {
     Heart,
     Ticket,
     ShieldCheck,
-    LogOut,
+    LogOut, Gift,
 } from "lucide-react";
 
 const sections = [
@@ -18,6 +18,7 @@ const sections = [
         title: "Tài khoản",
         items: [
             { label: "Tài khoản của tôi", to: "/user/profile", icon: UserRound },
+            { label: "Điểm tích lũy", to: "/user/product-favorites", icon: Gift },
             { label: "Yêu thích", to: "/user/product-favorites", icon: Heart },
         ],
     },

@@ -5,6 +5,7 @@ import { updateQuantity, removeFromCart, fetchCart } from "@/redux/action/cartAc
 import { useNavigate } from "react-router-dom";
 import axios from '@/utils/axiosCustomize';
 import FavoriteButton from "../../../components/ui/FavoriteButton"
+import {toast} from "react-toastify";
 
 const ShoppingCart = () => {
     const dispatch = useDispatch();
@@ -97,6 +98,14 @@ const ShoppingCart = () => {
         setIsDropdownOpen(false);
     };
 
+    const handleUpdateItem = async (id,qty) => {
+        const result = await dispatch(updateQuantity(id, qty));
+        if (!result.success)
+        {
+            toast.error(result.message);
+        }
+    }
+
     const toggleFavorite = (id) => {
         setFavorites(prev => {
             const next = new Set(prev);
@@ -111,8 +120,7 @@ const ShoppingCart = () => {
 
     const subtotal = Number(cart.finalTotal || 0);
     const tax = subtotal > 0 ? 40000 : 0;
-    const total = Math.max(0, subtotal - cart.discount + shippingFee + tax);
-
+    const total = subtotal === 0 ? 0 : subtotal - cart.discount + shippingFee + tax;
     const formatAddress = (address) => {
         return `${[address.address_line, address.ward, address.district, address.city].filter(Boolean).join(', ')}`;
     };
@@ -342,10 +350,10 @@ const ShoppingCart = () => {
                                                         fill={favorites.has(item.id) ? 'currentColor' : 'none'}
                                                     />
                                                 </button> */}
-<FavoriteButton 
-    productId={item.Product?.id} 
-    size="small"
-/>
+                                                <FavoriteButton
+                                                    productId={item.Product?.id}
+                                                    size="small"
+                                                />
                                                 <button
                                                     onClick={() => dispatch(removeFromCart(item.id))}
                                                     className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"
@@ -356,7 +364,7 @@ const ShoppingCart = () => {
                                                 <div className="flex items-center gap-2 bg-gray-100 rounded-2xl p-1">
                                                     <button
                                                         onClick={() => {
-                                                            dispatch(updateQuantity(item.id, Math.max(1, item.qty - 1)));
+                                                            handleUpdateItem(item.id, Math.max(1, item.qty - 1))
                                                             setCouponCode('');
                                                         }}
                                                         className="w-8 h-8 rounded-xl bg-white hover:bg-gray-200 flex items-center justify-center text-gray-700 transition-all shadow-sm"
@@ -368,8 +376,8 @@ const ShoppingCart = () => {
                                                     </span>
                                                     <button
                                                         onClick={() => {
-                                                            dispatch(updateQuantity(item.id, item.qty + 1));
-                                                            setCouponCode('');
+                                                            handleUpdateItem(item.id, Math.max(1, item.qty + 1))
+                                                            setCouponCode('')
                                                         }}
                                                         className="w-8 h-8 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 flex items-center justify-center text-white transition-all shadow-md"
                                                     >

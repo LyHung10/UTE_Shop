@@ -1,7 +1,7 @@
 //utils/axiosCustomize
 import axios from "axios";
 import NProgress from "nprogress";
-import {doLogin} from "@/redux/action/authAction.jsx";
+import {doLogin, doLogout} from "@/redux/action/authAction.jsx";
 import {store} from "@/redux/store.jsx";
 import {refreshToken} from "@/services/authService.jsx";
 
@@ -91,7 +91,7 @@ instance.interceptors.response.use(
                 return instance(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError, null);
-                // store.dispatch(doLogout());
+                store.dispatch(doLogout());
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

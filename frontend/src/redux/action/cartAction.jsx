@@ -9,36 +9,40 @@ import {
 import {getCart, postCheckoutCOD} from "@/services/cartService.jsx";
 
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
-    try {
-        dispatch({ type: SET_CART_LOADING, payload: true });
-        await axios.post('api/orders/cart', {
-            productId,
-            qty,
-            color: color || null,
-            size: size || null
-        });
-        dispatch(fetchCart());
-        dispatch({ type: SET_CART_LOADING, payload: false });
-    } catch (err) {
-        console.error("Error adding to cart:", err);
-        dispatch({ type: SET_CART_ERROR, payload: err.message });
-        dispatch({ type: SET_CART_LOADING, payload: false });
-    }
+        try {
+            dispatch({ type: SET_CART_LOADING, payload: true });
+            const res = await axios.post('api/orders/cart', {
+                productId,
+                qty,
+                color: color || null,
+                size: size || null
+            });
+            if (res) {
+                dispatch(fetchCart());
+                dispatch({ type: SET_CART_LOADING, payload: false });
+                return { success: res.success, message: res.message };
+            }
+        } catch (err) {
+            console.error("Error updating quantity:", err);
+            dispatch({ type: SET_CART_ERROR, payload: err.message });
+            // Fallback: update local state only
+            dispatch({ type: SET_CART_LOADING, payload: false });
+        }
 };
 
-// Cập nhật số lượng sản phẩm
 export const updateQuantity = (itemId, qty) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
-        await axios.put('api/orders/cart', { itemId, qty });
-        // Fetch lại cart sau khi update
-        dispatch(fetchCart());
-        dispatch({ type: SET_CART_LOADING, payload: false });
+        const res = await axios.put('api/orders/cart', { itemId, qty });
+        if (res)
+        {
+            dispatch(fetchCart());
+            dispatch({ type: SET_CART_LOADING, payload: false });
+            return { success: res.success, message: res.message };
+        }
     } catch (err) {
         console.error("Error updating quantity:", err);
         dispatch({ type: SET_CART_ERROR, payload: err.message });
-        // Fallback: update local state only
-        dispatch({ type: UPDATE_QTY, payload: { itemId, qty } });
         dispatch({ type: SET_CART_LOADING, payload: false });
     }
 };
