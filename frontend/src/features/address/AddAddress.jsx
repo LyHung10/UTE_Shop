@@ -7,6 +7,8 @@ const AddAddress = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
+        name_order: '',
+        phone_order: '',
         address_line: '',
         city: '',
         district: '',
@@ -28,7 +30,7 @@ const AddAddress = () => {
 
     const fetchProvinces = async () => {
         try {
-            const response = await fetch('https://provinces.open-api.vn/api/v2/?depth=2');
+            const response = await fetch('https://provinces.open-api.vn/api/v1/?depth=2');
             const data = await response.json();
             setProvinces(data);
         } catch (error) {
@@ -116,7 +118,7 @@ const AddAddress = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        
+
         setFormData({
             ...formData,
             [name]: type === 'checkbox' ? checked : value

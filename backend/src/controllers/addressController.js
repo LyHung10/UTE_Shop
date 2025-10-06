@@ -10,13 +10,13 @@ export const createAddress = async (req, res) => {
             phone_order,
             address_line,
             city,
-            district,
-            ward,
+            district, // Giờ district chứa cả quận/huyện và phường/xã
             postal_code,
             is_default
         } = req.body;
 
-        const fullAddress = `${address_line}, ${ward || ""}, ${district || ""}, ${city || ""}`;
+        // Sửa lại fullAddress - không còn ward nữa
+        const fullAddress = `${address_line}, ${district || ""}, ${city || ""}`;
         const { lat, lon } = await geocodeAddress(fullAddress);
 
         // Nếu có default mới thì bỏ default cũ
@@ -33,8 +33,7 @@ export const createAddress = async (req, res) => {
             phone_order,
             address_line,
             city,
-            district,
-            ward,
+            district, // Chỉ còn district, không có ward
             postal_code,
             is_default: is_default || false,
             lat,
@@ -50,7 +49,10 @@ export const createAddress = async (req, res) => {
 export const getUserAddresses = async (req, res) => {
     try {
         const userId = req.user.sub; // Lấy từ token thay vì params
-        const addresses = await db.Address.findAll({ where: { user_id: userId } });
+        const addresses = await db.Address.findAll({ 
+            where: { user_id: userId },
+            order: [['is_default', 'DESC']] // Sắp xếp địa chỉ mặc định lên đầu
+        });
         return res.json(addresses);
     } catch (err) {
         return res.status(500).json({ error: err.message });
