@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { Search, ShoppingCart, User, MenuIcon, GraduationCap } from "lucide-react"
 import { Menu, Popover, PopoverButton, PopoverPanel } from "@headlessui/react"
-import { doLogout } from "@/redux/action/userAction.jsx"
+import { doLogout } from "@/redux/action/authAction.jsx"
 import { motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import { getCategories } from "@/services/categoryService.jsx"
@@ -14,8 +14,8 @@ export const cartRef = React.createRef()
 const Header = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
-    const isAuthenticated = useSelector((state) => state.user.isAuthenticated)
-    const user = useSelector((state) => state.user.account)
+    const isAuthenticated = useSelector((state) => state.authStatus.isAuthenticated)
+    const user = useSelector((state)=>state.user)
     const cartCount = useSelector((state) => state.cart.count)
 
     const handleLogOut = () => {

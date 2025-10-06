@@ -1,14 +1,19 @@
-import { FETCH_USER_LOGIN_SUCCESS, USER_LOGOUT_SUCCESS } from "./actionTypes";
-import { resetCart } from "./cartAction";
+import {getUser} from "@/services/userService.jsx";
+import {GET_PROFILE_USER} from "@/redux/action/actionTypes.js";
 
-export const doLogin = (data) => ({
-  type: FETCH_USER_LOGIN_SUCCESS,
-  payload: data,
-});
 
-export const doLogout = () => {
-  return (dispatch) => {
-    dispatch({ type: USER_LOGOUT_SUCCESS }); // clear user
-    dispatch(resetCart()); // clear giỏ hàng
-  };
+export const fetchUser = () => async (dispatch) => {
+    try {
+        const user = await getUser();
+        if (user)
+        {
+            dispatch({
+                type: GET_PROFILE_USER,
+                payload: user
+            });
+        }
+    } catch (err) {
+        console.error("Error get user:", err)
+    }
 };
+

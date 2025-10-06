@@ -46,8 +46,8 @@ const navItems = [
 const othersItems = [
   {
     icon: <User2Icon/>,
-    name: "User",
-    path: "/admin/manage-users",
+    name: "Customer",
+    path: "/admin/manage-customers",
   },
   {
     icon: <Package/>,

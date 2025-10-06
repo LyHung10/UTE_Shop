@@ -2,7 +2,7 @@ import { useSelector } from "react-redux";
 import { AuthContext } from "../contexts/AuthContext";
 
 const AuthProvider = ({ children }) => {
-    const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+    const isAuthenticated = useSelector((state) => state.authStatus.isAuthenticated);
 
     return (
         <AuthContext.Provider value={{ isAuthenticated }}>

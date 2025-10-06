@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import axios from "../../../utils/axiosCustomize.jsx"
 import ProductSlider from "../../home/components/ProductSlider.jsx"
+import ListProducts from "@/features/product/components/ListProducts.jsx";
 
 const FavoritesPage = () => {
     const [favorites, setFavorites] = useState([])
@@ -39,7 +40,7 @@ const FavoritesPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-100">
-            <ProductSlider listProducts={favorites} nameTop="Sản phẩm yêu thích của bạn"  slidesPerViewDesktop={3} />
+            <ListProducts listProducts={favorites}/>
         </div>
     )
 }

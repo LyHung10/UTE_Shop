@@ -1,6 +1,5 @@
 import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order, User } from "../models/index.js";
-import { Op, fn, col } from "sequelize";
-import order from "../models/order.js";
+import { Op, fn, col, literal } from "sequelize";
 
 class ProductService {
     async getProductEngagement(productId) {
@@ -248,50 +247,50 @@ class ProductService {
         });
     }
 
-    async getProductsByCategorySlug(slug, page, limit = 3) {
-        const offset = (page - 1) * limit;
-
-        // lấy dữ liệu + tổng số sản phẩm để tính totalPages
-        const { rows: products, count: totalItems } = await Product.findAndCountAll({
-            include: [
-                {
-                    model: Category,
-                    as: "category",
-                    attributes: ["id", "name", "slug"],
-                    where: { slug }, // lọc theo slug
-                },
-                {
-                    model: ProductImage,
-                    as: "images",
-                    attributes: ["id", "url", "alt", "sort_order"],
-                    order: [["sort_order", "ASC"]],
-                },
-                {
-                    model: Inventory,
-                    as: "inventory",
-                    attributes: ["stock", "reserved"],
-                },
-                {
-                    model: Review,
-                    as: "reviews",
-                    attributes: ["id", "rating", "text", "created_at"],
-                },
-            ],
-            limit,
-            offset,
-            distinct: true, // tránh bị count sai khi join nhiều bảng
-        });
-
-        return {
-            products,
-            pagination: {
-                totalItems,
-                totalPages: Math.ceil(totalItems / limit),
-                currentPage: page,
-                pageSize: limit,
-            },
-        };
-    }
+    // async getProductsByCategorySlug(slug, page, limit = 20) {
+    //     const offset = (page - 1) * limit;
+    //
+    //     // lấy dữ liệu + tổng số sản phẩm để tính totalPages
+    //     const { rows: products, count: totalItems } = await Product.findAndCountAll({
+    //         include: [
+    //             {
+    //                 model: Category,
+    //                 as: "category",
+    //                 attributes: ["id", "name", "slug"],
+    //                 where: { slug }, // lọc theo slug
+    //             },
+    //             {
+    //                 model: ProductImage,
+    //                 as: "images",
+    //                 attributes: ["id", "url", "alt", "sort_order"],
+    //                 order: [["sort_order", "ASC"]],
+    //             },
+    //             {
+    //                 model: Inventory,
+    //                 as: "inventory",
+    //                 attributes: ["stock", "reserved"],
+    //             },
+    //             {
+    //                 model: Review,
+    //                 as: "reviews",
+    //                 attributes: ["id", "rating", "text", "created_at"],
+    //             },
+    //         ],
+    //         limit,
+    //         offset,
+    //         distinct: true, // tránh bị count sai khi join nhiều bảng
+    //     });
+    //
+    //     return {
+    //         products,
+    //         pagination: {
+    //             totalItems,
+    //             totalPages: Math.ceil(totalItems / limit),
+    //             currentPage: page,
+    //             pageSize: limit,
+    //         },
+    //     };
+    // }
 
     async getSimilarProducts(productId, limit = 12) {
         const id = Number(productId);
@@ -380,6 +379,178 @@ class ProductService {
         }
 
         return result;
+    }
+    async getProductsByCategorySlug(
+        slug,
+        page = 1,
+        limit = 20,
+        opts = {} // { sizes, colors, sort }
+    ) {
+        const offset = (page - 1) * limit;
+
+        const toArray = (v) =>
+            Array.isArray(v)
+                ? v
+                : typeof v === "string"
+                    ? v.split(",").map((s) => s.trim()).filter(Boolean)
+                    : undefined;
+
+        const sizesArr  = toArray(opts.sizes);
+        const colorsArr = toArray(opts.colors);
+        const sortKey   = opts.sort; // 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
+
+        // ==== [A] Build điều kiện WHERE cho MySQL JSON ====
+        // gom các điều kiện vào AND
+        const andConds = [];
+
+        // SIZES: mảng JSON các chuỗi
+        if (sizesArr?.length) {
+            // Ưu tiên JSON_OVERLAPS (MySQL 8.0.17+)
+            // CAST('[...]' AS JSON) để so sánh array với array
+            andConds.push(
+                // JSON_OVERLAPS(sizes, ['S','M']) = 1
+                // fallback dưới sẽ xử lý nếu môi trường không hỗ trợ OVERLAPS
+                fn(
+                    "IF",
+                    fn(
+                        "COALESCE",
+                        // thử gọi JSON_OVERLAPS, nếu không có sẽ trả NULL
+                        fn(
+                            "JSON_OVERLAPS",
+                            col("sizes"),
+                            literal(`CAST('${JSON.stringify(sizesArr)}' AS JSON)`)
+                        ),
+                        null
+                    ),
+                    1,
+                    1
+                )
+            );
+
+            // Fallback an toàn (vẫn hoạt động nếu OVERLAPS không khả dụng):
+            // (JSON_CONTAINS(sizes, '"S"') OR JSON_CONTAINS(sizes, '"M"') ...)
+            const sizeOr = {
+                [Op.or]: sizesArr.map((s) =>
+                    // JSON_CONTAINS(array, '"value"') => 1 nếu mảng chứa giá trị
+                    // Sequelize.where(fn('JSON_CONTAINS', col('sizes'), '"M"'), 1)
+                    // (dùng JSON.stringify để có chuỗi kèm dấu ngoặc kép đúng)
+                    // Lưu ý: JSON_CONTAINS trả 1/0 nên so sánh = 1
+                    ({ [Op.and]: [ literal(`JSON_CONTAINS(sizes, ${JSON.stringify(JSON.stringify(s))}) = 1`) ] })
+                ),
+            };
+            andConds.push(sizeOr);
+        }
+
+        // COLORS: mảng JSON các object { name, class }
+        if (colorsArr?.length) {
+            // Tìm theo name: JSON_SEARCH(colors, 'one', 'Red', NULL, '$[*].name') IS NOT NULL
+            const colorOr = {
+                [Op.or]: colorsArr.map((c) =>
+                    // Sequelize.where(fn('JSON_SEARCH', col('colors'), 'one', c, null, '$[*].name'), { [Op.ne]: null })
+                    // Dùng literal cho gọn:
+                    ({ [Op.and]: [ literal(`JSON_SEARCH(colors, 'one', ${JSON.stringify(c)}, NULL, '$[*].name') IS NOT NULL`) ] })
+                ),
+            };
+            andConds.push(colorOr);
+        }
+
+        const productWhere = andConds.length ? { [Op.and]: andConds } : {};
+
+        // ==== [B] Map sort → order ====
+        let order = [];
+        let useRatingGroup = false;
+        switch (sortKey) {
+            case "price_asc":
+                order = [["price", "ASC"]];
+                break;
+            case "price_desc":
+                order = [["price", "DESC"]];
+                break;
+            case "newest":
+                order = [["created_at", "DESC"]];
+                break;
+            case "rating":
+                useRatingGroup = true; // <== BỔ SUNG để sort theo rating thực sự chạy
+                break;
+            case "popularity":
+            default:
+                order = [["sale_count", "DESC"]];
+                break;
+        }
+
+        const baseIncludes = [
+            {
+                model: Category,
+                as: "category",
+                attributes: ["id", "name", "slug"],
+                where: { slug },
+            },
+            {
+                model: ProductImage,
+                as: "images",
+                attributes: ["id", "url", "alt", "sort_order"],
+                order: [["sort_order", "ASC"]],
+            },
+            {
+                model: Inventory,
+                as: "inventory",
+                attributes: ["stock", "reserved"],
+            },
+        ];
+
+        if (useRatingGroup) {
+            const { rows: products, count } = await Product.findAndCountAll({
+                where: productWhere,
+                include: [
+                    ...baseIncludes,
+                    { model: Review, as: "reviews", attributes: [] },
+                ],
+                attributes: {
+                    include: [
+                        [fn("AVG", col("reviews.rating")), "avg_rating"],
+                        [fn("COUNT", col("reviews.id")), "review_count"],
+                    ],
+                },
+                group: ["Product.id"],
+                order: [[fn("AVG", col("reviews.rating")), "DESC"], ["created_at", "DESC"]],
+                limit,
+                offset,
+                subQuery: false,
+                distinct: true,
+            });
+            const totalItems = Array.isArray(count) ? count.length : count;
+            return {
+                products,
+                pagination: {
+                    totalItems,
+                    totalPages: Math.ceil(totalItems / limit),
+                    currentPage: page,
+                    pageSize: limit,
+                },
+            };
+        }
+
+        const { rows: products, count: totalItems } = await Product.findAndCountAll({
+            where: productWhere,
+            include: [
+                ...baseIncludes,
+                { model: Review, as: "reviews", attributes: ["id", "rating", "text", "created_at"] },
+            ],
+            order,
+            limit,
+            offset,
+            distinct: true,
+        });
+
+        return {
+            products,
+            pagination: {
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: page,
+                pageSize: limit,
+            },
+        };
     }
 }
 

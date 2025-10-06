@@ -97,20 +97,70 @@ class ProductController {
       next(err);
     }
   }
+  // async getProductsByCategorySlug(req, res, next) {
+  //   try {
+  //     const { slug } = req.params;
+  //     const page = parseInt(req.params.page, 10); // nếu không có thì mặc định = 1
+  //
+  //     const data = await productService.getProductsByCategorySlug(slug, page);
+  //
+  //     res.json({
+  //       success: true,
+  //       message: "Lấy sản phẩm theo danh mục thành công",
+  //       data,
+  //     });
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // }
+
   async getProductsByCategorySlug(req, res, next) {
     try {
       const { slug } = req.params;
-      const page = parseInt(req.params.page, 10); // nếu không có thì mặc định = 1
 
-      const data = await productService.getProductsByCategorySlug(slug, page);
+      // Backward-compatible: ưu tiên params.page nếu có, nếu không dùng query.page
+      const pageFromParams = parseInt(req.params.page, 10);
+      const pageFromQuery = parseInt(req.query.page, 10);
+      const page = Number.isFinite(pageFromParams)
+          ? pageFromParams
+          : Number.isFinite(pageFromQuery)
+              ? pageFromQuery
+              : 1;
 
-      res.json({
+      const limitQ = parseInt(req.query.limit, 10);
+      const limit = Number.isFinite(limitQ) ? limitQ : 20;
+
+      // Nhận sizes/colors từ query: chấp nhận "M,L" hoặc ?sizes=M&sizes=L
+      const toArray = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (typeof v === "string") {
+          return v
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+        }
+        return undefined;
+      };
+
+      const sizes = toArray(req.query.sizes);
+      const colors = toArray(req.query.colors);
+
+      // sort: 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
+      const sort = typeof req.query.sort === "string" ? req.query.sort : undefined;
+
+      const data = await productService.getProductsByCategorySlug(slug, page, limit, {
+        sizes,
+        colors,
+        sort,
+      });
+
+      return res.json({
         success: true,
         message: "Lấy sản phẩm theo danh mục thành công",
         data,
       });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   }
 

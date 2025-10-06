@@ -23,8 +23,9 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
     const messagesEndRef = useRef(null);
     const hasJoinedRoomRef = useRef(false);
 
-    const user = useSelector((state) => state.user?.account);
-    const accessToken = user?.accessToken;
+    const user = useSelector((state) => state.user);
+    const authStatus = useSelector((state) => state.authStatus);
+    const accessToken = authStatus?.accessToken;
 
     // Scroll to bottom
     const scrollToBottom = () => {
@@ -315,7 +316,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 created_at: now.toISOString(),
                 display_time: formatTime(now),
                 user: {
-                    id: user?.id || 'admin',
+                    id: authStatus?.id || 'admin',
                     first_name: user?.first_name || 'Admin',
                     last_name: user?.last_name || '',
                     image: user?.image || null,

@@ -14,6 +14,7 @@ const initialState = {
   tax: 40000,
   finalTotal: 0,
   appliedVoucher: "",
+  addressId: "",
   discount: 0,
   order: null,
   payment: null,
@@ -52,6 +53,7 @@ export default function cartReducer(state = initialState, action) {
         finalTotal : action.payload.finalTotal,
         discount: action.payload.discount,
         appliedVoucher: action.payload.appliedVoucher,
+        addressId: action.payload.addressId,
       };
 
     case UPDATE_QTY:

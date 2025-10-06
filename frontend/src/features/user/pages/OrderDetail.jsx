@@ -31,7 +31,6 @@ export default function OrderDetail() {
                 setLoading(true);
                 setErr("");
                 const res = await getOrderDetail(id);
-                console.log(res);
                 setData(res?.data || null); // API trả về { data: {...} }
             } catch (e) {
                 if (e.name !== "CanceledError")

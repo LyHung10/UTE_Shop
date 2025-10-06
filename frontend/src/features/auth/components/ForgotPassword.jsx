@@ -1,7 +1,7 @@
 import {useNavigate} from "react-router-dom";
 import {useState} from "react";
 import {toast} from "react-toastify";
-import {postForgotPassword} from "../../../services/apiService.jsx";
+import {postForgotPassword} from "../../../services/authService.jsx";
 import {useDispatch, useSelector} from "react-redux";
 import {authOTP} from "../../../redux/action/authOtpAction.jsx";
 
@@ -23,7 +23,6 @@ const ForgotPassword = () => {
                     email: emailForgotPassword,
                     isForgotPassword: true
                 };
-                console.log(newAuthOTP);
                 dispatch(authOTP(newAuthOTP));
 
                 toast.success(data.message);

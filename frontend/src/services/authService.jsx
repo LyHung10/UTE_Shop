@@ -30,9 +30,11 @@ const postResetPassword = (email, otp, newPassword) => {
         newPassword: newPassword
     });
 }
-const getUser = () => {
-    return axios.get("/api/users/profile");
-}
 
-export { getUser, postLogin, postSignup, postAuthOtp, postForgotPassword, postResetPassword }
+const refreshToken = (refreshToken) => {
+    return axios.post("api/auth/refresh", {
+        refreshToken
+    });
+}
+export { postLogin, postSignup, postAuthOtp, postForgotPassword, postResetPassword, refreshToken }
 

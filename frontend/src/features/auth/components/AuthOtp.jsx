@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {postAuthOtp} from "../../../services/apiService.jsx";
+import {postAuthOtp} from "../../../services/authService.jsx";
 import {useDispatch, useSelector} from "react-redux";
 import {toast} from "react-toastify";
 import {useNavigate} from "react-router-dom";
@@ -19,7 +19,6 @@ const AuthOtp = () => {
     };
     const handleSubmit = async() => {
         const fullOtp = otp.join('');
-        console.log("Giá trị OTP:", fullOtp);
         if (!authOtp.isForgotPassword)
         {
             let data = await postAuthOtp(authOtp.email, fullOtp);

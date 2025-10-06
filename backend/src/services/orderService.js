@@ -1,6 +1,6 @@
 import {sequelize} from "../config/configdb";
 
-const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher } = require('../models');
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher,Address } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
 
@@ -356,7 +356,7 @@ class OrderService {
         return { items: cartItems, totalAmount };
     }
 
-    static async checkoutCOD(userId, voucherCode) {
+    static async checkoutCOD(userId, voucherCode, addressId) {
         return await Order.sequelize.transaction(async (t) => {
             // Lấy giỏ hàng pending
             const order = await Order.findOne({
@@ -414,6 +414,9 @@ class OrderService {
 
             if (appliedVoucher) {
                 order.voucher_id = appliedVoucher.id;
+            }
+            if (addressId) {
+                order.address_id = addressId;
             }
             await order.save({ transaction: t });
 
@@ -576,6 +579,56 @@ class OrderService {
                 throw error;
             }
         });
+    }
+
+    static async getAllOrders() {
+        const orders = await Order.findAll({
+            include: [
+                {
+                    model: User,
+                    attributes: ['first_name', 'last_name']
+                },
+                {
+                    model: Address,
+                    as: 'address',
+                    attributes: ['address_line', 'ward', 'district', 'city', 'postal_code']
+                }
+            ],
+            order: [['created_at', 'DESC']]
+        });
+
+        return orders.map(o => {
+            const userName = `${o.User?.first_name || ''} ${o.User?.last_name || ''}`.trim();
+
+            const addr = o.address
+                ? [
+                    o.address.address_line,
+                    o.address.ward,
+                    o.address.district,
+                    o.address.city,
+                    o.address.postal_code
+                ].filter(Boolean).join(', ')
+                : null;
+
+            return {
+                orderId: o.id,
+                userName,
+                totalAmount: Number(o.total_amount || 0),
+                address: addr,
+                status: o.status
+            };
+        });
+    }
+
+    static async updateOrderStatus(orderId) {
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            throw new Error(`Order with id ${orderId} not found`);
+        }
+        order.status = "PACKING";
+        await order.save();
+
+        return order; // trả về order sau khi update
     }
 }
 export default OrderService;

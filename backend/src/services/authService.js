@@ -5,6 +5,7 @@ import { createOtp, verifyOtp } from './otpService';
 import { sendOtpMail } from './emailService';
 import { signAccessToken, signRefreshToken, persistRefreshToken } from './tokenService';
 import OTP_TYPES from '../enums/otpType';
+import {Model as RefreshToken} from "sequelize";
 
 const { User, ResetToken, } = db;
 
@@ -65,11 +66,8 @@ export async function loginUser({ email, password }, req) {
   return {
     accessToken,
     refreshToken,
-    user: {
-      email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name
-    }
+    id: user.id,
+    role: user.role_id,
   };
 }
 
