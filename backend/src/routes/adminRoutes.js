@@ -7,6 +7,7 @@ import { authenticateToken, authAdmin } from '../middleware/auth.js';
 const router = express.Router();
 
 router.put('/confirm-order', OrderController.confirmOrder);
+router.put('/shipping-order', OrderController.confirmShippingOrder);
 router.get('/orders', OrderController.getAllOrders);
 // Lấy danh sách users (có search, pagination)
 router.get('/users', userController.getUsers);

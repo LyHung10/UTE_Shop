@@ -7,6 +7,7 @@ import { checkoutCOD, confirmCODPayment } from "@/redux/action/cartAction.jsx"; 
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "../../../utils/axiosCustomize.jsx";
+import {toast} from "react-toastify";
 
 const PaymentMethodPage = () => {
     const dispatch = useDispatch();
@@ -55,13 +56,18 @@ const PaymentMethodPage = () => {
         try {
             if (selectedMethod === "cod") {
                 // ---------------- COD ----------------
-                const data = await dispatch(checkoutCOD(cart.appliedVoucher, cart.addressId));
-                const orderId = data.order.id;
-                // await dispatch(confirmCODPayment(orderId));
-                alert(`Đặt hàng COD thành công! OrderID: ${orderId}`);
-                dispatch({ type: 'CLEAR_CART' });
-                dispatch({ type: 'SET_CART_COUNT', payload: 0 });
-                navigate("/payment/completed");
+                const res = await dispatch(checkoutCOD(cart.appliedVoucher, cart.addressId, cart.shippingFee));
+                if (res.success)
+                {
+                    const orderId = res.data?.order?.id;
+                    toast.success(`Đặt hàng COD thành công! OrderID: ${orderId}`);
+                    // dispatch({ type: 'CLEAR_CART' });
+                    // dispatch({ type: 'SET_CART_COUNT', payload: 0 });
+                    navigate("/payment/completed");
+                }
+                else{
+                    toast.info(res.message);
+                }
             }
             else if (selectedMethod === "vnpay") {
                 // ---------------- VNPay ----------------

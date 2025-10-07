@@ -16,6 +16,7 @@ const initialState = {
   appliedVoucher: "",
   addressId: "",
   discount: 0,
+  shippingFee: 0,
   order: null,
   payment: null,
   loading: false,
@@ -54,6 +55,7 @@ export default function cartReducer(state = initialState, action) {
         discount: action.payload.discount,
         appliedVoucher: action.payload.appliedVoucher,
         addressId: action.payload.addressId,
+        shippingFee: action.payload.shippingFee,
       };
 
     case UPDATE_QTY:

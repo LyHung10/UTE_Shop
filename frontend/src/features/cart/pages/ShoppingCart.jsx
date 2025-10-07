@@ -30,7 +30,6 @@ const ShoppingCart = () => {
     useEffect(() => {
         if (selectedAddress) {
             calculateShippingFee(selectedAddress.id);
-            dispatch(fetchCart(couponCode,selectedAddress.id));
         }
     }, [selectedAddress]);
 
@@ -42,6 +41,12 @@ const ShoppingCart = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (selectedAddress) {
+            dispatch(fetchCart(couponCode, selectedAddress.id, shippingFee));
+        }
+    }, [shippingFee, selectedAddress, couponCode]);
 
     const fetchAddresses = async () => {
         setLoadingAddresses(true);
@@ -85,6 +90,7 @@ const ShoppingCart = () => {
             }
 
             setShippingFee(fee);
+
         } catch (error) {
             console.error('Error calculating shipping fee:', error);
             setShippingFee(20000);
@@ -115,12 +121,15 @@ const ShoppingCart = () => {
     };
 
     const handleApplyCoupon = () => {
-        dispatch(fetchCart(couponCode,selectedAddress.id));
+        dispatch(fetchCart(couponCode,selectedAddress.id, shippingFee));
     };
+    const subtotal = Number(cart?.finalTotal ?? 0);
+    const discount = Number(cart?.discount ?? 0);
+    const fee      = Number(shippingFee ?? 0);
+    const tax      = subtotal > 0 ? 40000 : 0;
 
-    const subtotal = Number(cart.finalTotal || 0);
-    const tax = subtotal > 0 ? 40000 : 0;
-    const total = subtotal === 0 ? 0 : subtotal - cart.discount + shippingFee + tax;
+    const total = subtotal - discount + fee + tax;
+
     const formatAddress = (address) => {
         return `${[address.address_line, address.ward, address.district, address.city].filter(Boolean).join(', ')}`;
     };

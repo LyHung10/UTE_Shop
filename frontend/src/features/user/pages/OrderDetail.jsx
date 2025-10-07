@@ -8,22 +8,66 @@ import {
 } from "lucide-react";
 import EnhancedOrderProgress from "@/features/user/components/EnhancedOrderProgress.jsx";
 import { getOrderDetail } from "@/services/orderService.jsx";
-import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
+import { formatDateTime, formatPrice, normalizeStatus } from "@/utils/format.jsx";
 
+const tax = 40000;
 // Map trạng thái -> badge + icon + step index cho progress
 const STATUS_MAP = {
     NEW:              { key: "PENDING",    label: "Mới tạo",         icon: Clock,        step: 1 },
     CONFIRMED:        { key: "PENDING",    label: "Đã xác nhận",     icon: PackageCheck, step: 2 },
-    PACKING:          { key: "PENDING",    label: "Chuẩn bị hàng",   icon: Warehouse,   step: 3 },
+    PACKING:          { key: "PENDING",    label: "Chuẩn bị hàng",   icon: Warehouse,    step: 3 },
     SHIPPING:         { key: "DELIVERING", label: "Chờ giao hàng",   icon: Truck,        step: 4 },
     COMPLETED:        { key: "COMPLETED",  label: "Giao thành công", icon: CheckCircle2, step: 5 },
     CANCELLED:        { key: "CANCELLED",  label: "Đã hủy",          icon: XCircle,      step: 0 }
 };
+
 export default function OrderDetail() {
     const { id } = useParams();
     const [data, setData] = useState(null);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Chuẩn hoá response {order, address, items} -> shape cũ UI đang dùng
+    const normalize = (payload) => {
+        const o = payload?.order || {};
+        const addrText = payload?.address?.text || "";
+        const addrDetail = payload?.address?.detail || {};
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+
+        // shipping_fee phía server không trả → fallback 0 (hoặc lấy từ order.shipping_fee nếu có)
+        const shipping_fee = Number(o?.shipping_fee ?? 0);
+
+        // “discount” phía server là tiền giảm do voucher đã tính
+        const voucher_discount = Number(o?.discount ?? 0);
+        const discount = 0; // giữ field discount cho UI cũ (nếu sau này có các giảm giá khác)
+
+        return {
+            id: o.id,
+            status: o.status,
+            created_at: o.created_at,
+            updated_at: o.updated_at,
+            total_amount: Number(o.total_amount ?? 0),
+
+            // địa chỉ hiển thị & người nhận (map sang các field UI cũ đang dùng)
+            receiver_name: addrDetail?.name_order || null,
+            receiver_phone: addrDetail?.phone_order || null,
+            shipping_address: addrText || null,
+
+            // phí/giảm
+            shipping_fee,
+            discount,                // giữ field cũ
+            voucher_discount,        // hiển thị “Voucher từ shop”
+            voucher_id: o?.voucher_id ?? null,
+
+            // thanh toán
+            payment_method: o?.payment_method || null,
+            payment_status: o?.payment_status || null,
+
+            // items
+            items
+        };
+    };
+
     useEffect(() => {
         const controller = new AbortController();
         (async () => {
@@ -31,7 +75,9 @@ export default function OrderDetail() {
                 setLoading(true);
                 setErr("");
                 const res = await getOrderDetail(id);
-                setData(res?.data || null); // API trả về { data: {...} }
+                // service trả: { success, message, data: { order, address, items } }
+                const normalized = normalize(res?.data || null);
+                setData(normalized);
             } catch (e) {
                 if (e.name !== "CanceledError")
                     setErr(e?.response?.data?.error || e.message);
@@ -54,11 +100,23 @@ export default function OrderDetail() {
         (sum, it) => sum + Number(it.price) * Number(it.qty),
         0
     );
-    const shipping = Number(data.shipping_fee || 0);
-    const discount = Number(data.discount || 0);
-    const voucher = Number(data.voucher_discount || 0);
-    const grandTotal = subtotal + shipping - discount - voucher;
 
+    const shipping = Number(data.shipping_fee || 0);
+
+    // discount “khác” (giữ field theo UI cũ) → hiện tại = 0
+    const discount = Number(data.discount || 0);
+
+    // voucher từ shop = order.discount của server
+    const voucher = Number(data.voucher_discount || 0);
+
+    // tổng tiền: ưu tiên server; nếu thiếu thì tự tính
+    const computedGrand = (subtotal + shipping - discount - voucher);
+    const grandTotal = Number.isFinite(Number(data.total_amount))
+        ? Number(data.total_amount)
+        : computedGrand;
+
+    // flag để luôn hiển thị voucher nếu có voucher_id dù giá trị = 0
+    const shouldShowVoucherLine = (data.voucher_id != null) || voucher > 0;
 
     return (
         <div className="flex flex-col gap-4">
@@ -139,10 +197,7 @@ export default function OrderDetail() {
             <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
                 <div className="divide-y divide-gray-100">
                     {data.items?.map((it, idx) => (
-                        <div
-                            key={idx}
-                            className="flex items-center gap-4 px-4 py-3"
-                        >
+                        <div key={idx} className="flex items-center gap-4 px-4 py-3">
                             <img
                                 src={it.product?.image}
                                 alt={it.product?.name}
@@ -177,12 +232,21 @@ export default function OrderDetail() {
               {formatPrice(subtotal)}
             </span>
                     </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Thuế</span>
+                        <span className="font-medium text-gray-900">
+              {formatPrice(tax)}
+            </span>
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <span className="text-gray-600">Phí vận chuyển</span>
                         <span className="font-medium text-gray-900">
-              {formatPrice(shipping)}
+              {formatPrice(grandTotal-tax-discount-subtotal)}
             </span>
                     </div>
+
                     {discount > 0 && (
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Giảm giá</span>
@@ -191,21 +255,26 @@ export default function OrderDetail() {
               </span>
                         </div>
                     )}
-                    {voucher > 0 && (
+
+                    {/* Luôn hiển thị “Voucher từ shop” khi có voucher_id, kể cả số tiền 0 */}
+                    {shouldShowVoucherLine && (
                         <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Voucher từ shop</span>
+                            <span className="text-gray-600">Voucher</span>
                             <span className="font-medium text-emerald-700">
                 - {formatPrice(voucher)}
               </span>
                         </div>
                     )}
+
                     <div className="my-2 h-px bg-gray-100" />
+
                     <div className="flex items-center justify-between text-base">
                         <span className="font-semibold text-gray-900">Thành tiền</span>
                         <span className="font-bold text-indigo-700">
               {formatPrice(grandTotal)}
             </span>
                     </div>
+
                     <div className="mt-2 flex items-center justify-between">
             <span className="inline-flex items-center gap-2 text-gray-600">
               <CreditCard className="h-4 w-4" /> Phương thức thanh toán
@@ -220,8 +289,8 @@ export default function OrderDetail() {
             {/* Footer meta */}
             <div className="text-xs text-gray-500 text-right">
                 Ngày đặt: {formatDateTime(data.created_at)}{" "}
-                <span className="mx-1 text-gray-300">•</span> Cập nhật:{" "}
-                {formatDateTime(data.updated_at)}
+                <span className="mx-1 text-gray-300">•</span>
+                Cập nhật: {formatDateTime(data.updated_at)}
             </div>
         </div>
     );

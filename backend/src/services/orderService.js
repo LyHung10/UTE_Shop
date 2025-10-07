@@ -17,119 +17,38 @@ class OrderService {
         } = options;
 
         const where = { user_id: userId };
-        if (status) {
-            where.status = status;
-        }
-        // Lọc khoảng thời gian theo created_at nếu truyền from/to
+        if (status) where.status = status;
+
         if (from || to) {
             where.created_at = {};
             if (from) where.created_at[Op.gte] = new Date(from);
             if (to)   where.created_at[Op.lte] = new Date(to);
         }
-        // Sắp xếp
+
         const orderBy =
             sort === 'created_at'
                 ? [['created_at', 'ASC']]
                 : [['created_at', 'DESC']];
-        // Lấy dữ liệu
+
         const { rows, count } = await Order.findAndCountAll({
             where,
             order: orderBy,
             limit: pageSize,
             offset: (page - 1) * pageSize,
+            distinct: true,
             include: [
                 {
                     model: OrderItem,
+                    attributes: ['id', 'qty', 'price', 'product_id', 'color', 'size', 'status'],
                     include: [
                         {
                             model: Product,
-                            attributes: [
-                                'id',
-                                'name',
-                                'price',
-                                'original_price',
-                                'discount_percent',
-                            ],
+                            attributes: ['id', 'name', 'price', 'original_price', 'discount_percent'],
                             include: [
                                 {
                                     model: ProductImage,
                                     as: 'images',
                                     attributes: ['url'],
-                                    separate: true,     // để limit hoạt động chính xác
-                                    limit: 1
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        });
-        // Chuẩn hoá response + tính tổng
-        const data = rows.map((order) => {
-            const items = (order.OrderItems || []).map((it) => {
-                const prod = it.Product;
-                const firstImage = prod && Array.isArray(prod.images) && prod.images.length > 0
-                    ? prod.images[0].url
-                    : null;
-
-                return {
-                    qty: it.qty,
-                    price: Number(it.price),   // DECIMAL → Number để tính
-                    color: it.color,
-                    size: it.size,
-                    status: it.status,
-                    product: prod
-                        ? {
-                            id: prod.id,
-                            name: prod.name,
-                            price: Number(prod.price),
-                            original_price: prod.original_price != null ? Number(prod.original_price) : null,
-                            discount_percent: prod.discount_percent != null ? Number(prod.discount_percent) : null,
-                            image: firstImage
-                        }
-                        : null
-                };
-            });
-
-            const totalAmount = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-
-            return {
-                id: order.id,
-                status: order.status,
-                created_at: order.created_at || order.createdAt,
-                updated_at: order.updated_at || order.updatedAt,
-                total_amount: Number(totalAmount.toFixed(2)),
-                items
-            };
-        });
-
-        return {
-            page,
-            page_size: pageSize,
-            total: count,
-            data
-        };
-    }
-
-    static async getDetailOrder(userId, orderId = {}) {
-        return await Order.findOne({
-            where: {
-                id: orderId,
-                user_id: userId
-            },
-            include: [
-                {
-                    model: OrderItem,
-                    include: [
-                        {
-                            model: Product,
-                            attributes: ["id", "name", "price", "original_price", "discount_percent"
-                            ],
-                            include: [
-                                {
-                                    model: ProductImage,
-                                    as: "images",
-                                    attributes: ["url"],
                                     separate: true,
                                     limit: 1
                                 }
@@ -138,10 +57,235 @@ class OrderService {
                     ]
                 },
                 {
-                    model: Payment
+                    model: Address,
+                    as: 'address',
+                    attributes: ['address_line', 'ward', 'district', 'city', 'postal_code', 'name_order', 'phone_order']
                 }
+                // ❌ Không join Voucher để khỏi dính lỗi cột `code` không tồn tại
             ]
         });
+
+        // Tính discount cho từng order dựa trên voucher_id (nếu có)
+        const data = await Promise.all(rows.map(async (o) => {
+            const items = Array.isArray(o?.OrderItems) ? o.OrderItems : [];
+
+            const mappedItems = items.map((it) => {
+                const prod = it.Product;
+                const firstImage = prod && Array.isArray(prod.images) && prod.images.length > 0
+                    ? prod.images[0].url
+                    : null;
+
+                return {
+                    id: it.id,
+                    qty: Number(it.qty) || 0,
+                    price: Number(it.price) || 0,
+                    color: it.color,
+                    size: it.size,
+                    status: it.status,
+                    product: prod ? {
+                        id: prod.id,
+                        name: prod.name,
+                        price: Number(prod.price) || 0,
+                        original_price: prod.original_price != null ? Number(prod.original_price) : null,
+                        discount_percent: prod.discount_percent != null ? Number(prod.discount_percent) : null,
+                        image: firstImage
+                    } : null
+                };
+            });
+
+            const subtotal = mappedItems.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+            // Nếu DB đã có total_amount thì ưu tiên dùng; nếu không thì dùng subtotal
+            const totalAmount = o.total_amount != null
+                ? Number(o.total_amount) || 0
+                : Number(subtotal.toFixed(2));
+
+            // 👉 TÍNH DISCOUNT: nếu có voucher_id thì validate dựa trên slug (hoặc code nếu có cột đó)
+            let discount = 0;
+            if (o.voucher_id) {
+                const v = await Voucher.findByPk(o.voucher_id);
+                if (v) {
+                    const voucherCodeOrSlug = v.slug; // dùng slug an toàn
+                    const result = await voucherService.validateVoucher(voucherCodeOrSlug, subtotal);
+                    if (result?.valid) {
+                        discount = Number(result.discount || 0);
+                    }
+                }
+            }
+
+            const addr = o.address
+                ? {
+                    text: [
+                        o.address.address_line,
+                        o.address.ward,
+                        o.address.district,
+                        o.address.city,
+                        o.address.postal_code
+                    ].filter(Boolean).join(', '),
+                    detail: {
+                        address_line: o.address.address_line,
+                        ward: o.address.ward,
+                        district: o.address.district,
+                        city: o.address.city,
+                        postal_code: o.address.postal_code,
+                        name_order: o.address.name_order,
+                        phone_order: o.address.phone_order
+                    }
+                }
+                : null;
+
+            return {
+                order: {
+                    id: o.id,
+                    status: o.status,
+                    created_at: o.created_at || o.createdAt,
+                    updated_at: o.updated_at || o.updatedAt,
+                    total_amount: totalAmount
+                },
+                address: addr,
+                discount,       // 🆕 số tiền giảm (0 nếu không có voucher)
+                items: mappedItems
+            };
+        }));
+
+        return {
+            success: true,
+            message: "Lấy danh sách đơn hàng thành công",
+            pagination: {
+                page,
+                page_size: pageSize,
+                total: count
+            },
+            data
+        };
+    }
+
+    static async getDetailOrder(userId, orderId) {
+        try {
+            // === Tìm đơn hàng thuộc user ===
+            const order = await Order.findOne({
+                where: { id: orderId, user_id: userId },
+                include: [
+                    {
+                        model: OrderItem,
+                        include: [
+                            {
+                                model: Product,
+                                attributes: ["id", "name", "price", "original_price", "discount_percent"],
+                                include: [
+                                    {
+                                        model: ProductImage,
+                                        as: "images",
+                                        attributes: ["url"],
+                                        separate: true,
+                                        limit: 1
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    { model: Payment },
+                    { model: Address, as: "address" } // lấy địa chỉ giao hàng
+                ]
+            });
+
+            if (!order) {
+                return { success: false, message: "Không tìm thấy đơn hàng này." };
+            }
+
+            // === Tính tổng phụ (subtotal) ===
+            const items = Array.isArray(order.OrderItems) ? order.OrderItems : [];
+            const subtotal = items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
+
+            // === Tính discount nếu có voucher ===
+            let discount = 0;
+            if (order.voucher_id) {
+                const v = await Voucher.findByPk(order.voucher_id);
+                if (v) {
+                    const result = await voucherService.validateVoucher(v.slug, subtotal);
+                    if (result?.valid) discount = Number(result.discount || 0);
+                }
+            }
+
+            // === Format danh sách sản phẩm ===
+            const mappedItems = items.map((it) => {
+                const prod = it.Product;
+                const firstImage = prod && Array.isArray(prod.images) && prod.images.length > 0
+                    ? prod.images[0].url
+                    : null;
+
+                return {
+                    id: it.id,
+                    qty: Number(it.qty) || 0,
+                    price: Number(it.price) || 0,
+                    color: it.color,
+                    size: it.size,
+                    status: it.status,
+                    product: prod ? {
+                        id: prod.id,
+                        name: prod.name,
+                        price: Number(prod.price) || 0,
+                        original_price: prod.original_price != null ? Number(prod.original_price) : null,
+                        discount_percent: prod.discount_percent != null ? Number(prod.discount_percent) : null,
+                        image: firstImage
+                    } : null
+                };
+            });
+
+            // === Gộp địa chỉ giao hàng ===
+            const addr = order.address
+                ? {
+                    text: [
+                        order.address.address_line,
+                        order.address.ward,
+                        order.address.district,
+                        order.address.city,
+                        order.address.postal_code
+                    ].filter(Boolean).join(', '),
+                    detail: {
+                        address_line: order.address.address_line,
+                        ward: order.address.ward,
+                        district: order.address.district,
+                        city: order.address.city,
+                        postal_code: order.address.postal_code,
+                        name_order: order.address.name_order,
+                        phone_order: order.address.phone_order
+                    }
+                }
+                : null;
+
+            // === Format dữ liệu trả về ===
+            const totalAmount = Number(order.total_amount ?? subtotal - discount);
+
+            const data = {
+                order: {
+                    id: order.id,
+                    status: order.status,
+                    created_at: order.created_at || order.createdAt,
+                    updated_at: order.updated_at || order.updatedAt,
+                    total_amount: totalAmount,
+                    discount,
+                    voucher_id: order.voucher_id ?? null,
+                    payment_method: order.Payment?.method || null,
+                    payment_status: order.Payment?.status || null
+                },
+                address: addr,
+                items: mappedItems
+            };
+
+            return {
+                success: true,
+                message: "Lấy chi tiết đơn hàng thành công",
+                data
+            };
+        } catch (err) {
+            console.error("[getDetailOrder] error:", err);
+            return {
+                success: false,
+                message: "Đã xảy ra lỗi khi lấy chi tiết đơn hàng",
+                error: err.message
+            };
+        }
     }
 
     static async addToCart(userId, productId, qty, color, size) {
@@ -151,7 +295,6 @@ class OrderService {
         const product = await Product.findByPk(productId);
         if (!product) return { success: false, message: 'Sản phẩm không tồn tại' };
 
-        // ✅ Kiểm tra tồn kho trước khi thêm
         const inventory = await Inventory.findOne({ where: { product_id: productId } });
         if (!inventory) {
             return { success: false, message: 'Sản phẩm này hiện chưa có trong kho' };
@@ -163,12 +306,10 @@ class OrderService {
             return { success: false, message: `Chỉ còn ${inventory.stock - inventory.reserved} sản phẩm trong kho` };
         }
 
-        // Kiểm tra size
         if (size && product.sizes && !product.sizes.includes(size)) {
             return { success: false, message: `Kích thước không hợp lệ. Kích thước hợp lệ: ${product.sizes.join(', ')}` };
         }
 
-        // Kiểm tra color
         if (color && product.colors && product.colors.length > 0) {
             const colorNames = typeof product.colors[0] === 'object'
                 ? product.colors.map(c => c.name)
@@ -184,7 +325,6 @@ class OrderService {
             order = await Order.create({ user_id: userId, status: 'pending', total_amount: 0 });
         }
 
-        // Kiểm tra item đã tồn tại chưa
         const whereCondition = {
             order_id: order.id,
             product_id: productId,
@@ -398,21 +538,39 @@ class OrderService {
         return { items: cartItems, totalAmount };
     }
 
-    static async checkoutCOD(userId, voucherCode, addressId) {
+    static async checkoutCOD(userId, voucherCode, addressId, shippingFee) {
+        const tax = 40000;
+        const fee      = Number(shippingFee ?? 0);
+        console.log(shippingFee);
         return await Order.sequelize.transaction(async (t) => {
-            // Lấy giỏ hàng pending
             const order = await Order.findOne({
                 where: { user_id: userId, status: 'pending' },
                 include: [{ model: OrderItem, include: [Product] }],
                 transaction: t,
                 lock: t.LOCK.UPDATE
             });
-
-            if (!order || order.OrderItems.length === 0) {
-                throw new Error("Cart is empty");
+            if (!order || order.OrderItems.length === 0) return {
+                success: false,
+                message: "Giỏ hàng trống",
+            }
+            if (!addressId) return {
+                success: false,
+                message: "Vui lòng chọn địa chỉ để thanh toán!",
+            }
+            const address = await Address.findOne({
+                where: { id: addressId, user_id: userId },
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+            if (!address) return {
+                success: false,
+                message: "Địa chỉ không tồn tại!",
+            }
+            else
+            {
+                order.address_id = addressId;
             }
 
-            // Kiểm tra tồn kho
             for (const item of order.OrderItems) {
                 const inv = await Inventory.findOne({
                     where: { product_id: item.product_id },
@@ -420,11 +578,16 @@ class OrderService {
                     lock: t.LOCK.UPDATE
                 });
 
-                if (!inv || inv.stock < item.qty) {
-                    throw new Error(`Product ${item.product_id} out of stock`);
+                if (!inv) return {
+                    success: false,
+                    message: "Không tìm thấy sản phẩm trong kho!",
+                }
+                const available = (inv.stock || 0) - (inv.reserved || 0);
+                if (item.qty > available) return {
+                    success: false,
+                    message: `Một số sản phẩm trong giỏ đã hết hàng`
                 }
 
-                inv.stock -= item.qty;
                 inv.reserved += item.qty;
                 await inv.save({ transaction: t });
             }
@@ -437,46 +600,62 @@ class OrderService {
             let discount = 0;
             let appliedVoucher = null;
 
-            // Validate voucher nếu có
             if (voucherCode) {
                 const result = await voucherService.validateVoucher(voucherCode, total, { transaction: t });
-                if (!result.valid) {
-                    throw new Error(result.message || "Mã giảm giá không hợp lệ.");
+                if (!result.valid) return {
+                    success: false,
+                    message: result.message,
                 }
                 appliedVoucher = result.voucher;
+
                 discount = result.discount;
                 appliedVoucher.usage_limit -= 1;
                 appliedVoucher.used_count += 1;
                 await appliedVoucher.save({ transaction: t });
             }
 
-            // Cập nhật status order
-            order.status = "NEW"; // chờ giao hàng
-            order.total_amount = total - discount;
+            order.status = "new";
+            order.total_amount = total - discount + tax + fee;
 
             if (appliedVoucher) {
                 order.voucher_id = appliedVoucher.id;
             }
-            if (addressId) {
-                order.address_id = addressId;
-            }
             await order.save({ transaction: t });
 
-            // Tạo payment COD
-            const payment = await Payment.create({
-                order_id: order.id,
-                method: "COD",
-                status: "PENDING", // chờ shipper thu tiền
-                amount: order.total_amount
-            }, { transaction: t });
+            // === 🔎 Kiểm tra xem Payment đã tồn tại chưa ===
+            let payment = await Payment.findOne({
+                where: { order_id: order.id },
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (payment) {
+                // ✅ Nếu đã có, chỉ cập nhật lại (không tạo mới)
+                payment.method = "COD";
+                payment.status = "pending";
+                payment.amount = order.total_amount;
+                await payment.save({ transaction: t });
+            } else {
+                // ✅ Nếu chưa có, tạo mới
+                payment = await Payment.create({
+                    order_id: order.id,
+                    method: "COD",
+                    status: "pending", // chờ shipper thu tiền
+                    amount: order.total_amount
+                }, { transaction: t });
+            }
 
             return {
-                order,
-                payment,
+                success: true,
+                message: "Checkout COD thành công",
+                data:
+                    {
+                        order,
+                        payment,
+                    }
             };
         });
     }
-
 
     static async confirmCODPayment(orderId) {
         return await Order.sequelize.transaction(async (t) => {
@@ -486,19 +665,80 @@ class OrderService {
             });
             if (!payment) throw new Error("Payment not found");
 
-            payment.status = "PAID";
+            payment.status = "paid";
             await payment.save({ transaction: t });
 
-            const order = await Order.findByPk(orderId, { transaction: t });
-            order.status = "COMPLETED";
-            await order.save({ transaction: t });
+            const order = await Order.findOne({
+                where: {id:orderId },
+                include: [{ model: OrderItem, include: [Product] }],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
 
-            return { order, payment };
+            if (!order) throw new Error("Order not found");
+
+            if (["completed", "canceled"].includes(order.status)) {
+                throw new Error(`Order already finalized with status ${order.status}`);
+            }
+
+            for (const item of order.OrderItems) {
+                const inv = await Inventory.findOne({
+                    where: { product_id: item.product_id },
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+                const product = await Product.findByPk(item.product_id, {
+                    transaction: t, lock: t.LOCK.UPDATE
+                });
+                if (!product) {
+                    throw new Error(`Product ${item.product_id} not found`);
+                }
+                product.sale_count = product.sale_count + item.qty;
+
+                if (!inv) {
+                    throw new Error(`Inventory for product ${item.product_id} not found`);
+                }
+
+                const need = Number(item.qty) || 0;
+                const reserved = Number(inv.reserved) || 0;
+                const stock = Number(inv.stock) || 0;
+
+                inv.stock = stock - need;
+                inv.reserved = reserved - need;
+
+                await inv.save({ transaction: t });
+                await product.save({ transaction: t });
+            }
+
+            const user = await User.findByPk(order.user_id, { transaction: t, lock: t.LOCK.UPDATE });
+            if (user) {
+                const pointsEarned = Math.floor(order.total_amount / 100);  // mỗi 100k là được 1k
+                user.loyalty_points = (user.loyalty_points || 0) + pointsEarned;
+                console.log(`User ${order.user_id} earned ${pointsEarned} loyalty points, total now ${user.loyalty_points}`);
+                await user.save({ transaction: t });
+            }
+
+            if (order.status === "shipping"){
+                order.status = "completed";
+            }
+            else
+            {
+                return {
+                    success: false,
+                    message: `Đơn hàng có trạng thái ${order.status} không cho phép xác nhận`}
+            }
+            await order.save({ transaction: t });
+            return {
+                success: true,
+                message: "Đơn hàng COD đã thành công",
+                data:
+                    {
+                        order,
+                        payment,
+                    }
+            };
         });
     }
-
-
-    //////////////
 
     static async checkoutVNPay(userId) {
         return await Order.sequelize.transaction(async (t) => {
@@ -662,15 +902,52 @@ class OrderService {
         });
     }
 
-    static async updateOrderStatus(orderId) {
+    static async updateOrderPackingStatus(orderId) {
         const order = await Order.findByPk(orderId);
         if (!order) {
             throw new Error(`Order with id ${orderId} not found`);
         }
-        order.status = "PACKING";
-        await order.save();
+        if (order.status === "new")
+        {
+            order.status = "packing"
+            await order.save();
+        }
+        else
+        {
+            return {
+                success: false,
+                message: "Đơn đã được xác nhận trước đó!"
+            }
+        }
 
-        return order; // trả về order sau khi update
+        return {
+            success: true,
+            message: `Xác nhận đơn hàng ${order.id} thành công!`
+        }
+    }
+
+    static async updateOrderShippingStatus(orderId) {
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            throw new Error(`Order with id ${orderId} not found`);
+        }
+        if (order.status === "packing")
+        {
+            order.status = "shipping"
+            await order.save();
+        }
+        else
+        {
+            return {
+                success: false,
+                message: "Đơn hàng hàng đã được giao trước đó"
+            }
+        }
+
+        return {
+            success: true,
+            message: `Đang vận chuyển đơn hàng ${order.id}!`
+        }
     }
 }
 export default OrderService;

@@ -20,17 +20,40 @@ const OrderHistory = () => {
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
 
+    // Chuẩn hoá dữ liệu API mới -> shape cũ để UI cũ dùng lại
+    const normalizeOrders = (apiData = []) =>
+        apiData.map((d) => ({
+            id: d?.order?.id,
+            status: d?.order?.status,
+            created_at: d?.order?.created_at,
+            updated_at: d?.order?.updated_at,
+            total_amount: d?.order?.total_amount,
+            // thêm các field mới nhưng không phá UI cũ:
+            address: d?.address || null,
+            discount: Number(d?.discount ?? 0),
+            items: Array.isArray(d?.items) ? d.items : []
+        }));
+
     const fetchOrders = async (status) => {
         try {
             setLoading(true);
             setErr("");
+
+            // service vẫn gọi như cũ, backend lo filter status
             const res = await getUserOrders(status);
-            setOrders(res?.data);
+
+            // Chuẩn hoá list
+            const list = normalizeOrders(res?.data);
+
+            // Lấy page info từ pagination mới
+            const p = res?.pagination || {};
             setPageInfo({
-                page: res?.page,
-                page_size: res?.page_size,
-                total: res?.total,
+                page: p.page ?? 1,
+                page_size: p.page_size ?? 10,
+                total: p.total ?? (Array.isArray(list) ? list.length : 0),
             });
+
+            setOrders(list);
         } catch (e) {
             setErr(e?.response?.data?.error || e.message || "Lỗi tải đơn hàng");
         } finally {
@@ -40,6 +63,7 @@ const OrderHistory = () => {
 
     useEffect(() => {
         fetchOrders(activeTab);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
 
     const filtered = q.trim()
@@ -50,7 +74,7 @@ const OrderHistory = () => {
         )
         : orders;
 
-    // Lọc bỏ items COMMENTED + bỏ order rỗng
+    // Lọc bỏ items COMMENTED + bỏ order rỗng (giữ nguyên logic cũ)
     const cleaned = filtered
         .map(order => ({
             ...order,

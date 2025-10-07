@@ -36,50 +36,27 @@ class OrderController {
 
     static async getDetailOrder(req, res) {
         try {
-            // Middleware auth đã gắn user vào req
-            const userId = req.user?.sub;
+            const userId = req.user?.sub;            // middleware auth
             const orderId = req.params.orderId;
 
-            const order = await OrderService.getDetailOrder(userId, orderId);
-            const data = {
-                id: order.id,
-                status: order.status,
-                created_at: order.createdAt,
-                updated_at: order.updatedAt,
-                total_amount: Number(order.total_amount ?? 0),
+            const result = await OrderService.getDetailOrder(userId, orderId);
 
-                // Nếu bảng Order có các field dưới thì trả ra (tùy schema của bạn)
-                receiver_name: order.receiver_name || null,
-                receiver_phone: order.receiver_phone || null,
-                shipping_address: order.shipping_address || null,
-                shipping_fee: Number(order.shipping_fee ?? 0),
-                discount: Number(order.discount ?? 0),
-                voucher_discount: Number(order.voucher_discount ?? 0),
-                payment_method: order.Payment.method || null,
+            // Không tìm thấy hoặc service báo fail
+            if (!result || result.success === false || !result.data) {
+                return res.status(404).json({
+                    success: false,
+                    message: result?.message || "Không tìm thấy đơn hàng này."
+                });
+            }
 
-                items: (order.OrderItems || order.items || []).map((it) => ({
-                    qty: it.qty,
-                    price: Number(it.price),
-                    color: it.color,
-                    size: it.size,
-                    product: it.Product
-                        ? {
-                            name: it.Product.name,
-                            price: Number(it.Product.price),
-                            original_price: Number(it.Product.original_price),
-                            discount_percent: it.Product.discount_percent,
-                            image:
-                                (it.Product.images && it.Product.images[0]?.url) || null,
-                        }
-                        : null,
-                })),
-            };
-
-            res.json({data});
+            // Trả đúng format từ service: { success, message, data: { order, address, items } }
+            return res.json(result);
         } catch (err) {
-            // Log server-side để debug
             console.error('[getDetailOrder] error:', err);
-            res.status(400).json({ error: err.message || 'Bad request' });
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'Bad request'
+            });
         }
     }
 
@@ -148,18 +125,12 @@ class OrderController {
     static async checkoutCOD(req, res) {
         try {
             const userId = req.user.sub;
-            const { voucherCode, addressId } = req.body;
-            const result = await OrderService.checkoutCOD(userId, voucherCode, addressId);
-
-            return res.status(201).json({
-                success: true,
-                message: "Checkout COD thành công.",
-                order: result.order,
-            });
+            const { voucherCode, addressId, shippingFee} = req.body;
+            const result = await OrderService.checkoutCOD(userId, voucherCode, addressId, shippingFee);
+            res.status(201).json(result);
         } catch (err) {
             console.error("Checkout COD error:", err);
             return res.status(400).json({
-                success: false,
                 error: err.message || "Checkout thất bại."
             });
         }
@@ -233,11 +204,18 @@ class OrderController {
     static async confirmOrder(req, res) {
         try {
             const { id } = req.body;
-            const updatedOrder = await OrderService.updateOrderStatus(id);
+            const result = await OrderService.updateOrderPackingStatus(id);
+            res.status(201).json(result);
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
+        }
+    }
 
-            return res.status(200).json({
-                message: `Xác nhận đơn hàng ${updatedOrder.orderId} thành công`,
-            });
+    static async confirmShippingOrder(req, res) {
+        try {
+            const { id } = req.body;
+            const result = await OrderService.updateOrderShippingStatus(id);
+            res.status(201).json(result);
         } catch (err) {
             return res.status(400).json({ message: err.message });
         }
