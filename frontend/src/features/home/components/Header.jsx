@@ -1,13 +1,14 @@
 import React from "react"
 import { useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { Search, ShoppingCart, User, MenuIcon, GraduationCap } from "lucide-react"
+import { Search, ShoppingCart, User, MenuIcon, GraduationCap, X, Clock, TrendingUp } from "lucide-react"
 import { Menu, Popover, PopoverButton, PopoverPanel } from "@headlessui/react"
 import { doLogout } from "@/redux/action/authAction.jsx"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import { getCategories } from "@/services/categoryService.jsx"
 import { fetchCart } from "@/redux/action/cartAction.jsx"
+import { getSearchSuggestions } from "@/services/searchService.jsx"
 import NotificationBell from "./NotificationBell"
 
 export const cartRef = React.createRef()
@@ -17,6 +18,16 @@ const Header = () => {
     const isAuthenticated = useSelector((state) => state.authStatus.isAuthenticated)
     const user = useSelector((state)=>state.user)
     const cartCount = useSelector((state) => state.cart.count)
+
+    // Search states
+    const [searchQuery, setSearchQuery] = useState("")
+    const [suggestions, setSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [searchHistory, setSearchHistory] = useState([])
+    const [isSearching, setIsSearching] = useState(false)
+
+    const searchInputRef = useRef(null)
+    const searchContainerRef = useRef(null)
 
     const handleLogOut = () => {
         dispatch(doLogout())
@@ -31,6 +42,12 @@ const Header = () => {
         }
     }
 
+    // Load search history
+    useEffect(() => {
+        const history = JSON.parse(localStorage.getItem('searchHistory') || '[]')
+        setSearchHistory(history)
+    }, [])
+
     useEffect(() => {
         dispatch(fetchCart())
     }, [dispatch])
@@ -38,6 +55,92 @@ const Header = () => {
     useEffect(() => {
         fetchCategories()
     }, [])
+
+    // Click outside to close suggestions
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+                setShowSuggestions(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    // Debounced search suggestions
+    useEffect(() => {
+        if (searchQuery.trim().length < 2) {
+            setSuggestions([])
+            return
+        }
+
+        const timer = setTimeout(async () => {
+            setIsSearching(true)
+            try {
+                const data = await getSearchSuggestions(searchQuery)
+                if (data && data.success) {
+                    setSuggestions(data.suggestions || [])
+                }
+            } catch (error) {
+                console.error("Error fetching suggestions:", error)
+                setSuggestions([])
+            } finally {
+                setIsSearching(false)
+            }
+        }, 300)
+
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    // Handle search submission
+    const handleSearch = (query = searchQuery) => {
+        if (!query.trim()) return
+
+        // Add to search history
+        const newHistory = [query, ...searchHistory.filter(item => item !== query)].slice(0, 5)
+        setSearchHistory(newHistory)
+        localStorage.setItem('searchHistory', JSON.stringify(newHistory))
+
+        // Navigate to search results page
+        navigate(`/search?q=${encodeURIComponent(query)}`)
+        
+        // Reset states
+        setSearchQuery("")
+        setShowSuggestions(false)
+        setSuggestions([])
+    }
+
+    // Handle suggestion click
+    const handleSuggestionClick = (suggestion) => {
+        handleSearch(suggestion.name)
+    }
+
+    // Handle history click
+    const handleHistoryClick = (historyItem) => {
+        setSearchQuery(historyItem)
+        handleSearch(historyItem)
+    }
+
+    // Clear search history
+    const clearSearchHistory = () => {
+        setSearchHistory([])
+        localStorage.setItem('searchHistory', '[]')
+    }
+
+    // Handle key press
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch()
+        }
+    }
+
+    // Clear search input
+    const clearSearch = () => {
+        setSearchQuery("")
+        setSuggestions([])
+        searchInputRef.current?.focus()
+    }
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-blue-500/20">
@@ -112,13 +215,120 @@ const Header = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 gap-3 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200">
-                            <Search className="w-4 h-4 text-blue-300" />
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm sản phẩm..."
-                                className="bg-transparent text-white placeholder-blue-300 outline-none w-48 text-sm"
-                            />
+                        {/* Search Box */}
+                        <div ref={searchContainerRef} className="hidden md:block relative">
+                            <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 gap-3 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200">
+                                <Search className="w-4 h-4 text-blue-300" />
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    onFocus={() => setShowSuggestions(true)}
+                                    placeholder="Tìm kiếm sản phẩm..."
+                                    className="bg-transparent text-white placeholder-blue-300 outline-none w-48 text-sm"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={clearSearch}
+                                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                                    >
+                                        <X className="w-3 h-3 text-blue-300" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Search Suggestions Dropdown */}
+                            <AnimatePresence>
+                                {showSuggestions && (suggestions.length > 0 || searchHistory.length > 0) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-2xl shadow-2xl border border-blue-500/20 overflow-hidden z-50"
+                                    >
+                                        {/* Recent Searches */}
+                                        {searchQuery.length < 2 && searchHistory.length > 0 && (
+                                            <div className="p-3 border-b border-blue-500/20">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2 text-xs font-medium text-blue-300">
+                                                        <Clock className="w-3 h-3" />
+                                                        Tìm kiếm gần đây
+                                                    </div>
+                                                    <button
+                                                        onClick={clearSearchHistory}
+                                                        className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {searchHistory.map((item, index) => (
+                                                        <button
+                                                            key={index}
+                                                            onClick={() => handleHistoryClick(item)}
+                                                            className="w-full text-left p-2 rounded-lg hover:bg-blue-500/20 transition-colors flex items-center gap-2 group text-sm text-white"
+                                                        >
+                                                            <Clock className="w-3 h-3 text-blue-400 group-hover:text-blue-300" />
+                                                            <span>{item}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Search Suggestions */}
+                                        {suggestions.length > 0 && (
+                                            <div className="p-3">
+                                                <div className="flex items-center gap-2 text-xs font-medium text-blue-300 mb-2">
+                                                    <TrendingUp className="w-3 h-3" />
+                                                    Gợi ý cho bạn
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {suggestions.map((suggestion) => (
+                                                        <button
+                                                            key={suggestion.id}
+                                                            onClick={() => handleSuggestionClick(suggestion)}
+                                                            className="w-full text-left p-2 rounded-lg hover:bg-blue-500/20 transition-colors flex items-center gap-3 group text-sm"
+                                                        >
+                                                            <img
+                                                                src={suggestion.image || "/placeholder.svg"}
+                                                                alt={suggestion.name}
+                                                                className="w-8 h-8 rounded-lg object-cover"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="font-medium text-white group-hover:text-blue-300">
+                                                                    {suggestion.name}
+                                                                </div>
+                                                                <div className="text-xs text-blue-400">
+                                                                    {new Intl.NumberFormat("vi-VN", {
+                                                                        style: "currency",
+                                                                        currency: "VND",
+                                                                    }).format(suggestion.price)}
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Search Button for current query */}
+                                        {searchQuery.length >= 2 && (
+                                            <div className="p-3 border-t border-blue-500/20">
+                                                <button
+                                                    onClick={() => handleSearch()}
+                                                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-xl font-medium text-sm hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+                                                >
+                                                    <Search className="w-4 h-4" />
+                                                    Tìm kiếm "{searchQuery}"
+                                                </button>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         <motion.div

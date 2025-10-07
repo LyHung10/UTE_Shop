@@ -27,9 +27,6 @@ class ChatController {
             // 👇 QUAN TRỌNG: Lấy user_id từ JWT token
             const userId = req.user?.sub || null;
 
-            console.log('🔐 API user data:', req.user);
-            console.log('🔐 User ID from JWT:', userId);
-
             if (!sessionId || !message) {
                 return res.status(400).json({
                     success: false,
@@ -216,7 +213,6 @@ class ChatController {
                 data: stats
             });
         } catch (err) {
-            console.error('Get stats error:', err);
             res.status(500).json({ success: false, error: err.message });
         }
     }

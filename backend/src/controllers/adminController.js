@@ -8,9 +8,6 @@ class AdminController {
     try {
       const { search = '', page = 1, limit = 50, role } = req.query;
       const offset = (page - 1) * limit;
-
-      console.log('📋 Fetching users with params:', { search, page, limit, role });
-
       // Điều kiện tìm kiếm
       const whereCondition = {};
       
@@ -49,8 +46,6 @@ class AdminController {
         offset: offset
       });
 
-      console.log(`✅ Found ${rows.length} users out of ${count} total`);
-
       res.json({
         success: true,
         data: {
@@ -62,7 +57,6 @@ class AdminController {
         }
       });
     } catch (error) {
-      console.error('❌ Error fetching users:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -75,8 +69,6 @@ class AdminController {
     try {
       const { id } = req.params;
       
-      console.log('📋 Fetching user by ID:', id);
-
       const user = await User.findByPk(id, {
         attributes: [
           'id', 
@@ -101,14 +93,12 @@ class AdminController {
         });
       }
 
-      console.log('✅ User found:', user.email);
 
       res.json({
         success: true,
         data: user
       });
     } catch (error) {
-      console.error('❌ Error fetching user:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -119,7 +109,6 @@ class AdminController {
   // Lấy thống kê users
   async getUserStats(req, res) {
     try {
-      console.log('📊 Getting user statistics...');
 
       const totalUsers = await User.count();
       const verifiedUsers = await User.count({ where: { is_verified: true } });
@@ -143,8 +132,6 @@ class AdminController {
         raw: true
       });
 
-      console.log('✅ User stats calculated');
-
       res.json({
         success: true,
         data: {
@@ -155,7 +142,6 @@ class AdminController {
         }
       });
     } catch (error) {
-      console.error('❌ Error getting user stats:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -168,8 +154,6 @@ class AdminController {
     try {
       const { id } = req.params;
       const updateData = req.body;
-
-      console.log('📝 Updating user:', id, updateData);
 
       // Loại bỏ các field không được phép update
       const allowedFields = [
@@ -219,15 +203,12 @@ class AdminController {
         ]
       });
 
-      console.log('✅ User updated successfully');
-
       res.json({
         success: true,
         message: 'User updated successfully',
         data: updatedUser
       });
     } catch (error) {
-      console.error('❌ Error updating user:', error);
       res.status(500).json({
         success: false,
         message: error.message

@@ -41,7 +41,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         if (selectedSession && socketRef.current?.connected) {
             socketRef.current.emit('join_chat', selectedSession.session_id);
             hasJoinedRoomRef.current = true;
-            console.log('Auto-joined room:', selectedSession.session_id);
         }
     }, [selectedSession]);
 
@@ -80,8 +79,7 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         }
     }, [apiUrl, accessToken]);
 
-    // Load messages
-    // Load messages - DEBUG createdAt
+
     const loadMessages = useCallback(async (sessionId) => {
         try {
             const response = await axios.get(`${apiUrl}/api/chat/messages/${sessionId}`, {
@@ -89,8 +87,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
             });
 
             if (response.data.success) {
-                // DEBUG: Kiểm tra messages từ backend
-                console.log('Messages loaded from backend:', response.data.data);
                 if (response.data.data && response.data.data.length > 0) {
                     response.data.data.forEach((msg, index) => {
                         console.log(`Message ${index}:`, {
@@ -131,10 +127,8 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         const socket = socketRef.current;
 
         const handleConnect = () => {
-            console.log('✅ Admin socket connected');
             setIsConnected(true);
             socket.emit('join_admin');
-            console.log('📢 Emitted join_admin event');
 
             // Test socket connection
             socket.emit('test_connection', { message: 'Admin connected' });
@@ -168,7 +162,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
         const handleNewUserMessage = (data) => {
             // KIỂM TRA DỮ LIỆU NHẬN ĐƯỢC
             if (!data || !data.sessionId) {
-                console.error('❌ Invalid new_user_message data:', data);
                 return;
             }
 
@@ -176,7 +169,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
             const isAdminInThisSession = selectedSession && selectedSession.session_id === data.sessionId;
 
             if (isAdminInThisSession) {
-                console.log('👁️ Admin is in this session, skipping unread update');
                 return; // Không cập nhật unread count
             }
 
@@ -192,7 +184,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                         }
                         : session
                 );
-                console.log('🔄 Updated sessions with new message (admin not in session)');
                 return updated;
             });
 
@@ -333,7 +324,6 @@ const ChatAdminPanel = ({ apiUrl = 'http://localhost:4000' }) => {
                 messageType: 'text'
             });
 
-            console.log('✅ Admin message sent via socket:', messageText);
 
         } catch (error) {
             console.error('Failed to send message:', error);

@@ -23,7 +23,7 @@ import shippingRoutes from './routes/shippingRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-
+import productSearchRoutes from './routes/productSearchRoutes.js';
 import { initializeNotificationSocket } from './socket/notificationHandlers.js';
 
 dotenv.config();
@@ -67,6 +67,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/search', productSearchRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Error handler
