@@ -23,37 +23,30 @@ class SocketService {
                 if (token) {
                     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
                     socket.user = payload;
-                    console.log(`User authenticated via socket: ${payload.sub}, Role: ${payload.role || 'user'}`);
                 } else {
                     socket.user = null; // Guest user
-                    console.log('Guest user connected');
                 }
                 next();
             } catch (err) {
-                console.error('Socket auth error:', err);
                 socket.user = null; // Allow guest connection
                 next();
             }
         });
 
         this.io.on('connection', (socket) => {
-            console.log(`User connected: ${socket.id}, User ID: ${socket.user?.sub || 'Guest'}`);
 
             // Join chat room với flag để tránh duplicate
             socket.on('join_chat', (sessionId) => {
                 if (socket.rooms.has(sessionId)) {
-                    console.log(`User ${socket.id} already in room: ${sessionId}`);
                     return;
                 }
                 socket.join(sessionId);
-                console.log(`User ${socket.id} joined chat room: ${sessionId}`);
 
                 // Thêm: User cũng join vào user room để nhận thông báo
                 if (!socket.user?.role || socket.user.role === 'user') {
                     const userRoom = `user_${socket.user?.sub || 'guest'}`;
                     if (!socket.rooms.has(userRoom)) {
                         socket.join(userRoom);
-                        console.log(`User ${socket.id} joined user room: ${userRoom}`);
                     }
                 }
             });
@@ -62,11 +55,9 @@ class SocketService {
             socket.on('join_admin', () => {
                 if (socket.user?.role === 'admin') {
                     if (socket.rooms.has('admin_room')) {
-                        console.log(`Admin ${socket.id} already in admin room`);
                         return;
                     }
                     socket.join('admin_room');
-                    console.log(`Admin ${socket.id} joined admin room`);
 
                     // Send welcome message
                     socket.emit('admin_connected', {
@@ -98,14 +89,6 @@ class SocketService {
                         senderType,
                         messageType
                     });
-
-                    console.log('Created message:', {
-                        id: chatMessage.id,
-                        sender_type: chatMessage.sender_type,
-                        session_id: chatMessage.session_id
-                    });
-
-                    // QUAN TRỌNG: Sửa logic emit để đảm bảo cả user và admin đều nhận được tin nhắn
 
                     // Emit đến tất cả user trong session room (EXCLUDING sender)
                     socket.to(sessionId).emit('new_message', chatMessage);
@@ -154,7 +137,6 @@ class SocketService {
                     }
 
                 } catch (err) {
-                    console.error('Send message error:', err);
                     socket.emit('error', { message: err.message });
                 }
             });
@@ -163,11 +145,9 @@ class SocketService {
             socket.on('join_user_room', (userId) => {
                 const userRoom = `user_${userId}`;
                 if (socket.rooms.has(userRoom)) {
-                    console.log(`User ${socket.id} already in user room: ${userRoom}`);
                     return;
                 }
                 socket.join(userRoom);
-                console.log(`User ${socket.id} joined user room: ${userRoom}`);
             });
 
             // Typing indicator
@@ -212,7 +192,6 @@ class SocketService {
 
             // Trong backend socket handler
             socket.on('test_connection', (data) => {
-                console.log('Test connection received:', data);
                 socket.emit('test_response', { message: 'Server is working', timestamp: new Date() });
             });
         });

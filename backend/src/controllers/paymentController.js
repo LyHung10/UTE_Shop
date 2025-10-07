@@ -22,8 +22,6 @@ export const createPayment = async (req, res) => {
 // check callback từ VNPAY
 export const checkPayment = async (req, res) => {
     try {
-        console.log("VNPAY return query:", req.query);
-
         // verify SecureHash (nếu muốn)
         const result = await paymentService.verifyPayment(req.query);
 

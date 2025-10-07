@@ -39,7 +39,6 @@ class ChatService {
     // Gửi tin nhắn
     // chatService.js - sendMessage method
     async sendMessage({ sessionId, userId, message, senderType = 'user', messageType = 'text', metadata = null }) {
-        console.log('💬 Creating message with user_id:', userId);
 
         const chatMessage = await ChatMessage.create({
             user_id: userId,

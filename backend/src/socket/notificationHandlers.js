@@ -8,16 +8,12 @@ export const initializeNotificationSocket = (io) => {
   const notificationNamespace = io.of('/notifications');
 
   notificationNamespace.on('connection', (socket) => {
-    console.log('User connected to notifications:', socket.id);
 
     // User join room riêng của họ
     socket.on('user_connected', async (userData) => {
       const userId = userData.userId;
       userSocketMap.set(userId, socket.id);
       socket.userId = userId;
-      
-      console.log(`User ${userId} connected with socket ${socket.id}`);
-      console.log('Active users:', Array.from(userSocketMap.keys()));
 
       // Gửi số lượng unread count khi user connect
       try {
@@ -53,9 +49,7 @@ export const initializeNotificationSocket = (io) => {
     socket.on('disconnect', () => {
       if (socket.userId) {
         userSocketMap.delete(socket.userId);
-        console.log(`User ${socket.userId} disconnected. Active users:`, Array.from(userSocketMap.keys()));
       }
-      console.log('User disconnected from notifications:', socket.id);
     });
   });
 
@@ -65,7 +59,6 @@ export const initializeNotificationSocket = (io) => {
 // Hàm utility để gửi notification real-time - THÊM LOG
 export const sendNotificationToUser = (namespace, userId, notificationData) => {
   const socketId = userSocketMap.get(userId);
-  console.log(`Sending notification to user ${userId}, socket: ${socketId}`, notificationData);
   
   if (socketId) {
     namespace.to(socketId).emit('new_notification', notificationData);
@@ -75,7 +68,6 @@ export const sendNotificationToUser = (namespace, userId, notificationData) => {
       unread_count: notificationData.unread_count 
     });
     
-    console.log(`Real-time notification sent to user ${userId}`);
   } else {
     console.log(`User ${userId} is not connected to WebSocket`);
   }
@@ -83,7 +75,6 @@ export const sendNotificationToUser = (namespace, userId, notificationData) => {
 
 // Hàm gửi notification đến nhiều users
 export const sendNotificationToUsers = (namespace, userIds, notificationData) => {
-  console.log(`Broadcasting to ${userIds.length} users:`, userIds);
   userIds.forEach(userId => {
     sendNotificationToUser(namespace, userId, notificationData);
   });

@@ -108,7 +108,6 @@ const UserAvatar = ({ user, senderType, size = 10, className = '' }) => {
                     alt={name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                        console.log('❌ Image failed to load:', avatarUrl, e); // DEBUG ERROR
                         setImageError(true);
                     }}
                     onLoad={() => console.log('✅ Image loaded successfully:', avatarUrl)} // DEBUG SUCCESS

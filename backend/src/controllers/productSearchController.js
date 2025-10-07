@@ -6,11 +6,9 @@ class ProductSearchController {
     // Khởi tạo Elasticsearch
     async initElasticsearch() {
         try {
-            console.log('🔄 Initializing Elasticsearch...');
 
             // Test connection
             await elasticClient.ping();
-            console.log('✅ Elasticsearch is running');
 
             // Tạo index
             await this.createProductIndex();
@@ -20,7 +18,6 @@ class ProductSearchController {
 
             return true;
         } catch (error) {
-            console.log('❌ Elasticsearch not available - using MySQL fallback');
             return false;
         }
     }
@@ -63,9 +60,7 @@ class ProductSearchController {
                             }
                         }
                     }
-                });
-                console.log('✅ Created products index with performance optimization');
-            }
+                });            }
         } catch (error) {
             console.error('Error creating index:', error.message);
         }
@@ -117,7 +112,6 @@ class ProductSearchController {
                     refresh: true,
                     operations
                 });
-                console.log(`✅ Synced ${products.length} products`);
             }
 
         } catch (error) {
@@ -141,7 +135,6 @@ class ProductSearchController {
                 });
             }
 
-            console.log(`🔍 Search suggestions for: "${q}"`);
 
             // ƯU TIÊN: Elasticsearch với timeout
             try {
@@ -197,8 +190,6 @@ class ProductSearchController {
                 }));
 
                 const responseTime = Date.now() - startTime;
-                console.log(`✅ ES suggestions: ${responseTime}ms`);
-
                 return res.json({
                     success: true,
                     suggestions,
@@ -207,7 +198,6 @@ class ProductSearchController {
                 });
 
             } catch (esError) {
-                console.log(`❌ ES failed: ${esError.message}, using MySQL`);
                 return this.mysqlSearchSuggestions(req, res, startTime);
             }
 
@@ -262,7 +252,6 @@ class ProductSearchController {
             }));
 
             const responseTime = Date.now() - startTime;
-            console.log(`✅ MySQL suggestions: ${responseTime}ms`);
 
             res.json({
                 success: true,
@@ -332,7 +321,6 @@ class ProductSearchController {
             const products = result.hits.hits.map((hit) => hit._source);
 
             const responseTime = Date.now() - start;
-            console.log(`✅ Elasticsearch search in ${responseTime}ms, found ${products.length}`);
 
             // Nếu Elasticsearch có kết quả
             if (products.length > 0) {
@@ -352,7 +340,6 @@ class ProductSearchController {
             }
 
             // Nếu ES không có kết quả → fallback MySQL
-            console.log("⚠️ Không tìm thấy trong Elasticsearch, fallback MySQL...");
             return await this.mysqlSearchProducts(req, res, start);
         } catch (err) {
             console.error("❌ Elasticsearch error:", err.message);
@@ -411,7 +398,6 @@ class ProductSearchController {
             });
 
             const responseTime = Date.now() - start;
-            console.log(`✅ MySQL search in ${responseTime}ms, found ${products.length}`);
 
             return res.json({
                 success: true,
@@ -511,7 +497,6 @@ class ProductSearchController {
                 const products = result.hits.hits.map(hit => hit._source);
 
                 const responseTime = Date.now() - startTime;
-                console.log(`✅ ES advanced search: ${responseTime}ms`);
 
                 return res.json({
                     success: true,
@@ -602,7 +587,6 @@ class ProductSearchController {
             });
 
             const responseTime = Date.now() - startTime;
-            console.log(`✅ MySQL advanced search: ${responseTime}ms`);
 
             res.json({
                 success: true,

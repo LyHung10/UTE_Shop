@@ -31,7 +31,6 @@ class NotificationController {
                     unread_count: unreadCount
                 });
 
-                console.log(`✅ Real-time notification sent to user ${notificationData.user_id}`);
             } catch (socketError) {
                 console.error('WebSocket send error:', socketError);
                 // Vẫn trả về response thành công dù socket lỗi
@@ -92,7 +91,6 @@ class NotificationController {
                             ...notification.toJSON(),
                             unread_count: unreadCount
                         });
-                        console.log(`✅ Real-time broadcast sent to user ${userId}`);
                     } catch (socketError) {
                         console.error(`WebSocket send error for user ${userId}:`, socketError);
                     }

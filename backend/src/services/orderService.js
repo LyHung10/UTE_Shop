@@ -543,7 +543,6 @@ class OrderService {
             if (user) {
                 const pointsEarned = Math.floor(roundedAmount / 100);  // mỗi 100k là được 1k
                 user.loyalty_points = (user.loyalty_points || 0) + pointsEarned;
-                console.log(`User ${userId} earned ${pointsEarned} loyalty points, total now ${user.loyalty_points}`);
                 await user.save({ transaction: t });
             }
             // Vẫn build URL cho đẹp, nhưng thực tế order đã COMPLETED
@@ -562,8 +561,6 @@ class OrderService {
     // Updated VNPay confirmation method
     static async confirmVNPayPayment(orderId, query) {
         return await Order.sequelize.transaction(async (t) => {
-            console.log("Confirming VNPay payment for order:", orderId);
-            console.log("Query parameters received:", query);
 
             try {
                 const result = await paymentService.verifyPayment(query);
@@ -613,11 +610,9 @@ class OrderService {
                 order.status = "COMPLETED";
                 await order.save({ transaction: t });
 
-                console.log("VNPay payment CONFIRMED successfully for order:", orderId);
                 return { order, payment };
 
             } catch (error) {
-                console.error("Error confirming VNPay payment:", error);
                 throw error;
             }
         });
