@@ -31,7 +31,7 @@ import SignUp from "@/features/auth/pages/SignUp.jsx";
 import Orders from "@/admin/pages/Manage/Orders.jsx";
 import Products from "@/admin/pages/Manage/Products.jsx";
 import Users from "@/admin/pages/Manage/Users.jsx";
-
+import SearchPage from "./features/product/pages/SearchPage.jsx";
 function App() {
   return (
     <>
@@ -61,6 +61,7 @@ function App() {
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="category/:category" element={<ProductCategories />} />
           <Route path="tryon" element={<TryOnPage />} />
+          <Route path="search" element={<SearchPage />} />
         </Route>
 
         {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
