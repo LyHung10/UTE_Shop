@@ -1,5 +1,4 @@
 import {CheckCircle2, ChevronRight, Clock, Package, Truck, Warehouse, XCircle} from "lucide-react";
-import { Link } from "react-router-dom";
 import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
 import {useNavigate} from "react-router-dom";
 
@@ -76,23 +75,6 @@ const OrderCard = (props) => {
                         <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 line-clamp-1">{it.product.name}</div>
                             <div className="mt-0.5 text-xs text-gray-500">{`${it.color}, ${it.size}`}</div>
-                            {/* Hiển thị trạng thái đánh giá cho sản phẩm */}
-                            {order.status === "COMPLETED" && (
-                                <div className="mt-1">
-                                    {it.status === "COMMENTED" ? (
-                                        <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                                            <CheckCircle2 className="h-3 w-3" />
-                                            Đã đánh giá
-                                        </span>
-                                    ) : (
-                                        <Link to={`/review?orderId=${order.id}&productId=${it.product.id}`}>
-                                            <button className="inline-flex items-center gap-1 text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors">
-                                                Đánh giá sản phẩm
-                                            </button>
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
                         </div>
                         <div className="text-sm text-gray-600">x{it.qty}</div>
                         <div className="w-28 text-right text-sm font-semibold text-gray-900">{formatPrice(it?.product.price)}</div>

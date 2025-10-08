@@ -1,6 +1,6 @@
 // features/orders/pages/OrderDetail.jsx
 import { useEffect, useState } from "react";
-import {useNavigate, useParams} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Truck, Clock, CheckCircle2, XCircle,
     MapPin, Phone, User as UserIcon, CreditCard,
@@ -13,12 +13,12 @@ import { formatDateTime, formatPrice, normalizeStatus } from "@/utils/format.jsx
 const tax = 40000;
 // Map trạng thái -> badge + icon + step index cho progress
 const STATUS_MAP = {
-    NEW:              { key: "PENDING",    label: "Mới tạo",         icon: Clock,        step: 1 },
-    CONFIRMED:        { key: "PENDING",    label: "Đã xác nhận",     icon: PackageCheck, step: 2 },
-    PACKING:          { key: "PENDING",    label: "Chuẩn bị hàng",   icon: Warehouse,    step: 3 },
-    SHIPPING:         { key: "DELIVERING", label: "Chờ giao hàng",   icon: Truck,        step: 4 },
-    COMPLETED:        { key: "COMPLETED",  label: "Giao thành công", icon: CheckCircle2, step: 5 },
-    CANCELLED:        { key: "CANCELLED",  label: "Đã hủy",          icon: XCircle,      step: 0 }
+    NEW: { key: "PENDING", label: "Mới tạo", icon: Clock, step: 1 },
+    CONFIRMED: { key: "PENDING", label: "Đã xác nhận", icon: PackageCheck, step: 2 },
+    PACKING: { key: "PENDING", label: "Chuẩn bị hàng", icon: Warehouse, step: 3 },
+    SHIPPING: { key: "DELIVERING", label: "Chờ giao hàng", icon: Truck, step: 4 },
+    COMPLETED: { key: "COMPLETED", label: "Giao thành công", icon: CheckCircle2, step: 5 },
+    CANCELLED: { key: "CANCELLED", label: "Đã hủy", icon: XCircle, step: 0 }
 };
 
 export default function OrderDetail() {
@@ -161,7 +161,7 @@ export default function OrderDetail() {
                 <div className="mt-4 flex flex-wrap gap-2 md:justify-end">
                     {(s === "DELIVERED" || s === "COMPLETED") && (
                         <button
-                            onClick={()=>navigate("/user/review")}
+                            onClick={() => navigate(`/user/orders/${data.id}/review`)}  // Thêm /user/ prefix
                             className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-amber-600">
                             <Star className="h-4 w-4" /> Đánh giá
                         </button>
@@ -232,30 +232,30 @@ export default function OrderDetail() {
                     <div className="flex items-center justify-between">
                         <span className="text-gray-600">Tổng tiền hàng</span>
                         <span className="font-medium text-gray-900">
-              {formatPrice(subtotal)}
-            </span>
+                            {formatPrice(subtotal)}
+                        </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                         <span className="text-gray-600">Thuế</span>
                         <span className="font-medium text-gray-900">
-              {formatPrice(tax)}
-            </span>
+                            {formatPrice(tax)}
+                        </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                         <span className="text-gray-600">Phí vận chuyển</span>
                         <span className="font-medium text-gray-900">
-              {formatPrice(grandTotal-tax-discount-subtotal)}
-            </span>
+                            {formatPrice(grandTotal - tax - discount - subtotal)}
+                        </span>
                     </div>
 
                     {discount > 0 && (
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Giảm giá</span>
                             <span className="font-medium text-emerald-700">
-                - {formatPrice(discount)}
-              </span>
+                                - {formatPrice(discount)}
+                            </span>
                         </div>
                     )}
 
@@ -264,8 +264,8 @@ export default function OrderDetail() {
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Voucher</span>
                             <span className="font-medium text-emerald-700">
-                - {formatPrice(voucher)}
-              </span>
+                                - {formatPrice(voucher)}
+                            </span>
                         </div>
                     )}
 
@@ -274,17 +274,17 @@ export default function OrderDetail() {
                     <div className="flex items-center justify-between text-base">
                         <span className="font-semibold text-gray-900">Thành tiền</span>
                         <span className="font-bold text-indigo-700">
-              {formatPrice(grandTotal)}
-            </span>
+                            {formatPrice(grandTotal)}
+                        </span>
                     </div>
 
                     <div className="mt-2 flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-gray-600">
-              <CreditCard className="h-4 w-4" /> Phương thức thanh toán
-            </span>
+                        <span className="inline-flex items-center gap-2 text-gray-600">
+                            <CreditCard className="h-4 w-4" /> Phương thức thanh toán
+                        </span>
                         <span className="text-sm font-medium text-gray-900">
-              {data.payment_method || "—"}
-            </span>
+                            {data.payment_method || "—"}
+                        </span>
                     </div>
                 </div>
             </div>
