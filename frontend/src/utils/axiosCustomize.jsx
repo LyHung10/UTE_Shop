@@ -4,6 +4,7 @@ import NProgress from "nprogress";
 import {doLogin, doLogout} from "@/redux/action/authAction.jsx";
 import {store} from "@/redux/store.jsx";
 import {refreshToken} from "@/services/authService.jsx";
+import {toast} from "react-toastify";
 
 NProgress.configure(
     {
@@ -74,24 +75,28 @@ instance.interceptors.response.use(
 
             try {
                 const res = await refreshToken(token?.refreshToken);
-                const newAccessToken = res.accessToken; // ⚠️ Đảm bảo res có đúng field
+                if (res.success)
+                {
+                    const newAccessToken = res.accessToken;
+                    store.dispatch(
+                        doLogin({
+                            accessToken: newAccessToken,
+                            refreshToken: token?.refreshToken, // Giữ refresh token cũ
+                            role: token?.role, // Giữ refresh token cũ
+                        })
+                    );
 
-                // ✅ Lưu token mới vào Redux
-                store.dispatch(
-                    doLogin({
-                        accessToken: newAccessToken,
-                        refreshToken: token?.refreshToken, // Giữ refresh token cũ
-                        role: token?.role, // Giữ refresh token cũ
-                    })
-                );
+                    processQueue(null, newAccessToken);
 
-                processQueue(null, newAccessToken);
-                // ✅ Retry lại request ban đầu
-                originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
-                return instance(originalRequest);
+                    originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
+                    return instance(originalRequest);
+                }
+                else {
+                    store.dispatch(doLogout());
+                    toast.error("Tài khoản đã bị đăng nhập ở nơi khác vui lòng đăng nhập lại");
+                }
             } catch (refreshError) {
                 processQueue(refreshError, null);
-                store.dispatch(doLogout());
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

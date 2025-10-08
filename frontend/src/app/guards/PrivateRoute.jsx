@@ -7,7 +7,6 @@ const PrivateRoute = () => {
     const location = useLocation();
 
     if (!isAuthenticated) {
-        toast.error("Bạn cần đăng nhập để sử dụng chức năng này!");
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
     return <Outlet />;
