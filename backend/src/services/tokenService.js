@@ -45,36 +45,34 @@ export async function persistRefreshToken(user_id, token, meta = {}) {
 }
 
 export async function handleRefreshToken(refreshToken) {
-  if (!refreshToken) {
-    throw new Error("Refresh token required");
+  if (!refreshToken) return {
+    success: false,
+    message: "Refresh token required"
   }
-
-  // Kiểm tra token có trong DB không
   const stored = await RefreshToken.findOne({ where: { token: refreshToken } });
-  if (!stored) {
-    throw new Error("Invalid refresh token");
+  if (!stored) return {
+    success: false,
+    message: "Invalid refresh token"
   }
 
-  try {
-    // Giải mã refresh token để lấy user_id
-    const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    console.log(payload);
-    // Truy vấn user từ DB để lấy email và role
-    const user = await User.findByPk(payload.sub);
-    if (!user) {
-      throw new Error("User not found");
-    }
+  const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  console.log(payload);
 
-    // Cấp lại access token mới
-    const newAccessToken = signAccessToken({
-      sub: user.id,
-      email: user.email,
-      role: user.role_id,
-    });
-
-    return { accessToken: newAccessToken };
-  } catch (err) {
-    console.error("Refresh token error:", err);
-    throw new Error("Refresh token expired or invalid");
+  const user = await User.findByPk(payload.sub);
+  if (!user) return {
+    success: false,
+    message: "User not found"
   }
+  // Cấp lại access token mới
+  const newAccessToken = signAccessToken({
+    sub: user.id,
+    email: user.email,
+    role: user.role_id,
+  });
+
+  return {
+    success: true,
+    message: "Refresh success",
+    accessToken: newAccessToken
+  };
 }

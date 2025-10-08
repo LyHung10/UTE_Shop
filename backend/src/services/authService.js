@@ -49,12 +49,16 @@ export async function verifyUserOtp({ email, otp }) {
 
 export async function loginUser({ email, password }, req) {
   const user = await User.findOne({ where: { email } });
-  if (!user || !user.is_verified) {
-    throw { status: 401, message: 'Sai thông tin hoặc tài khoản chưa xác thực' };
+  if (!user || !user.is_verified) return{
+    success: false,
+    message: "Sai thông tin hoặc tài khoản chưa xác thực"
   }
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) throw { status: 401, message: 'Sai thông tin đăng nhập' };
+  if (!match) return{
+    success: false,
+    message: "Mật khẩu không chính xác"
+  }
 
   const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role_id });
   const refreshToken = signRefreshToken({ sub: user.id });
@@ -64,10 +68,14 @@ export async function loginUser({ email, password }, req) {
   });
 
   return {
-    accessToken,
-    refreshToken,
-    id: user.id,
-    role: user.role_id,
+    success: true,
+    message: "Đăng nhập thành công",
+    data: {
+      accessToken,
+      refreshToken,
+      id: user.id,
+      role: user.role_id,
+    }
   };
 }
 

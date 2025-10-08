@@ -20,19 +20,18 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const handleLogin = async () => {
-    let data = await postLogin(email, password);
+    let res = await postLogin(email, password);
 
-    if (data.accessToken && data.refreshToken) {
-      // B1: Lưu token trước
+    if (res.success) {
       dispatch(doLogin({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        role: data.role,
-        id: data.id
+        accessToken: res?.data?.accessToken,
+        refreshToken: res?.data?.refreshToken,
+        role: res?.data?.role,
+        id: res?.data?.id
       }));
-      toast.success("Đăng nhập thành công");
+      toast.success(res.message);
       dispatch(fetchUser());
-      if (data.role === "admin")
+      if (res?.data?.role === "admin")
       {
         navigate("/admin")
       }
@@ -40,10 +39,7 @@ export default function SignInForm() {
         navigate("/")
       }
     }
-
-    if (data && data.message) {
-      toast.error(data.message);
-    }
+    else toast.error(res.message);
   };
 
   return (
