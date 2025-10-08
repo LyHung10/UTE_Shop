@@ -123,6 +123,7 @@ class ProductService {
 
     // 4. Khi xem chi tiết sản phẩm + tăng view_count
     async getProductById(id) {
+        // Lấy thông tin product cơ bản
         const product = await Product.findByPk(id, {
             attributes: {
                 include: ['colors', 'sizes']
@@ -139,29 +140,45 @@ class ProductService {
                     as: "inventory",
                     attributes: ["stock", "reserved"],
                 },
-                // Bỏ reviews ở đây, sẽ query riêng
             ],
         });
+
         if (!product) return null;
 
-        // Query reviews riêng với order DESC (mới nhất lên đầu)
-        const reviews = await Review.findAll({
+        // Query riêng để lấy thống kê reviews - SỬA LỖI Ở ĐÂY
+        const reviewStats = await Review.findOne({
             where: { product_id: id },
-            order: [["created_at", "DESC"]], 
-            include: [
-                {
-                    model: User,
-                    attributes: ["id", "first_name", "last_name", "image"]
-                }
-            ]
+            attributes: [
+                [fn("AVG", col("rating")), "avg_rating"],
+                [fn("COUNT", col("id")), "review_count"]
+            ],
+            raw: true
         });
+
+        // Query reviews riêng với order DESC (mới nhất lên đầu)
+        // const reviews = await Review.findAll({
+        //     where: { product_id: id },
+        //     order: [["created_at", "DESC"]],
+        //     include: [
+        //         {
+        //             model: User,
+        //             attributes: ["id", "first_name", "last_name", "image"]
+        //         }
+        //     ]
+        // });
 
         // Tăng view_count
         product.view_count += 1;
         await product.save();
 
-        // Thêm reviews vào product
-        product.setDataValue('reviews', reviews);
+        // Thêm thống kê reviews vào product
+        // Nên format avg_rating thành số và làm tròn
+        const avgRating = parseFloat(reviewStats?.avg_rating) || 0;
+        product.setDataValue('avg_rating', Number(avgRating.toFixed(2))); // Làm tròn 1 chữ số
+        product.setDataValue('review_count', reviewStats?.review_count || 0);
+
+        // Thêm reviews chi tiết vào product
+        // product.setDataValue('reviews', reviews);
 
         return product;
     }
@@ -395,9 +412,9 @@ class ProductService {
                     ? v.split(",").map((s) => s.trim()).filter(Boolean)
                     : undefined;
 
-        const sizesArr  = toArray(opts.sizes);
+        const sizesArr = toArray(opts.sizes);
         const colorsArr = toArray(opts.colors);
-        const sortKey   = opts.sort; // 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
+        const sortKey = opts.sort; // 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
 
         // ==== [A] Build điều kiện WHERE cho MySQL JSON ====
         // gom các điều kiện vào AND
@@ -435,7 +452,7 @@ class ProductService {
                     // Sequelize.where(fn('JSON_CONTAINS', col('sizes'), '"M"'), 1)
                     // (dùng JSON.stringify để có chuỗi kèm dấu ngoặc kép đúng)
                     // Lưu ý: JSON_CONTAINS trả 1/0 nên so sánh = 1
-                    ({ [Op.and]: [ literal(`JSON_CONTAINS(sizes, ${JSON.stringify(JSON.stringify(s))}) = 1`) ] })
+                    ({ [Op.and]: [literal(`JSON_CONTAINS(sizes, ${JSON.stringify(JSON.stringify(s))}) = 1`)] })
                 ),
             };
             andConds.push(sizeOr);
@@ -448,7 +465,7 @@ class ProductService {
                 [Op.or]: colorsArr.map((c) =>
                     // Sequelize.where(fn('JSON_SEARCH', col('colors'), 'one', c, null, '$[*].name'), { [Op.ne]: null })
                     // Dùng literal cho gọn:
-                    ({ [Op.and]: [ literal(`JSON_SEARCH(colors, 'one', ${JSON.stringify(c)}, NULL, '$[*].name') IS NOT NULL`) ] })
+                    ({ [Op.and]: [literal(`JSON_SEARCH(colors, 'one', ${JSON.stringify(c)}, NULL, '$[*].name') IS NOT NULL`)] })
                 ),
             };
             andConds.push(colorOr);

@@ -392,11 +392,14 @@ const ProductDetail = () => {
                                     {[...Array(5)].map((_, i) => (
                                         <Star
                                             key={i}
-                                            className={`w-5 h-5 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                            className={`w-5 h-5 ${i < product?.avg_rating
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-gray-300"
+                                                }`}
                                         />
                                     ))}
                                 </div>
-                                <span className="text-gray-700 font-medium">4.5/5</span>
+                                <span className="text-gray-700 font-medium">{product?.avg_rating}/5</span>
                                 <span className="text-gray-500">({reviews.length} reviews)</span>
                             </div>
 
