@@ -48,7 +48,7 @@ function App() {
               <Route path="order-detail/:id" element={<OrderDetail />} />
               <Route path="profile" element={<UserProfile />} />
               <Route path="product-favorites" element={<FavoritesPage />} />
-              <Route path="review" element={<ReviewPage />} />
+              <Route path="orders/:orderId/review" element={<ReviewPage />} />
             </Route>
             <Route path="cart" element={<ShoppingCart />} />
             <Route path="checkout" element={<CheckoutPage />} />
@@ -69,19 +69,19 @@ function App() {
           <Route index element={<Home />} />
           <Route path="chat" element={<ChatAdminPanel />} />
           <Route path="notification" element={<AdminNotificationSender />} />
-          <Route path="profile" element={<AdminProfile/>} />
-          <Route path="manage-orders" element={<Orders/>} />
-          <Route path="manage-products" element={<Products/>} />
-          <Route path="manage-customers" element={<Users/>} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="manage-orders" element={<Orders />} />
+          <Route path="manage-products" element={<Products />} />
+          <Route path="manage-customers" element={<Users />} />
         </Route>
 
         {/* ===== AUTH (ngoài Layout) ===== */}
-        <Route path="/login" element={<SignIn/>} />
-        <Route path="/signup" element={<SignUp/>} />
+        <Route path="/login" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<AuthOtp />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         {/* 404 */}
-        <Route path="*" element={<NotFound/>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <ToastContainer

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {Search, Package, Truck, Clock, CheckCircle2, XCircle, Warehouse} from "lucide-react";
+import { Search, Package, Truck, Clock, CheckCircle2, XCircle, Warehouse } from "lucide-react";
 import OrderCard from "@/features/user/components/OrderCard.jsx";
 import { getUserOrders } from "@/services/orderService.jsx";
 
@@ -134,7 +134,7 @@ const OrderHistory = () => {
                     </div>
                 ) : cleaned.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
-                        Không tìm thấy đơn hàng phù hợp.
+                        Không có đơn hàng nào cần xử lí.
                     </div>
                 ) : (
                     cleaned.map((order) => <OrderCard key={order.id} order={order} />)

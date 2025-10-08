@@ -217,8 +217,8 @@ const Header = () => {
                     <div className="flex items-center gap-4">
                         {/* Search Box */}
                         <div ref={searchContainerRef} className="hidden md:block relative">
-                            <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 gap-3 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200">
-                                <Search className="w-4 h-4 text-blue-300" />
+                            <div className="flex items-center bg-white/10 backdrop-white-sm rounded-full px-4 py-2 gap-3 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200">
+                                <Search className="w-4 h-6 text-blue-300" />
                                 <input
                                     ref={searchInputRef}
                                     type="text"
@@ -227,7 +227,7 @@ const Header = () => {
                                     onKeyPress={handleKeyPress}
                                     onFocus={() => setShowSuggestions(true)}
                                     placeholder="Tìm kiếm sản phẩm..."
-                                    className="bg-transparent text-white placeholder-blue-300 outline-none w-48 text-sm"
+                                    className="bg-transparent text-white placeholder-blue-300 outline-none w-80 text-sm"
                                 />
                                 {searchQuery && (
                                     <button

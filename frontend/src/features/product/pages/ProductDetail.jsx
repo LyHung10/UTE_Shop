@@ -10,11 +10,11 @@ import "swiper/css/navigation"
 import "swiper/css/thumbs"
 import "swiper/css/effect-fade"
 import "swiper/css/autoplay"
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import { useRef } from "react"
 import { useParams } from "react-router-dom"
 import { getProductById } from "@/services/productService.jsx"
-import {addToCart} from "@/redux/action/cartAction.jsx"
+import { addToCart } from "@/redux/action/cartAction.jsx"
 import axios from "../../../utils/axiosCustomize.jsx"
 import { cartRef } from "../../home/components/Header.jsx"
 import { useNavigate } from "react-router-dom";
@@ -133,12 +133,11 @@ const ProductDetail = () => {
             return
         }
         const result = await dispatch(addToCart(product.id, quantity, selectedColor.name, selectedSize))
-        if (result.success)
-        {
+        if (result.success) {
             toast.success(result.message);
             animateAddToCart()
         }
-        else{
+        else {
             toast.error(result.message);
         }
     }
@@ -393,11 +392,14 @@ const ProductDetail = () => {
                                     {[...Array(5)].map((_, i) => (
                                         <Star
                                             key={i}
-                                            className={`w-5 h-5 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                            className={`w-5 h-5 ${i < product?.avg_rating
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-gray-300"
+                                                }`}
                                         />
                                     ))}
                                 </div>
-                                <span className="text-gray-700 font-medium">4.5/5</span>
+                                <span className="text-gray-700 font-medium">{product?.avg_rating}/5</span>
                                 <span className="text-gray-500">({reviews.length} reviews)</span>
                             </div>
 
@@ -682,110 +684,6 @@ const ProductDetail = () => {
                     </div>
                 </div>
             </div>
-
-            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 mt-20 border-t border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 py-20">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-                        <div>
-                            <h2 className="text-4xl font-bold mb-2 text-white">STAY UP TO DATE ABOUT</h2>
-                            <h2 className="text-4xl font-bold text-transparent bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text">
-                                OUR LATEST OFFERS
-                            </h2>
-                        </div>
-                        <div className="space-y-4 w-full md:w-auto">
-                            <div className="relative">
-                                <input
-                                    type="email"
-                                    placeholder="Enter your email address"
-                                    className="w-full md:w-96 px-6 py-4 rounded-xl bg-white/90 backdrop-blur-sm border border-white/30 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all duration-300"
-                                />
-                                <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-2 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-pink-600 transition-all duration-300 shadow-lg">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer - keeping existing light theme */}
-            <footer className="bg-gray-100">
-                <div className="max-w-7xl mx-auto px-4 py-12">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-                        <div className="md:col-span-1">
-                            <h3 className="text-2xl font-bold mb-4">SHOP.CO</h3>
-                            <p className="text-gray-600 text-sm mb-6">
-                                We have clothes that suits your style and which you're proud to wear. From women to men.
-                            </p>
-                            <div className="flex gap-3">
-                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                                    <span className="text-xs">f</span>
-                                </div>
-                                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs">t</span>
-                                </div>
-                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                                    <span className="text-xs">in</span>
-                                </div>
-                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                                    <span className="text-xs">ig</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium mb-4">COMPANY</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li>About</li>
-                                <li>Features</li>
-                                <li>Works</li>
-                                <li>Career</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium mb-4">HELP</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li>Customer Support</li>
-                                <li>Delivery Details</li>
-                                <li>Terms & Conditions</li>
-                                <li>Privacy Policy</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium mb-4">FAQ</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li>Account</li>
-                                <li>Manage Deliveries</li>
-                                <li>Orders</li>
-                                <li>Payments</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium mb-4">RESOURCES</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li>Free eBooks</li>
-                                <li>Development Tutorial</li>
-                                <li>How to - Blog</li>
-                                <li>Youtube Playlist</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-sm text-gray-600">Shop.co � 2000-2023, All Rights Reserved</p>
-                        <div className="flex gap-2 mt-4 md:mt-0">
-                            <img src="/visa-logo-generic.png" alt="Visa" className="h-6" />
-                            <img src="/mastercard-logo.png" alt="Mastercard" className="h-6" />
-                            <img src="/paypal-logo.png" alt="PayPal" className="h-6" />
-                            <img src="/apple-pay-logo.png" alt="Apple Pay" className="h-6" />
-                            <img src="src/assets/google-pay.png" alt="Google Pay" className="h-6" />
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     )
 }
