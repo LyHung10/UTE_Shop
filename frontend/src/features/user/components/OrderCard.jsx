@@ -25,6 +25,36 @@ const OrderCard = (props) => {
     const {order} = props;
     const navigate = useNavigate();
 
+    const handleCancel = async (orderId) => {
+        if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này không?")) return;
+        try {
+            // Gọi API hủy đơn hàng
+            const res = await fetch(`/api/orders/${orderId}/cancel`, {
+                method: "POST",
+            });
+            if (!res.ok) throw new Error("Không thể hủy đơn hàng");
+            alert("Đã hủy đơn hàng thành công!");
+            window.location.reload(); // hoặc dùng navigate(0)
+        } catch (err) {
+            alert("Lỗi khi hủy đơn hàng: " + err.message);
+        }
+    };
+
+    const handleRequestCancel = async (orderId) => {
+        if (!window.confirm("Bạn có muốn gửi yêu cầu hủy đơn hàng này không?")) return;
+        try {
+            // Gọi API gửi yêu cầu hủy đơn hàng
+            const res = await fetch(`/api/orders/${orderId}/request-cancel`, {
+                method: "POST",
+            });
+            if (!res.ok) throw new Error("Không thể gửi yêu cầu hủy");
+            alert("Đã gửi yêu cầu hủy đơn hàng thành công!");
+        } catch (err) {
+            alert("Lỗi khi gửi yêu cầu hủy: " + err.message);
+        }
+    };
+
+
     return (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Header */}
@@ -77,8 +107,28 @@ const OrderCard = (props) => {
                     {formatDateTime(order.created_at)}
                 </div>
                 <div className="flex items-center gap-3 md:gap-4">
+
                     <div className="text-sm">Tổng tiền: <span className="font-semibold text-gray-900">{formatPrice(order.total_amount)}</span></div>
-                    <button 
+
+                    {order.status.toUpperCase() === "NEW" && (
+                        <button
+                            onClick={() => handleCancel(order.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 transition-colors"
+                        >
+                            Hủy đơn hàng
+                        </button>
+                    )}
+
+                    {(order.status.toUpperCase() === "PACKING" || order.status.toUpperCase() === "SHIPPING") && (
+                        <button
+                            onClick={() => handleRequestCancel(order.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+                        >
+                            Gửi yêu cầu hủy
+                        </button>
+                    )}
+
+                    <button
                         className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
                         onClick={() => navigate(`/user/order-detail/${order.id}`)}
                     >

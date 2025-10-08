@@ -28,7 +28,6 @@ const OrderHistory = () => {
             created_at: d?.order?.created_at,
             updated_at: d?.order?.updated_at,
             total_amount: d?.order?.total_amount,
-            // thêm các field mới nhưng không phá UI cũ:
             address: d?.address || null,
             discount: Number(d?.discount ?? 0),
             items: Array.isArray(d?.items) ? d.items : []

@@ -51,7 +51,7 @@ const ReviewPage = () => {
                         {/* Header */}
                         <div className="flex items-center gap-4 mb-6">
                             <img
-                                src={product.images[0].url}
+                                // src={product.images[0].url}
                                 alt={product.name}
                                 className="h-20 w-20 rounded-lg object-cover border"
                             />

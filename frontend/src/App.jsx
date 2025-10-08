@@ -48,11 +48,11 @@ function App() {
               <Route path="order-detail/:id" element={<OrderDetail />} />
               <Route path="profile" element={<UserProfile />} />
               <Route path="product-favorites" element={<FavoritesPage />} />
+              <Route path="review" element={<ReviewPage />} />
             </Route>
             <Route path="cart" element={<ShoppingCart />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="payment/completed" element={<PaymentCompleted />} />
-            <Route path="review" element={<ReviewPage />} />
             <Route path="resetpassword" element={<ResetPassword />} />
             <Route path="add/addresses" element={<AddAddress />} />
           </Route>

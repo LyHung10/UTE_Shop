@@ -1,6 +1,6 @@
 // features/orders/pages/OrderDetail.jsx
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {
     Truck, Clock, CheckCircle2, XCircle,
     MapPin, Phone, User as UserIcon, CreditCard,
@@ -23,6 +23,7 @@ const STATUS_MAP = {
 
 export default function OrderDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(false);
@@ -159,7 +160,9 @@ export default function OrderDetail() {
                 {/* Actions */}
                 <div className="mt-4 flex flex-wrap gap-2 md:justify-end">
                     {(s === "DELIVERED" || s === "COMPLETED") && (
-                        <button className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-amber-600">
+                        <button
+                            onClick={()=>navigate("/user/review")}
+                            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-amber-600">
                             <Star className="h-4 w-4" /> Đánh giá
                         </button>
                     )}
