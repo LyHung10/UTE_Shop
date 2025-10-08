@@ -155,18 +155,6 @@ class ProductService {
             raw: true
         });
 
-        // Query reviews riêng với order DESC (mới nhất lên đầu)
-        // const reviews = await Review.findAll({
-        //     where: { product_id: id },
-        //     order: [["created_at", "DESC"]],
-        //     include: [
-        //         {
-        //             model: User,
-        //             attributes: ["id", "first_name", "last_name", "image"]
-        //         }
-        //     ]
-        // });
-
         // Tăng view_count
         product.view_count += 1;
         await product.save();
@@ -264,50 +252,7 @@ class ProductService {
         });
     }
 
-    // async getProductsByCategorySlug(slug, page, limit = 20) {
-    //     const offset = (page - 1) * limit;
-    //
-    //     // lấy dữ liệu + tổng số sản phẩm để tính totalPages
-    //     const { rows: products, count: totalItems } = await Product.findAndCountAll({
-    //         include: [
-    //             {
-    //                 model: Category,
-    //                 as: "category",
-    //                 attributes: ["id", "name", "slug"],
-    //                 where: { slug }, // lọc theo slug
-    //             },
-    //             {
-    //                 model: ProductImage,
-    //                 as: "images",
-    //                 attributes: ["id", "url", "alt", "sort_order"],
-    //                 order: [["sort_order", "ASC"]],
-    //             },
-    //             {
-    //                 model: Inventory,
-    //                 as: "inventory",
-    //                 attributes: ["stock", "reserved"],
-    //             },
-    //             {
-    //                 model: Review,
-    //                 as: "reviews",
-    //                 attributes: ["id", "rating", "text", "created_at"],
-    //             },
-    //         ],
-    //         limit,
-    //         offset,
-    //         distinct: true, // tránh bị count sai khi join nhiều bảng
-    //     });
-    //
-    //     return {
-    //         products,
-    //         pagination: {
-    //             totalItems,
-    //             totalPages: Math.ceil(totalItems / limit),
-    //             currentPage: page,
-    //             pageSize: limit,
-    //         },
-    //     };
-    // }
+
 
     async getSimilarProducts(productId, limit = 12) {
         const id = Number(productId);
