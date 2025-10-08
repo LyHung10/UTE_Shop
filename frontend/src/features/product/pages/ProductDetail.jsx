@@ -389,18 +389,34 @@ const ProductDetail = () => {
 
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="flex items-center gap-1">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star
-                                            key={i}
-                                            className={`w-5 h-5 ${i < product?.avg_rating
-                                                    ? "fill-yellow-400 text-yellow-400"
-                                                    : "text-gray-300"
-                                                }`}
-                                        />
-                                    ))}
+                                    {[...Array(5)].map((_, i) => {
+                                        const rating = product?.avg_rating || 0;
+                                        const starNumber = i + 1;
+
+                                        return (
+                                            <div key={i} className="relative">
+                                                {/* Sao nền (luôn hiển thị) */}
+                                                <Star className="w-5 h-5 text-gray-300" />
+
+                                                {/* Sao vàng (phủ lên tùy theo rating) */}
+                                                <div
+                                                    className="absolute top-0 left-0 overflow-hidden"
+                                                    style={{
+                                                        width: `${rating >= starNumber ? 100 : rating >= starNumber - 0.5 ? 50 : 0}%`
+                                                    }}
+                                                >
+                                                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <span className="text-gray-700 font-medium">{product?.avg_rating}/5</span>
-                                <span className="text-gray-500">({reviews.length} reviews)</span>
+                                <span className="text-gray-700 font-medium">
+                                    {(product?.avg_rating || 0).toFixed(1)}/5
+                                </span>
+                                <span className="text-gray-500">
+                                    ({product?.review_count || 0} đánh giá)
+                                </span>
                             </div>
 
                             <div className="flex items-center gap-4 mb-6">
@@ -616,15 +632,28 @@ const ProductDetail = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Rating */}
+                                                {/* Rating trong từng review */}
                                                 <div className="flex items-center gap-1 mb-2">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star
-                                                            key={i}
-                                                            className={`w-4 h-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                                                }`}
-                                                        />
-                                                    ))}
+                                                    {[...Array(5)].map((_, i) => {
+                                                        const starNumber = i + 1;
+
+                                                        return (
+                                                            <div key={i} className="relative">
+                                                                {/* Sao nền (luôn hiển thị) */}
+                                                                <Star className="w-4 h-4 text-gray-300" />
+
+                                                                {/* Sao vàng (phủ lên tùy theo rating) */}
+                                                                <div
+                                                                    className="absolute top-0 left-0 overflow-hidden"
+                                                                    style={{
+                                                                        width: `${review.rating >= starNumber ? 100 : review.rating >= starNumber - 0.5 ? 50 : 0}%`
+                                                                    }}
+                                                                >
+                                                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                     <span className="ml-2 text-sm text-gray-600">{review.rating}/5</span>
                                                 </div>
 

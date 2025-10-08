@@ -7,6 +7,10 @@ import FavoriteButton from "../../../components/ui/FavoriteButton"
 const ProductCard = ({ product }) => {
   const navigate = useNavigate()
 
+  // Fix: Đảm bảo avg_rating là số
+  const avgRating = parseFloat(product?.avg_rating) || 0;
+  const reviewCount = parseInt(product?.review_count) || 0;
+
   return (
     <motion.div
       className="group cursor-pointer"
@@ -53,15 +57,36 @@ const ProductCard = ({ product }) => {
             {product.name}
           </h4>
 
-          {/* Rating */}
+          {/* Rating - ĐÃ SỬA */}
           <div className="flex items-center gap-2">
-            <div className="flex text-yellow-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-current" />
-              ))}
+            <div className="flex items-center gap-0.5">
+              {[...Array(5)].map((_, i) => {
+                const starNumber = i + 1;
+                
+                return (
+                  <div key={i} className="relative">
+                    {/* Sao nền (luôn hiển thị) */}
+                    <Star className="w-4 h-4 text-gray-300" />
+                    
+                    {/* Sao vàng (phủ lên tùy theo rating) */}
+                    <div
+                      className="absolute top-0 left-0 overflow-hidden"
+                      style={{
+                        width: `${avgRating >= starNumber ? 100 : avgRating >= starNumber - 0.5 ? 50 : 0}%`
+                      }}
+                    >
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <span className="text-sm text-gray-600 font-medium">{product.avg_rating}</span>
-            <span className="text-xs text-gray-400">({product.review_count} đánh giá)</span>
+            <span className="text-sm text-gray-600 font-medium">
+              {avgRating.toFixed(1)} {/* Đã được parseFloat nên chắc chắn là số */}
+            </span>
+            <span className="text-xs text-gray-400">
+              ({reviewCount}) {/* Đã được parseInt nên chắc chắn là số */}
+            </span>
           </div>
 
           {/* Price */}
