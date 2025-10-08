@@ -319,10 +319,10 @@ class OrderService {
             }
         }
 
-        // Tìm order pending
-        let order = await Order.findOne({ where: { user_id: userId, status: 'pending' } });
+        // Tìm order PENDING
+        let order = await Order.findOne({ where: { user_id: userId, status: 'PENDING' } });
         if (!order) {
-            order = await Order.create({ user_id: userId, status: 'pending', total_amount: 0 });
+            order = await Order.create({ user_id: userId, status: 'PENDING', total_amount: 0 });
         }
 
         const whereCondition = {
@@ -402,7 +402,7 @@ class OrderService {
 
     static async getCart(userId, voucherCode = null) {
         const order = await Order.findOne({
-            where: { user_id: userId, status: 'pending' },
+            where: { user_id: userId, status: 'PENDING' },
             include: [{
                 model: OrderItem,
                 include: {
@@ -443,44 +443,10 @@ class OrderService {
         };
     }
 
-
-    static async updateQuantity(userId, itemId, qty) {
-        if (!itemId || qty < 1) return {
-            success: false,
-            message: 'Số lượng không hợp lệ'
-        };
-
-        if (qty > 10) return {
-            success: false,
-            message: 'Số lượng không vượt quá 10'
-        };
-
-        const orderItem = await OrderItem.findOne({
-            where: { id: itemId },
-            include: [
-                { model: Order, where: { user_id: userId, status: 'pending' } }
-            ]
-        });
-
-        if (!orderItem) return {
-            success: false,
-            message: 'Sản phẩm không tồn tại'
-        };
-
-        orderItem.qty = qty;
-        await orderItem.save();
-
-        return {
-            success: true,
-            message: 'Cập nhật sản phẩm thành công'
-        };
-    }
-
-
     static async removeItem(userId, itemId) {
         const orderItem = await OrderItem.findOne({
             where: { id: itemId },
-            include: [{ model: Order, where: { user_id: userId, status: 'pending' } }]
+            include: [{ model: Order, where: { user_id: userId, status: 'PENDING' } }]
         });
         if (!orderItem) throw new Error('Cart item not found');
 
@@ -500,7 +466,7 @@ class OrderService {
     }
 
     static async clearCart(userId) {
-        const order = await Order.findOne({ where: { user_id: userId, status: 'pending' } });
+        const order = await Order.findOne({ where: { user_id: userId, status: 'PENDING' } });
         if (!order) return { items: [], totalAmount: 0 };
 
         await OrderItem.destroy({ where: { order_id: order.id } });
@@ -512,7 +478,7 @@ class OrderService {
 
     static async getCartByUser(userId) {
         const order = await Order.findOne({
-            where: { user_id: userId, status: 'pending' },
+            where: { user_id: userId, status: 'PENDING' },
             include: [{ model: OrderItem, include: Product }]
         });
 
@@ -544,7 +510,7 @@ class OrderService {
         console.log(shippingFee);
         return await Order.sequelize.transaction(async (t) => {
             const order = await Order.findOne({
-                where: { user_id: userId, status: 'pending' },
+                where: { user_id: userId, status: 'PENDING' },
                 include: [{ model: OrderItem, include: [Product] }],
                 transaction: t,
                 lock: t.LOCK.UPDATE
@@ -614,7 +580,7 @@ class OrderService {
                 await appliedVoucher.save({ transaction: t });
             }
 
-            order.status = "new";
+            order.status = "NEW";
             order.total_amount = total - discount + tax + fee;
 
             if (appliedVoucher) {
@@ -632,7 +598,7 @@ class OrderService {
             if (payment) {
                 // ✅ Nếu đã có, chỉ cập nhật lại (không tạo mới)
                 payment.method = "COD";
-                payment.status = "pending";
+                payment.status = "PENDING";
                 payment.amount = order.total_amount;
                 await payment.save({ transaction: t });
             } else {
@@ -640,7 +606,7 @@ class OrderService {
                 payment = await Payment.create({
                     order_id: order.id,
                     method: "COD",
-                    status: "pending", // chờ shipper thu tiền
+                    status: "PENDING", // chờ shipper thu tiền
                     amount: order.total_amount
                 }, { transaction: t });
             }
@@ -665,7 +631,7 @@ class OrderService {
             });
             if (!payment) throw new Error("Payment not found");
 
-            payment.status = "paid";
+            payment.status = "PAID";
             await payment.save({ transaction: t });
 
             const order = await Order.findOne({
@@ -677,7 +643,7 @@ class OrderService {
 
             if (!order) throw new Error("Order not found");
 
-            if (["completed", "canceled"].includes(order.status)) {
+            if (["COMPLETED", "canceled"].includes(order.status)) {
                 throw new Error(`Order already finalized with status ${order.status}`);
             }
 
@@ -718,8 +684,8 @@ class OrderService {
                 await user.save({ transaction: t });
             }
 
-            if (order.status === "shipping"){
-                order.status = "completed";
+            if (order.status === "SHIPPING"){
+                order.status = "COMPLETED";
             }
             else
             {
@@ -797,8 +763,6 @@ class OrderService {
         });
     }
 
-
-    // Updated VNPay confirmation method
     static async confirmVNPayPayment(orderId, query) {
         return await Order.sequelize.transaction(async (t) => {
 
@@ -902,9 +866,9 @@ class OrderService {
         if (!order) {
             throw new Error(`Order with id ${orderId} not found`);
         }
-        if (order.status === "new")
+        if (order.status === "NEW")
         {
-            order.status = "packing"
+            order.status = "PACKING"
             await order.save();
         }
         else
@@ -926,9 +890,9 @@ class OrderService {
         if (!order) {
             throw new Error(`Order with id ${orderId} not found`);
         }
-        if (order.status === "packing")
+        if (order.status === "PACKING")
         {
-            order.status = "shipping"
+            order.status = "SHIPPING"
             await order.save();
         }
         else
@@ -943,6 +907,89 @@ class OrderService {
             success: true,
             message: `Đang vận chuyển đơn hàng ${order.id}!`
         }
+    }
+
+    static async cancelOrder(userId, orderId) {
+        return await Order.sequelize.transaction(async (t) => {
+            // 1) Tìm order thuộc user và khóa ghi
+            const order = await Order.findOne({
+                where: { id: orderId, user_id: userId },
+                include: [
+                    { model: OrderItem, include: [Product] },
+                    { model: Payment }
+                ],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (!order) {
+                return { success: false, message: "Không tìm thấy đơn hàng." };
+            }
+
+            if (order.status !== "NEW") {
+                return { success: false, message: "Chỉ có thể hủy đơn hàng mới tạo." };
+            }
+
+            // 3) Kiểm tra thời gian: chỉ cho phép hủy trước 30 phút sau khi đặt
+            const createdAt = order.updatedAt;
+            const now = new Date();
+            const diffMs = now - new Date(createdAt);
+            const diffMinutes = Math.floor(diffMs / (60 * 1000));
+
+            if (diffMinutes > 30) {
+                return { success: false, message: "Đơn hàng chỉ được hủy trong vòng 30 phút sau khi đặt." };
+            }
+
+            for (const item of order.OrderItems || []) {
+                const inv = await Inventory.findOne({
+                    where: { product_id: item.product_id },
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+
+                // Có thể đơn hàng chưa từng reserve (tùy flow), nhưng theo checkoutCOD bạn đã reserve
+                if (inv) {
+                    const currReserved = Number(inv.reserved) || 0;
+                    const qty = Number(item.qty) || 0;
+                    inv.reserved = Math.max(currReserved - qty, 0);
+                    await inv.save({ transaction: t });
+                }
+            }
+
+            // 5) Hoàn tác voucher usage nếu có
+            if (order.voucher_id) {
+                const v = await Voucher.findByPk(order.voucher_id, {
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+                if (v) {
+                    v.usage_limit = (Number(v.usage_limit) || 0) + 1;
+                    v.used_count = Math.max((Number(v.used_count) || 0) - 1, 0);
+                    await v.save({ transaction: t });
+                }
+            }
+
+            const payment = order.Payment;
+            if (payment) {
+                const method = payment.method
+                const pstatus = payment.status
+
+                if (method === "COD" && pstatus.toUpperCase() === "PENDING") {
+                    payment.status = "CANCELLED";
+                    await payment.save({ transaction: t });
+                } else if (method === "VNPAY" && pstatus === "PAID") {
+                    payment.status = "REFUND_PENDING";
+                    await payment.save({ transaction: t });
+                }
+            }
+            order.status = "CANCELLED";
+            await order.save({ transaction: t });
+
+            return {
+                success: true,
+                message: `Đã hủy đơn hàng #${order.id} thành công.`,
+            };
+        });
     }
 }
 export default OrderService;

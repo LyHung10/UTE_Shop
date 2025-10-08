@@ -18,16 +18,15 @@ export default function EnhancedOrderProgress(props) {
         status,
         timeline = {},
     } = props
-    useEffect(() => {
-        console.log("Ngày đặt",timeline.placedAt);
-    }, []);
     const cancelled = String(status || "").toUpperCase() === "CANCELLED";
 
     if (cancelled) {
         return (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
-                Đơn hàng đã hủy
+                {`Đơn hàng đã hủy vào ngày ${formatVN(timeline.cancelAt)}`}
+
+
             </div>
         );
     }

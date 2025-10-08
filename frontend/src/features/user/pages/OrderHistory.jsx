@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Search, Package, Truck, Clock, CheckCircle2, XCircle, Warehouse } from "lucide-react";
 import OrderCard from "@/features/user/components/OrderCard.jsx";
-import { getUserOrders } from "@/services/orderService.jsx";
+import {getUserOrders} from "@/services/orderService.jsx";
 
 const TABS = [
     { key: "", label: "Tất cả", icon: Package },
@@ -19,7 +19,6 @@ const OrderHistory = () => {
     const [pageInfo, setPageInfo] = useState({ page: 1, page_size: 10, total: 0 });
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
-
     // Chuẩn hoá dữ liệu API mới -> shape cũ để UI cũ dùng lại
     const normalizeOrders = (apiData = []) =>
         apiData.map((d) => ({
@@ -137,7 +136,7 @@ const OrderHistory = () => {
                         Không có đơn hàng nào cần xử lí.
                     </div>
                 ) : (
-                    cleaned.map((order) => <OrderCard key={order.id} order={order} />)
+                    cleaned.map((order) => <OrderCard key={order.id} order={order} fetchOrders={fetchOrders}/>)
                 )}
             </div>
 

@@ -93,7 +93,7 @@ export default function OrderDetail() {
     if (err) return <div className="text-red-500">{err}</div>;
     if (!data) return <div>Không tìm thấy đơn hàng</div>;
 
-    const s = normalizeStatus(data.status);
+    const s = data.status.toUpperCase();
     const statusMeta = STATUS_MAP[s] || STATUS_MAP.NEW;
     const StatusIcon = statusMeta.icon;
 
@@ -153,6 +153,7 @@ export default function OrderDetail() {
                         currentStep={statusMeta.step}
                         timeline={{
                             placedAt: data.created_at,
+                            cancelAt: data.updated_at,
                         }}
                     />
                 </div>
@@ -169,9 +170,11 @@ export default function OrderDetail() {
                     <button className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
                         <MessageSquare className="h-4 w-4" /> Liên hệ người bán
                     </button>
-                    <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-                        <Repeat className="h-4 w-4" /> Mua lại
-                    </button>
+                    {/*{data.status === "COMPLETED" && (*/}
+                    {/*    <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700">*/}
+                    {/*    <Repeat className="h-4 w-4" /> Mua lại*/}
+                    {/*    </button>*/}
+                    {/*)}*/}
                 </div>
             </div>
 
@@ -293,7 +296,6 @@ export default function OrderDetail() {
             <div className="text-xs text-gray-500 text-right">
                 Ngày đặt: {formatDateTime(data.created_at)}{" "}
                 <span className="mx-1 text-gray-300">•</span>
-                Cập nhật: {formatDateTime(data.updated_at)}
             </div>
         </div>
     );
