@@ -8,5 +8,6 @@ const router = express.Router();
 router.use(authenticateToken);
 // POST /api/vouchers
 router.post("/add", voucherController.addVoucher);
+router.get("/my", voucherController.getUserVouchers);
 
 export default router;

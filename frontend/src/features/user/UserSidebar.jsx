@@ -26,13 +26,12 @@ const sections = [
         title: "Đơn hàng",
         items: [
             { label: "Đơn hàng của tôi", to: "/user/my-orders", icon: Package },
-            { label: "Mã giảm giá", to: "/user/vouchers", icon: Ticket },
         ],
     },
     {
         title: "Bảo mật",
         items: [
-            { label: "Thiết lập bảo mật", to: "/user/security", icon: ShieldCheck },
+            { label: "Đổi mật khẩu", to: "/user/security", icon: ShieldCheck },
         ],
     },
 ];

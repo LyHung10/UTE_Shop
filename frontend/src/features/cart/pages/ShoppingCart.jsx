@@ -11,6 +11,7 @@ import axios from '@/utils/axiosCustomize';
 import FavoriteButton from "../../../components/ui/FavoriteButton"
 import { toast } from "react-toastify";
 import { useFlashSale } from "@/hooks/useFlashSale"
+import VoucherSelector from "@/features/cart/components/VoucherSelector.jsx";
 
 const ShoppingCart = () => {
     const dispatch = useDispatch();
@@ -28,30 +29,37 @@ const ShoppingCart = () => {
     const [couponCode, setCouponCode] = useState("");
     const [favorites, setFavorites] = useState(new Set());
     const { getProductFlashSaleInfo } = useFlashSale();
+    const [statusVoucher , setStatusVoucher] = useState(true);
 
     useEffect(() => {
         fetchAddresses();
     }, []);
 
     useEffect(() => {
-        if (selectedAddress) {
-            calculateShippingFee(selectedAddress.id);
-        }
-    }, [selectedAddress]);
-
-    useEffect(() => {
         const handleClickOutside = () => {
             setIsDropdownOpen(false);
         };
-
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        if (selectedAddress) {
-            dispatch(fetchCart(couponCode, selectedAddress.id, shippingFee));
+    const handleVoucher = async () => {
+        const  res = await dispatch(fetchCart(couponCode, selectedAddress?.id, shippingFee));
+        if (!res.success)
+        {
+            toast.info(res.message);
+            setStatusVoucher(false);
         }
+        else setStatusVoucher(true);
+    }
+
+    useEffect( () => {
+        if (selectedAddress)
+        {
+            calculateShippingFee(selectedAddress.id);
+            handleVoucher();
+        }
+
     }, [shippingFee, selectedAddress, couponCode]);
 
     const fetchAddresses = async () => {
@@ -123,10 +131,6 @@ const ShoppingCart = () => {
             next.has(id) ? next.delete(id) : next.add(id);
             return next;
         });
-    };
-
-    const handleApplyCoupon = () => {
-        dispatch(fetchCart(couponCode, selectedAddress.id, shippingFee));
     };
 
     const subtotal = Number(cart?.finalTotal ?? 0);
@@ -541,24 +545,10 @@ const ShoppingCart = () => {
 
                             <div className="mb-6">
                                 <label className="block text-sm font-semibold text-gray-900 mb-3">Mã giảm giá</label>
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <TicketPercent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                        <input
-                                            value={couponCode}
-                                            onChange={(e) => setCouponCode(e.target.value)}
-                                            type="text"
-                                            placeholder="Nhập mã"
-                                            className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleApplyCoupon}
-                                        className="shrink-0 px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
-                                    >
-                                        Áp dụng
-                                    </button>
-                                </div>
+                                <VoucherSelector setCouponCode={setCouponCode}
+                                                 couponCode = {couponCode}
+                                                 statusVoucher= {statusVoucher}
+                                />
                             </div>
 
                             <div className="space-y-3">

@@ -3,7 +3,7 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import { SiMoneygram } from "react-icons/si";
 import { RiSecurePaymentLine } from "react-icons/ri";
 import { ImSpinner8 } from "react-icons/im";
-import { checkoutCOD, confirmCODPayment } from "@/redux/action/cartAction.jsx"; // COD còn dùng
+import {checkoutCOD, confirmCODPayment, fetchCart} from "@/redux/action/cartAction.jsx"; // COD còn dùng
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "../../../utils/axiosCustomize.jsx";
@@ -63,6 +63,7 @@ const PaymentMethodPage = () => {
                     toast.success(`Đặt hàng COD thành công! OrderID: ${orderId}`);
                     // dispatch({ type: 'CLEAR_CART' });
                     // dispatch({ type: 'SET_CART_COUNT', payload: 0 });
+                    dispatch(fetchCart(cart.appliedVoucher, cart.addressId, cart.shippingFee));
                     navigate("/payment/completed");
                 }
                 else{

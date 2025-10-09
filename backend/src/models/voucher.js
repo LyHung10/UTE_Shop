@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             // 1 voucher có thể áp dụng cho nhiều order
             Voucher.hasMany(models.Order, { foreignKey: 'voucher_id', as: 'orders' });
+            Voucher.belongsTo(models.User, { foreignKey: 'user_id' });
         }
     }
 

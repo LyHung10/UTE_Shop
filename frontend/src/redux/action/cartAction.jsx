@@ -7,6 +7,7 @@ import {
     CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
 } from "./actionTypes";
 import {getCart, postCheckoutCOD} from "@/services/cartService.jsx";
+import {toast} from "react-toastify";
 
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
         try {
@@ -91,7 +92,6 @@ export const resetCart = () => ({
 export const fetchCart = (voucherId, addressId, shippingFee) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
-
         const res = await getCart(voucherId);
 
         // Đảm bảo data có đúng structure
@@ -112,6 +112,8 @@ export const fetchCart = (voucherId, addressId, shippingFee) => async (dispatch)
         });
 
         dispatch({ type: SET_CART_LOADING, payload: false });
+
+        return res;
     } catch (err) {
         console.error("Error fetching cart:", err);
         dispatch({ type: SET_CART_ERROR, payload: err.message });
@@ -131,13 +133,11 @@ export const fetchCart = (voucherId, addressId, shippingFee) => async (dispatch)
 export const checkoutCOD = (voucherCode, addressId, shippingFee) => async (dispatch) => {
     try {
         const res = await postCheckoutCOD(voucherCode, addressId, shippingFee);
-
         dispatch({
             type: "CHECKOUT_COD_SUCCESS",
             payload: res,
         });
-        dispatch(fetchCart());
-        return res; // để component còn dùng tiếp
+        return res;
     } catch (err) {
         console.error("checkoutCOD error", err);
         dispatch({ type: "CHECKOUT_COD_FAIL" });

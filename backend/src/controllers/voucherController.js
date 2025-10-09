@@ -28,6 +28,33 @@ class VoucherController {
             });
         }
     }
+
+    async getUserVouchers(req, res) {
+        try {
+            const userId = req.user?.sub;
+            const {
+                page,
+                page_size,
+                sort,
+                onlyActive,
+            } = req.query;
+
+            const result = await voucherService.getUserVouchers(userId, {
+                page,
+                pageSize: page_size,
+                sort,
+                onlyActive: onlyActive !== "false",
+            });
+
+            return res.json(result);
+        } catch (error) {
+            console.error("[getUserVouchers] error:", error);
+            return res.status(400).json({
+                success: false,
+                message: error.message || "Bad request",
+            });
+        }
+    }
 }
 
 module.exports = new VoucherController();

@@ -3,7 +3,7 @@ import { sequelize } from "../config/configdb";
 const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher, Address, FlashSale, FlashSaleProduct } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
-import { implodeEntry } from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
+import esult, { implodeEntry } from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
 import Op from "sequelize";
 class OrderService {
     static async getUserOrders(userId, options = {}) {
@@ -401,6 +401,8 @@ class OrderService {
     }
 
     static async getCart(userId, voucherCode = null) {
+        let statusVoucher = true;
+        let message = "";
         const order = await Order.findOne({
             where: { user_id: userId, status: 'PENDING' },
             include: [{
@@ -429,11 +431,18 @@ class OrderService {
                 discount = result.discount;
                 appliedVoucher = result.voucher.slug;
             }
+            else
+            {
+                statusVoucher = result.valid;
+                message = result.message;
+            }
         }
 
         const finalTotal = Math.max(total - discount, 0);
 
         return {
+            success: statusVoucher,
+            message,
             items,
             total,
             itemCount: items.length,
