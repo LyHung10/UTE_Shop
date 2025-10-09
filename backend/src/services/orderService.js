@@ -1,10 +1,10 @@
 import { sequelize } from "../config/configdb";
 
-const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher, Address } = require('../models');
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher, Address, FlashSale, FlashSaleProduct } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
 import { implodeEntry } from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
-
+import Op from "sequelize";
 class OrderService {
     static async getUserOrders(userId, options = {}) {
         const {
@@ -507,7 +507,11 @@ class OrderService {
     static async checkoutCOD(userId, voucherCode, addressId, shippingFee) {
         const tax = 40000;
         const fee = Number(shippingFee ?? 0);
-        console.log(shippingFee);
+        console.log('🚀 Bắt đầu checkout COD');
+
+        // ĐẢM BẢO OP ĐƯỢC IMPORT ĐÚNG
+        const { Op } = require('sequelize');
+
         return await Order.sequelize.transaction(async (t) => {
             const order = await Order.findOne({
                 where: { user_id: userId, status: 'PENDING' },
@@ -515,19 +519,25 @@ class OrderService {
                 transaction: t,
                 lock: t.LOCK.UPDATE
             });
+
             if (!order || order.OrderItems.length === 0) return {
                 success: false,
                 message: "Giỏ hàng trống",
             }
+
+            console.log('📦 Order found:', order.id, 'with items:', order.OrderItems.length);
+
             if (!addressId) return {
                 success: false,
                 message: "Vui lòng chọn địa chỉ để thanh toán!",
             }
+
             const address = await Address.findOne({
                 where: { id: addressId, user_id: userId },
                 transaction: t,
                 lock: t.LOCK.UPDATE
             });
+
             if (!address) return {
                 success: false,
                 message: "Địa chỉ không tồn tại!",
@@ -536,7 +546,17 @@ class OrderService {
                 order.address_id = addressId;
             }
 
+            // Lấy thời gian hiện tại để kiểm tra flash sale
+            const currentTime = new Date();
+            console.log('⏰ Current time for flash sale check:', currentTime.toISOString());
+
             for (const item of order.OrderItems) {
+                console.log('\n🔍 Processing item:', {
+                    productId: item.product_id,
+                    productName: item.Product?.name,
+                    quantity: item.qty
+                });
+
                 const inv = await Inventory.findOne({
                     where: { product_id: item.product_id },
                     transaction: t,
@@ -547,7 +567,15 @@ class OrderService {
                     success: false,
                     message: "Không tìm thấy sản phẩm trong kho!",
                 }
+
                 const available = (inv.stock || 0) - (inv.reserved || 0);
+                console.log('📊 Inventory check:', {
+                    stock: inv.stock,
+                    reserved: inv.reserved,
+                    available: available,
+                    needed: item.qty
+                });
+
                 if (item.qty > available) return {
                     success: false,
                     message: `Một số sản phẩm trong giỏ đã hết hàng`
@@ -555,6 +583,127 @@ class OrderService {
 
                 inv.reserved += item.qty;
                 await inv.save({ transaction: t });
+                console.log('✅ Inventory updated - reserved:', inv.reserved);
+
+                // 🔥 SỬA LẠI QUERY FLASH SALE VỚI OP ĐÚNG
+                console.log('\n🔦 Searching for flash sale...');
+                const flashSaleProduct = await FlashSaleProduct.findOne({
+                    where: {
+                        product_id: item.product_id
+                    },
+                    include: [{
+                        model: FlashSale,
+                        as: 'flash_sale',
+                        where: {
+                            start_time: { [Op.lte]: currentTime },
+                            end_time: { [Op.gte]: currentTime },
+                            is_active: true
+                        }
+                    }],
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+
+                console.log('🎯 Flash sale search result:', {
+                    found: !!flashSaleProduct,
+                    productId: item.product_id,
+                    queryConditions: {
+                        start_time_lte: currentTime,
+                        end_time_gte: currentTime,
+                        is_active: true
+                    }
+                });
+
+                if (flashSaleProduct) {
+                    console.log('🎉 FLASH SALE FOUND! Details:', {
+                        flashSaleProductId: flashSaleProduct.id,
+                        productId: flashSaleProduct.product_id,
+                        flashSaleId: flashSaleProduct.flash_sale_id,
+                        stock_flash_sale: flashSaleProduct.stock_flash_sale,
+                        current_sold_flash_sale: flashSaleProduct.sold_flash_sale,
+                        flash_price: flashSaleProduct.flash_price,
+                        original_price: flashSaleProduct.original_price,
+                        limit_per_user: flashSaleProduct.limit_per_user,
+                        flashSale: flashSaleProduct.flash_sale ? {
+                            id: flashSaleProduct.flash_sale.id,
+                            name: flashSaleProduct.flash_sale.name,
+                            start_time: flashSaleProduct.flash_sale.start_time,
+                            end_time: flashSaleProduct.flash_sale.end_time,
+                            is_active: flashSaleProduct.flash_sale.is_active
+                        } : null
+                    });
+
+                    // Kiểm tra số lượng mua có vượt quá giới hạn flash sale không
+                    const remainingFlashStock = flashSaleProduct.stock_flash_sale - flashSaleProduct.sold_flash_sale;
+                    console.log('📦 Flash sale stock check:', {
+                        total_stock: flashSaleProduct.stock_flash_sale,
+                        already_sold: flashSaleProduct.sold_flash_sale,
+                        remaining: remainingFlashStock,
+                        buying: item.qty
+                    });
+
+                    if (item.qty > remainingFlashStock) {
+                        console.log('❌ Not enough flash sale stock');
+                        return {
+                            success: false,
+                            message: `Sản phẩm "${item.Product?.name}" chỉ còn ${remainingFlashStock} sản phẩm trong flash sale`
+                        };
+                    }
+
+                    // Kiểm tra giới hạn mua mỗi user
+                    console.log('👤 Checking user purchase limit...');
+                    const userFlashOrders = await Order.findAll({
+                        where: {
+                            user_id: userId,
+                            status: { [Op.notIn]: ['CANCELLED', 'FAILED'] }
+                        },
+                        include: [{
+                            model: OrderItem,
+                            where: { product_id: item.product_id }
+                        }],
+                        transaction: t
+                    });
+
+                    const totalUserPurchased = userFlashOrders.reduce((sum, order) => {
+                        const orderItem = order.OrderItems.find(oi => oi.product_id === item.product_id);
+                        return sum + (orderItem ? orderItem.qty : 0);
+                    }, 0);
+
+                    console.log('📊 User purchase history:', {
+                        userId: userId,
+                        previousOrders: userFlashOrders.length,
+                        alreadyPurchased: totalUserPurchased,
+                        currentPurchase: item.qty,
+                        limit: flashSaleProduct.limit_per_user,
+                        totalAfterPurchase: totalUserPurchased + item.qty
+                    });
+
+                    if (totalUserPurchased + item.qty > flashSaleProduct.limit_per_user) {
+                        console.log('❌ User exceeded purchase limit');
+                        return {
+                            success: false,
+                            message: `Bạn chỉ được mua tối đa ${flashSaleProduct.limit_per_user} sản phẩm "${item.Product?.name}" trong flash sale`
+                        };
+                    }
+
+                    // 🔥 QUAN TRỌNG: CẬP NHẬT sold_flash_sale NGAY KHI CHECKOUT
+                    const oldSold = flashSaleProduct.sold_flash_sale;
+                    flashSaleProduct.sold_flash_sale = (flashSaleProduct.sold_flash_sale || 0) + item.qty;
+                    await flashSaleProduct.save({ transaction: t });
+
+                    console.log(`✅ SUCCESS: Updated flash sale sold count for product ${item.product_id}: +${item.qty} (${oldSold} → ${flashSaleProduct.sold_flash_sale})`);
+                } else {
+                    console.log('❌ NO FLASH SALE found for this product');
+                    console.log('Có thể do:');
+                    console.log('- Không có flash sale cho sản phẩm này');
+                    console.log('- Flash sale chưa bắt đầu hoặc đã kết thúc');
+                    console.log('- Flash sale không active');
+
+                    // KIỂM TRA THỦ CÔNG TRONG DATABASE
+                    console.log('\n🔎 Manual check - run these SQL queries:');
+                    console.log(`SELECT * FROM flash_sale_products WHERE product_id = ${item.product_id};`);
+                    console.log(`SELECT * FROM flash_sales WHERE is_active = true AND start_time <= '${currentTime.toISOString()}' AND end_time >= '${currentTime.toISOString()}';`);
+                }
             }
 
             const total = order.OrderItems.reduce(
@@ -562,10 +711,18 @@ class OrderService {
                 0
             );
 
+            console.log('💰 Order total calculation:', {
+                subtotal: total,
+                tax: tax,
+                shipping: fee,
+                total: total + tax + fee
+            });
+
             let discount = 0;
             let appliedVoucher = null;
 
             if (voucherCode) {
+                console.log('🎫 Processing voucher:', voucherCode);
                 const result = await voucherService.validateVoucher(voucherCode, total, { transaction: t });
                 if (!result.valid) return {
                     success: false,
@@ -577,6 +734,7 @@ class OrderService {
                 appliedVoucher.usage_limit -= 1;
                 appliedVoucher.used_count += 1;
                 await appliedVoucher.save({ transaction: t });
+                console.log('✅ Voucher applied, discount:', discount);
             }
 
             order.status = "NEW";
@@ -586,6 +744,7 @@ class OrderService {
                 order.voucher_id = appliedVoucher.id;
             }
             await order.save({ transaction: t });
+            console.log('✅ Order saved with status:', order.status);
 
             // === 🔎 Kiểm tra xem Payment đã tồn tại chưa ===
             let payment = await Payment.findOne({
@@ -595,13 +754,13 @@ class OrderService {
             });
 
             if (payment) {
-                // ✅ Nếu đã có, chỉ cập nhật lại (không tạo mới)
+                console.log('🔄 Updating existing payment');
                 payment.method = "COD";
                 payment.status = "PENDING";
                 payment.amount = order.total_amount;
                 await payment.save({ transaction: t });
             } else {
-                // ✅ Nếu chưa có, tạo mới
+                console.log('🆕 Creating new payment');
                 payment = await Payment.create({
                     order_id: order.id,
                     method: "COD",
@@ -610,11 +769,11 @@ class OrderService {
                 }, { transaction: t });
             }
 
+            console.log('🎉 CHECKOUT COMPLETED SUCCESSFULLY');
             return {
                 success: true,
                 message: "Checkout COD thành công",
-                data:
-                {
+                data: {
                     order,
                     payment,
                 }
