@@ -4,7 +4,8 @@
     "password": "root",
     "database": "ute_shop",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "timezone": "+07:00"
   },
   "test": {
     "username": "root",
@@ -16,8 +17,9 @@
   "production": {
     "username": "root",
     "password": "103204",
-    "database": "database_production",
+    "database": "ute_shop",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "timezone": "+07:00"
   }
 }

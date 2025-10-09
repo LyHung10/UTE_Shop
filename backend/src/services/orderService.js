@@ -1,10 +1,11 @@
-import {sequelize} from "../config/configdb";
+import { sequelize } from "../config/configdb";
 
-const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Voucher,Address } = require('../models');
+const { Order, OrderItem, Product, ProductImage, Inventory, Payment,
+    User, Voucher, Address, FlashSale, FlashSaleProduct } = require('../models');
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
-import {implodeEntry} from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
-
+import { implodeEntry } from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
+const { Op } = require('sequelize');
 class OrderService {
     static async getUserOrders(userId, options = {}) {
         const {
@@ -22,7 +23,7 @@ class OrderService {
         if (from || to) {
             where.created_at = {};
             if (from) where.created_at[Op.gte] = new Date(from);
-            if (to)   where.created_at[Op.lte] = new Date(to);
+            if (to) where.created_at[Op.lte] = new Date(to);
         }
 
         const orderBy =
@@ -540,7 +541,7 @@ class OrderService {
 
     static async checkoutCOD(userId, voucherCode, addressId, shippingFee) {
         const tax = 40000;
-        const fee      = Number(shippingFee ?? 0);
+        const fee = Number(shippingFee ?? 0);
         console.log(shippingFee);
         return await Order.sequelize.transaction(async (t) => {
             const order = await Order.findOne({
@@ -566,8 +567,7 @@ class OrderService {
                 success: false,
                 message: "Địa chỉ không tồn tại!",
             }
-            else
-            {
+            else {
                 order.address_id = addressId;
             }
 
@@ -649,10 +649,10 @@ class OrderService {
                 success: true,
                 message: "Checkout COD thành công",
                 data:
-                    {
-                        order,
-                        payment,
-                    }
+                {
+                    order,
+                    payment,
+                }
             };
         });
     }
@@ -669,7 +669,7 @@ class OrderService {
             await payment.save({ transaction: t });
 
             const order = await Order.findOne({
-                where: {id:orderId },
+                where: { id: orderId },
                 include: [{ model: OrderItem, include: [Product] }],
                 transaction: t,
                 lock: t.LOCK.UPDATE
@@ -680,6 +680,9 @@ class OrderService {
             if (["completed", "canceled"].includes(order.status)) {
                 throw new Error(`Order already finalized with status ${order.status}`);
             }
+
+            // Lấy thời gian hiện tại để kiểm tra flash sale
+            const currentTime = new Date();
 
             for (const item of order.OrderItems) {
                 const inv = await Inventory.findOne({
@@ -708,6 +711,38 @@ class OrderService {
 
                 await inv.save({ transaction: t });
                 await product.save({ transaction: t });
+
+                // KIỂM TRA VÀ CẬP NHẬT FLASH SALE
+                const flashSaleProduct = await FlashSaleProduct.findOne({
+                    where: {
+                        product_id: item.product_id
+                    },
+                    include: [{
+                        model: FlashSale,
+                        as: 'flash_sale',
+                        where: {
+                            start_time: { [Op.lte]: currentTime },
+                            end_time: { [Op.gte]: currentTime },
+                            is_active: true
+                        }
+                    }],
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+
+                if (flashSaleProduct) {
+                    // Cập nhật số lượng đã bán trong flash sale
+                    flashSaleProduct.sold_flash_sale = (flashSaleProduct.sold_flash_sale || 0) + need;
+
+                    // Kiểm tra không vượt quá stock flash sale
+                    if (flashSaleProduct.sold_flash_sale > flashSaleProduct.stock_flash_sale) {
+                        throw new Error(`Số lượng bán vượt quá stock flash sale cho sản phẩm ${item.product_id}`);
+                    }
+
+                    await flashSaleProduct.save({ transaction: t });
+
+                    console.log(`Updated flash sale sold count for product ${item.product_id}: +${need} (total: ${flashSaleProduct.sold_flash_sale})`);
+                }
             }
 
             const user = await User.findByPk(order.user_id, { transaction: t, lock: t.LOCK.UPDATE });
@@ -718,24 +753,24 @@ class OrderService {
                 await user.save({ transaction: t });
             }
 
-            if (order.status === "shipping"){
+            if (order.status === "shipping") {
                 order.status = "completed";
-            }
-            else
-            {
+            } else {
                 return {
                     success: false,
-                    message: `Đơn hàng có trạng thái ${order.status} không cho phép xác nhận`}
+                    message: `Đơn hàng có trạng thái ${order.status} không cho phép xác nhận`
+                }
             }
+
             await order.save({ transaction: t });
+
             return {
                 success: true,
                 message: "Đơn hàng COD đã thành công",
-                data:
-                    {
-                        order,
-                        payment,
-                    }
+                data: {
+                    order,
+                    payment,
+                }
             };
         });
     }
@@ -902,13 +937,11 @@ class OrderService {
         if (!order) {
             throw new Error(`Order with id ${orderId} not found`);
         }
-        if (order.status === "new")
-        {
+        if (order.status === "new") {
             order.status = "packing"
             await order.save();
         }
-        else
-        {
+        else {
             return {
                 success: false,
                 message: "Đơn đã được xác nhận trước đó!"
@@ -926,13 +959,11 @@ class OrderService {
         if (!order) {
             throw new Error(`Order with id ${orderId} not found`);
         }
-        if (order.status === "packing")
-        {
+        if (order.status === "packing") {
             order.status = "shipping"
             await order.save();
         }
-        else
-        {
+        else {
             return {
                 success: false,
                 message: "Đơn hàng hàng đã được giao trước đó"

@@ -21,6 +21,10 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux"
 import { checkFavorite } from "@/redux/action/favoriteActions.jsx"
 import FavoriteButton from "../../../components/ui/FavoriteButton.jsx"
+import { useFlashSale } from "@/hooks/useFlashSale"
+import CountdownTimer from "../../home/components/CountdownTimer.jsx"
+import ProgressBar from "../../home/components/ProgressBar"
+import { Zap, Clock } from "lucide-react"
 
 const ProductDetail = () => {
     const { id } = useParams()
@@ -127,17 +131,37 @@ const ProductDetail = () => {
         Silver: "bg-gradient-to-br from-gray-300 to-gray-400",
         Gold: "bg-gradient-to-br from-yellow-300 to-yellow-500",
     }
+    // Tìm hàm handleAddToCart, sửa thành:
     const handleAddToCart = async () => {
         if (!selectedSize || !selectedColor) {
-            toast.error("Please choose size and color")
+            toast.error("Vui lòng chọn size và màu sắc")
             return
         }
+
+        // Kiểm tra flash sale
+        if (flashSaleInfo?.isActive) {
+            // Validate số lượng flash sale
+            const availableFlashStock = flashSaleInfo.flashProduct.stock_flash_sale - flashSaleInfo.flashProduct.sold_flash_sale;
+            if (quantity > availableFlashStock) {
+                toast.error(`Chỉ còn ${availableFlashStock} sản phẩm trong flash sale`);
+                return;
+            }
+            if (quantity > flashSaleInfo.flashProduct.limit_per_user) {
+                toast.error(`Vượt quá giới hạn mua (tối đa ${flashSaleInfo.flashProduct.limit_per_user} sản phẩm)`);
+                return;
+            }
+        }
+
         const result = await dispatch(addToCart(product.id, quantity, selectedColor.name, selectedSize))
         if (result.success) {
             toast.success(result.message);
             animateAddToCart()
-        }
-        else {
+
+            // Refresh flash sale data sau khi thêm vào giỏ hàng
+            if (flashSaleInfo?.isActive) {
+                setTimeout(() => refreshFlashSales(), 1000);
+            }
+        } else {
             toast.error(result.message);
         }
     }
@@ -145,6 +169,9 @@ const ProductDetail = () => {
     const [isAnimating, setIsAnimating] = useState(false)
     const productImageRef = useRef(null)
 
+    // Thêm hook flash sale
+    const { getProductFlashSaleInfo, refreshFlashSales } = useFlashSale()
+    const flashSaleInfo = getProductFlashSaleInfo(product?.id)
     useEffect(() => {
         if (!product?.id) return
 
@@ -280,6 +307,26 @@ const ProductDetail = () => {
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+
+                                                {/* Flash Sale Badge trên ảnh */}
+                                                {flashSaleInfo && idx === 0 && (
+                                                    <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                                                        {flashSaleInfo.isActive && (
+                                                            <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1">
+                                                                <Zap className="w-4 h-4" />
+                                                                <span>FLASH SALE</span>
+                                                            </div>
+                                                        )}
+                                                        {flashSaleInfo.isUpcoming && (
+                                                            <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1">
+                                                                <Clock className="w-4 h-4" />
+                                                                <span>SẮP DIỄN RA</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
                                             </div>
                                         </SwiperSlide>
                                     ))}
@@ -386,7 +433,43 @@ const ProductDetail = () => {
                     <div className="space-y-8">
                         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
                             <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">{product?.name}</h1>
-
+                            {/* Flash Sale Banner */}
+                            {flashSaleInfo && (
+                                <div className="mb-4 p-4 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl text-white">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Zap className="w-6 h-6 animate-pulse" />
+                                            <div>
+                                                <h3 className="font-bold text-lg">{flashSaleInfo.flashSale.name}</h3>
+                                                <p className="text-sm opacity-90">{flashSaleInfo.flashSale.description}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            {flashSaleInfo.isActive && (
+                                                <>
+                                                    <span className="font-semibold">Kết thúc sau:</span>
+                                                    <CountdownTimer
+                                                        endTime={flashSaleInfo.flashSale.end_time}
+                                                        type="end"
+                                                        onStatusChange={() => refreshFlashSales()}
+                                                    />
+                                                </>
+                                            )}
+                                            {flashSaleInfo.isUpcoming && (
+                                                <>
+                                                    <span className="font-semibold">Bắt đầu sau:</span>
+                                                    <CountdownTimer
+                                                        startTime={flashSaleInfo.flashSale.start_time}
+                                                        type="start"
+                                                        onStatusChange={() => refreshFlashSales()}
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {/* Ratings */}
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => {
@@ -420,20 +503,41 @@ const ProductDetail = () => {
                             </div>
 
                             <div className="flex items-center gap-4 mb-6">
-                                <span className="text-4xl font-bold text-orange-500">
-                                    {product?.price
-                                        ? Number(product.price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
-                                        : ""}
-                                </span>
-                                {product?.original_price && (
-                                    <span className="text-xl text-gray-400 line-through">
-                                        {Number(product.original_price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-                                    </span>
-                                )}
-                                {product?.discount_percent > 0 && (
-                                    <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                                        -{product.discount_percent}%
-                                    </span>
+                                {/* Giá flash sale nếu có */}
+                                {flashSaleInfo?.isActive ? (
+                                    <>
+                                        <span className="text-4xl font-bold text-red-600">
+                                            {Number(flashSaleInfo.flashProduct.flash_price).toLocaleString("vi-VN", {
+                                                style: "currency", currency: "VND"
+                                            })}
+                                        </span>
+                                        <span className="text-xl text-gray-400 line-through">
+                                            {Number(flashSaleInfo.flashProduct.original_price).toLocaleString("vi-VN", {
+                                                style: "currency", currency: "VND"
+                                            })}
+                                        </span>
+                                        <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                                            -{Math.round((1 - flashSaleInfo.flashProduct.flash_price / flashSaleInfo.flashProduct.original_price) * 100)}%
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-4xl font-bold text-orange-500">
+                                            {product?.price
+                                                ? Number(product.price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+                                                : ""}
+                                        </span>
+                                        {product?.original_price && (
+                                            <span className="text-xl text-gray-400 line-through">
+                                                {Number(product.original_price).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+                                            </span>
+                                        )}
+                                        {product?.discount_percent > 0 && (
+                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                                                -{product.discount_percent}%
+                                            </span>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -445,6 +549,35 @@ const ProductDetail = () => {
                                     Còn lại: {product?.inventory?.stock - product?.inventory?.reserved} / {product?.inventory?.stock}
                                 </span>
                             </div>
+
+                            {/* Flash Sale Progress */}
+                            {flashSaleInfo?.isActive && (
+                                <div className="mb-6 space-y-2">
+                                    <ProgressBar
+                                        sold={flashSaleInfo.flashProduct.sold_flash_sale}
+                                        total={flashSaleInfo.flashProduct.stock_flash_sale}
+                                        height={4}
+                                    />
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        {/* <span>Đã bán: {flashSaleInfo.flashProduct.sold_flash_sale}</span> */}
+                                        {/* <span>Còn lại: {flashSaleInfo.flashProduct.stock_flash_sale - flashSaleInfo.flashProduct.sold_flash_sale}</span> */}
+                                        <span className="text-red-600 font-semibold">
+                                            Giới hạn: {flashSaleInfo.flashProduct.limit_per_user} sản phẩm/người
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Thông tin flash sale sắp diễn ra */}
+                            {flashSaleInfo?.isUpcoming && (
+                                <div className="mb-6 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <div className="flex items-center gap-2 text-orange-700">
+                                        <Clock className="w-4 h-4" />
+                                        <span className="font-semibold">Flash Sale sẽ bắt đầu vào:</span>
+                                        <span>{new Date(flashSaleInfo.flashSale.start_time).toLocaleString('vi-VN')}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-white border border-gray-200 rounded-2xl p-8 space-y-8 shadow-lg">

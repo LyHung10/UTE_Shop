@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Trash2, Minus, Plus, TicketPercent, Loader2, MapPin, ChevronDown, PlusCircle, ShoppingBag, Package } from 'lucide-react';
+// Thêm Zap vào import từ lucide-react
+import {
+    Heart, Trash2, Minus, Plus, TicketPercent, Loader2,
+    MapPin, ChevronDown, PlusCircle, ShoppingBag, Package, Zap
+} from 'lucide-react';
 import { useSelector, useDispatch } from "react-redux";
 import { updateQuantity, removeFromCart, fetchCart } from "@/redux/action/cartAction.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from '@/utils/axiosCustomize';
 import FavoriteButton from "../../../components/ui/FavoriteButton"
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
+import { useFlashSale } from "@/hooks/useFlashSale"
 
 const ShoppingCart = () => {
     const dispatch = useDispatch();
@@ -22,6 +27,7 @@ const ShoppingCart = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [couponCode, setCouponCode] = useState("");
     const [favorites, setFavorites] = useState(new Set());
+    const { getProductFlashSaleInfo } = useFlashSale();
 
     useEffect(() => {
         fetchAddresses();
@@ -104,10 +110,9 @@ const ShoppingCart = () => {
         setIsDropdownOpen(false);
     };
 
-    const handleUpdateItem = async (id,qty) => {
+    const handleUpdateItem = async (id, qty) => {
         const result = await dispatch(updateQuantity(id, qty));
-        if (!result.success)
-        {
+        if (!result.success) {
             toast.error(result.message);
         }
     }
@@ -121,17 +126,78 @@ const ShoppingCart = () => {
     };
 
     const handleApplyCoupon = () => {
-        dispatch(fetchCart(couponCode,selectedAddress.id, shippingFee));
+        dispatch(fetchCart(couponCode, selectedAddress.id, shippingFee));
     };
+
     const subtotal = Number(cart?.finalTotal ?? 0);
     const discount = Number(cart?.discount ?? 0);
-    const fee      = Number(shippingFee ?? 0);
-    const tax      = subtotal > 0 ? 40000 : 0;
+    const fee = Number(shippingFee ?? 0);
+    const tax = subtotal > 0 ? 40000 : 0;
 
     const total = subtotal - discount + fee + tax;
 
     const formatAddress = (address) => {
         return `${[address.address_line, address.ward, address.district, address.city].filter(Boolean).join(', ')}`;
+    };
+
+    // Hàm hiển thị giá sản phẩm
+    const renderProductPrice = (item) => {
+        const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+
+        if (flashSaleInfo?.isActive) {
+            // Hiển thị giá flash sale
+            return (
+                <>
+                    <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
+                        {Number(flashSaleInfo.flashProduct.flash_price).toLocaleString()}đ
+                    </span>
+                    <span className="text-gray-400 line-through text-sm">
+                        {Number(flashSaleInfo.flashProduct.original_price).toLocaleString()}đ
+                    </span>
+                    <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                        -
+                        {Math.round(
+                            (1 -
+                                Number(flashSaleInfo.flashProduct.flash_price) /
+                                Number(flashSaleInfo.flashProduct.original_price)) *
+                            100
+                        )}
+                        %
+                    </span>
+                    {/* Badge flash sale */}
+                    <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        FLASH
+                    </span>
+                </>
+            );
+        } else {
+            // Hiển thị giá bình thường
+            return (
+                <>
+                    <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
+                        {Number(item.price).toLocaleString()}đ
+                    </span>
+                    {item.Product?.original_price && (
+                        <>
+                            <span className="text-gray-400 line-through text-sm">
+                                {Number(item.Product.original_price).toLocaleString()}đ
+                            </span>
+                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                                -
+                                {Math.round(
+                                    (1 -
+                                        Number(item.price) /
+                                        Number(item.Product.original_price)) *
+                                    100
+                                )}
+                                %
+                            </span>
+                        </>
+                    )}
+                </>
+            );
+        }
     };
 
     return (
@@ -140,21 +206,7 @@ const ShoppingCart = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Cart Items Section */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
-                                <ShoppingBag className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                                    Giỏ hàng của bạn
-                                </h1>
-                                <p className="text-sm text-gray-600 mt-1">
-                                    {cart.items?.length || 0} sản phẩm
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Address Selector - ĐÃ SỬA HOÀN TOÀN Z-INDEX */}
+                        {/* Address Selector */}
                         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 transition-all hover:shadow-2xl relative z-40">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="p-2.5 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl">
@@ -222,7 +274,6 @@ const ShoppingCart = () => {
                                             />
                                         </button>
 
-                                        {/* ĐÃ SỬA: Tăng z-index rất cao và đảm bảo positioning */}
                                         {isDropdownOpen && (
                                             <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-80 overflow-y-auto">
                                                 <div className="p-2">
@@ -232,8 +283,8 @@ const ShoppingCart = () => {
                                                             type="button"
                                                             onClick={() => handleAddressSelect(address)}
                                                             className={`w-full text-left px-4 py-3.5 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all mb-1 ${selectedAddress?.id === address.id
-                                                                    ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200'
-                                                                    : ''
+                                                                ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200'
+                                                                : ''
                                                                 }`}
                                                         >
                                                             <div className="flex items-start justify-between">
@@ -278,7 +329,7 @@ const ShoppingCart = () => {
                             )}
                         </div>
 
-                        {/* Cart Items - GIẢM Z-INDEX XUỐNG THẤP */}
+                        {/* Cart Items */}
                         <div className="space-y-4 relative z-10">
                             {cart.items && cart.items.length > 0 ? (
                                 cart.items.map((item) => (
@@ -297,6 +348,22 @@ const ShoppingCart = () => {
                                                     alt={item.Product?.name}
                                                     className="w-full h-full object-cover"
                                                 />
+
+                                                {/* Flash Sale Badge trên ảnh */}
+                                                {(() => {
+                                                    const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+                                                    if (flashSaleInfo?.isActive) {
+                                                        return (
+                                                            <div className="absolute top-1 left-1">
+                                                                <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-lg">
+                                                                    <Zap className="w-2.5 h-2.5" />
+                                                                    <span>FLASH</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
@@ -323,42 +390,11 @@ const ShoppingCart = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
-                                                        {Number(item.price).toLocaleString()}đ
-                                                    </span>
-                                                    {item.Product?.original_price && (
-                                                        <>
-                                                            <span className="text-gray-400 line-through text-sm">
-                                                                {Number(item.Product.original_price).toLocaleString()}đ
-                                                            </span>
-                                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-lg">
-                                                                -
-                                                                {Math.round(
-                                                                    (1 -
-                                                                        Number(item.price) /
-                                                                        Number(item.Product.original_price)) *
-                                                                    100
-                                                                )}
-                                                                %
-                                                            </span>
-                                                        </>
-                                                    )}
+                                                    {renderProductPrice(item)}
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                {/* <button
-                                                    onClick={() => toggleFavorite(item.id)}
-                                                    className={`p-2.5 rounded-xl transition-all ${favorites.has(item.id)
-                                                            ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                                                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                                        }`}
-                                                >
-                                                    <Heart
-                                                        className="w-5 h-5"
-                                                        fill={favorites.has(item.id) ? 'currentColor' : 'none'}
-                                                    />
-                                                </button> */}
                                                 <FavoriteButton
                                                     productId={item.Product?.id}
                                                     size="small"
@@ -454,6 +490,31 @@ const ShoppingCart = () => {
                                     <div className="flex justify-between text-green-600 bg-green-50 p-3 rounded-xl">
                                         <span className="font-medium">Giảm giá</span>
                                         <span className="font-bold">-{cart.discount.toLocaleString()}đ</span>
+                                    </div>
+                                )}
+
+                                {cart.items?.some(item => {
+                                    const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+                                    return flashSaleInfo?.isActive;
+                                }) && (
+                                    <div className="flex justify-between text-orange-600 bg-orange-50 p-3 rounded-xl border border-orange-200">
+                                        <span className="font-medium flex items-center gap-2">
+                                            <Zap className="w-4 h-4" />
+                                            Tiết kiệm Flash Sale
+                                        </span>
+                                        <span className="font-bold">
+                                            -{(() => {
+                                                let totalFlashSaving = 0;
+                                                cart.items?.forEach(item => {
+                                                    const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+                                                    if (flashSaleInfo?.isActive) {
+                                                        const saving = (flashSaleInfo.flashProduct.original_price - flashSaleInfo.flashProduct.flash_price) * item.qty;
+                                                        totalFlashSaving += saving;
+                                                    }
+                                                });
+                                                return totalFlashSaving.toLocaleString();
+                                            })()}đ
+                                        </span>
                                     </div>
                                 )}
 

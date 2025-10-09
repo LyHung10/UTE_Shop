@@ -24,6 +24,7 @@ import addressRoutes from './routes/addressRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import productSearchRoutes from './routes/productSearchRoutes.js';
+import flashSaleRoutes from './routes/flashSaleRoutes.js';
 import { initializeNotificationSocket } from './socket/notificationHandlers.js';
 
 dotenv.config();
@@ -69,7 +70,7 @@ app.use('/api/address', addressRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', productSearchRoutes);
 app.use('/api/admin', adminRoutes);
-
+app.use('/api/flash-sales', flashSaleRoutes);
 // Error handler
 app.use(errorHandler);
 
