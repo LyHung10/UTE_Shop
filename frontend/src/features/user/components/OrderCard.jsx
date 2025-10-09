@@ -1,6 +1,9 @@
 import {CheckCircle2, ChevronRight, Clock, Package, Truck, Warehouse, XCircle} from "lucide-react";
-import {formatDateTime, formatPrice, normalizeStatus} from "@/utils/format.jsx";
+import {formatDateTime, formatPrice} from "@/utils/format.jsx";
 import {useNavigate} from "react-router-dom";
+import {postCancelOrder} from "@/services/orderService.jsx";
+import {toast} from "react-toastify";
+import { useState } from "react";
 
 const StatusBadge = ({ status }) => {
     const map = {
@@ -10,7 +13,7 @@ const StatusBadge = ({ status }) => {
         COMPLETED: { label: "Hoàn thành", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: CheckCircle2 },
         CANCELLED: { label: "Đã hủy", cls: "bg-rose-50 text-rose-700 border-rose-200", Icon: XCircle },
     };
-    const m = map[normalizeStatus(status)] || { label: status, cls: "bg-gray-50 text-gray-700 border-gray-200", Icon: Package };
+    const m = map[status.toUpperCase()] || { label: status, cls: "bg-gray-50 text-gray-700 border-gray-200", Icon: Package };
     const { Icon } = m;
     return (
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>
@@ -18,41 +21,47 @@ const StatusBadge = ({ status }) => {
             {m.label}
         </span>
     );
-}
+};
 
 const OrderCard = (props) => {
     const {order} = props;
     const navigate = useNavigate();
 
-    const handleCancel = async (orderId) => {
-        if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này không?")) return;
+    // 🆕 Modal state
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleCancel = async () => {
         try {
+            setIsCancelling(true);
             // Gọi API hủy đơn hàng
-            const res = await fetch(`/api/orders/${orderId}/cancel`, {
-                method: "POST",
-            });
-            if (!res.ok) throw new Error("Không thể hủy đơn hàng");
-            alert("Đã hủy đơn hàng thành công!");
-            window.location.reload(); // hoặc dùng navigate(0)
+            const res = await postCancelOrder(order.id);
+            if(res.success) {
+                toast.success(res.message);
+                props.fetchOrders?.("");
+            } else {
+                toast.info(res.message);
+            }
         } catch (err) {
-            alert("Lỗi khi hủy đơn hàng: " + err.message);
+            toast.error("Lỗi khi hủy đơn hàng: " + (err?.message || "Không xác định"));
+        } finally {
+            setIsCancelling(false);
+            setShowCancelModal(false);
         }
     };
 
-    const handleRequestCancel = async (orderId) => {
+    const handleRequestCancel = async () => {
         if (!window.confirm("Bạn có muốn gửi yêu cầu hủy đơn hàng này không?")) return;
         try {
-            // Gọi API gửi yêu cầu hủy đơn hàng
-            const res = await fetch(`/api/orders/${orderId}/request-cancel`, {
+            const res = await fetch(`/api/orders/${order.id}/request-cancel`, { // sửa orderId -> order.id
                 method: "POST",
             });
             if (!res.ok) throw new Error("Không thể gửi yêu cầu hủy");
-            alert("Đã gửi yêu cầu hủy đơn hàng thành công!");
+            toast.success("Đã gửi yêu cầu hủy đơn hàng thành công!");
         } catch (err) {
-            alert("Lỗi khi gửi yêu cầu hủy: " + err.message);
+            toast.error("Lỗi khi gửi yêu cầu hủy: " + (err?.message || "Không xác định"));
         }
     };
-
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -89,12 +98,11 @@ const OrderCard = (props) => {
                     {formatDateTime(order.created_at)}
                 </div>
                 <div className="flex items-center gap-3 md:gap-4">
-
                     <div className="text-sm">Tổng tiền: <span className="font-semibold text-gray-900">{formatPrice(order.total_amount)}</span></div>
 
                     {order.status.toUpperCase() === "NEW" && (
                         <button
-                            onClick={() => handleCancel(order.id)}
+                            onClick={() => setShowCancelModal(true)} // 🆕 mở modal
                             className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 transition-colors"
                         >
                             Hủy đơn hàng
@@ -118,8 +126,65 @@ const OrderCard = (props) => {
                     </button>
                 </div>
             </div>
+
+            {/* ===================== Modal Xác nhận Hủy ===================== */}
+            {showCancelModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center"
+                    aria-modal="true"
+                    role="dialog"
+                    aria-labelledby="cancel-title"
+                >
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/40"
+                        onClick={() => !isCancelling && setShowCancelModal(false)}
+                    />
+                    {/* Modal Card */}
+                    <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200">
+                        <div className="px-5 py-4 border-b border-gray-100">
+                            <h3 id="cancel-title" className="text-base font-semibold text-gray-900">
+                                Xác nhận hủy đơn hàng
+                            </h3>
+                        </div>
+                        <div className="px-5 py-4 text-sm text-gray-600">
+                            <p className="mb-2">
+                                Bạn có chắc chắn muốn hủy đơn <span className="font-medium text-gray-900">#{order.id}</span> không?
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                Lưu ý: Chỉ có thể hủy trong vòng 30 phút sau khi đặt và khi đơn đang ở trạng thái <span className="font-medium">NEW</span>.
+                            </p>
+                        </div>
+                        <div className="px-5 py-4 bg-gray-50 flex items-center justify-end gap-2 rounded-b-2xl">
+                            <button
+                                type="button"
+                                disabled={isCancelling}
+                                onClick={() => setShowCancelModal(false)}
+                                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60"
+                            >
+                                Không, quay lại
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                disabled={isCancelling}
+                                className="inline-flex items-center gap-2 rounded-lg border border-rose-600 bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+                            >
+                                {isCancelling && (
+                                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4A4 4 0 004 12z"></path>
+                                    </svg>
+                                )}
+                                Xác nhận hủy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* =================== /Modal Xác nhận Hủy ===================== */}
         </div>
     );
-}
+};
 
 export default OrderCard;

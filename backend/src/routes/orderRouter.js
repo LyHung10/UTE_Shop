@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', OrderController.getUserOrders);
+router.post('/cancel', OrderController.cancelOrder);
 router.get('/:orderId/detail', authenticateToken,OrderController.getDetailOrder);
 router.post('/cart',OrderController.addToCart);
 router.get('/cart',OrderController.getCart);

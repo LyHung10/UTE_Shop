@@ -220,6 +220,31 @@ class OrderController {
             return res.status(400).json({ message: err.message });
         }
     }
+
+    static async cancelOrder(req, res) {
+        try {
+            const userId = req.user?.sub;
+            const {orderId} = req.body;
+            const result = await OrderService.cancelOrder(userId, orderId);
+            if (!result) {
+                return res.status(500).json({success: false, message: 'Unexpected error'});
+            }
+
+            if (result.success === false) {
+                const msg = (result.message || '').toLowerCase();
+                const notFound = msg.includes('không tìm thấy');
+                return res.status(notFound ? 404 : 400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (err) {
+            console.error('[cancelOrder] error:', err);
+            return res.status(500).json({
+                success: false,
+                message: err.message || 'Internal Server Error',
+            });
+        }
+    }
 }
 
 export default OrderController;

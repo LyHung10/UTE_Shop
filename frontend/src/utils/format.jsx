@@ -16,4 +16,6 @@ export const formatDateTime = (iso) =>
             year: "numeric"
         })
         : "—";
-export const normalizeStatus = (s) => String(s || "").toUpperCase();
+
+export class normalizeStatus {
+}
