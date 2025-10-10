@@ -2,7 +2,7 @@ import express from "express";
 import {
     getProfile,
     uploadUserAvatar,
-    updateProfileController
+    updateProfileController, changePasswordController
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/auth";
 import * as authController from "../controllers/authController";
@@ -15,6 +15,7 @@ router.use(authenticateToken);
 // router.put("/update", updateUser);
 router.put("/upload-image", parser.single("avatar"), uploadUserAvatar);
 router.patch("/profile", updateProfileController);
+router.post("/change-password", changePasswordController);
 router.get("/profile", getProfile);
 router.post('/reset-password', authController.resetPassword);
 export default router;

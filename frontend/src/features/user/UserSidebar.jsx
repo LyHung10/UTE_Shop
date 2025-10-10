@@ -12,7 +12,8 @@ import {
     ShieldCheck,
     LogOut, Gift,
 } from "lucide-react";
-import {useSelector} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
+import {doLogout} from "@/redux/action/authAction.jsx";
 
 const sections = [
     {
@@ -39,6 +40,7 @@ const sections = [
 
 const UserSidebar = () => {
     const user = useSelector((state) => state.user);
+    const dispatch = useDispatch();
     return (
         <aside className="hidden lg:block bg-white rounded-2xl border border-gray-200 shadow-sm">
             {/* Header */}
@@ -104,7 +106,7 @@ const UserSidebar = () => {
                         type="button"
                         className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-rose-700 transition"
                         onClick={() => {
-                            // TODO: hook your sign-out logic here
+                            dispatch(doLogout())
                         }}
                     >
                         <LogOut className="h-4.5 w-4.5" />

@@ -149,8 +149,8 @@ const RewardStore = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 py-10">
-            <div className="max-w-6xl mx-auto px-6 space-y-8">
+        <div className="w-full bg-gray-50">
+            <div className="max-w-6xl my-10 mx-auto px-6 space-y-8">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

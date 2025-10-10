@@ -140,6 +140,11 @@ class ProductService {
                     as: "inventory",
                     attributes: ["stock", "reserved"],
                 },
+                {
+                    model: Category,
+                    as: "category",
+                    attributes: ["name","slug"]
+                }
             ],
         });
 

@@ -9,7 +9,7 @@ export default function Filter({
     return (
         <aside className="hidden lg:block bg-white sticky top-24 self-start">
             {/* Header của filter: không cuộn */}
-            <div className="px-3 py-3 border-b">Bộ lọc tìm kiếm</div>
+            <div className="px-3 py-3 border-b"><b>Bộ lọc tìm kiếm</b></div>
 
             {/* Vùng nội dung: CHỈ MỘT scroll container */}
             {/* 6rem ở dưới nên khớp với top-24 (96px) + chiều cao header filter (3.5rem ≈ 56px) */}

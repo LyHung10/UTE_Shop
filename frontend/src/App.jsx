@@ -34,6 +34,8 @@ import Users from "@/admin/pages/Manage/Users.jsx";
 import SearchPage from "./features/product/pages/SearchPage.jsx";
 import RewardStore from "@/features/user/pages/RewardStore.jsx";
 import ChangePassword from "@/features/user/pages/ChangePassword.jsx";
+import UserRoute from "@/app/guards/UserRoute.jsx";
+import AdminRoute from "@/app/guards/AdminRoute.jsx";
 function App() {
   return (
     <>
@@ -44,21 +46,23 @@ function App() {
 
           {/* Cần đăng nhập */}
           <Route element={<PrivateRoute />}>
-            <Route path="user" element={<UserLayout />}>
-              <Route index element={<UserProfile />} />
-              <Route path="my-orders" element={<OrderHistory />} />
-              <Route path="order-detail/:id" element={<OrderDetail />} />
-              <Route path="profile" element={<UserProfile />} />
-              <Route path="product-favorites" element={<FavoritesPage />} />
-              <Route path="orders/:orderId/review" element={<ReviewPage />} />
-              <Route path="gift" element={<RewardStore />} />
-              <Route path="change-password" element={<ChangePassword />} />
+            <Route element={<UserRoute />}>
+              <Route path="user" element={<UserLayout />}>
+                <Route index element={<UserProfile />} />
+                <Route path="my-orders" element={<OrderHistory />} />
+                <Route path="order-detail/:id" element={<OrderDetail />} />
+                <Route path="profile" element={<UserProfile />} />
+                <Route path="product-favorites" element={<FavoritesPage />} />
+                <Route path="orders/:orderId/review" element={<ReviewPage />} />
+                <Route path="gift" element={<RewardStore />} />
+                <Route path="change-password" element={<ChangePassword />} />
+              </Route>
+              <Route path="cart" element={<ShoppingCart />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="payment/completed" element={<PaymentCompleted />} />
+              <Route path="resetpassword" element={<ResetPassword />} />
+              <Route path="add/addresses" element={<AddAddress />} />
             </Route>
-            <Route path="cart" element={<ShoppingCart />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="payment/completed" element={<PaymentCompleted />} />
-            <Route path="resetpassword" element={<ResetPassword />} />
-            <Route path="add/addresses" element={<AddAddress />} />
           </Route>
 
           {/* Public pages */}
@@ -69,15 +73,20 @@ function App() {
         </Route>
 
         {/* ===== ADMIN LAYOUT (TÁCH RIÊNG) ===== */}
-        <Route path="/admin" element={<AppLayout />}>
-          <Route index element={<Home />} />
-          <Route path="chat" element={<ChatAdminPanel />} />
-          <Route path="notification" element={<AdminNotificationSender />} />
-          <Route path="profile" element={<AdminProfile />} />
-          <Route path="manage-orders" element={<Orders />} />
-          <Route path="manage-products" element={<Products />} />
-          <Route path="manage-customers" element={<Users />} />
+        <Route element={<PrivateRoute />}>
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AppLayout />}>
+              <Route index element={<Home />} />
+              <Route path="chat" element={<ChatAdminPanel />} />
+              <Route path="notification" element={<AdminNotificationSender />} />
+              <Route path="profile" element={<AdminProfile />} />
+              <Route path="manage-orders" element={<Orders />} />
+              <Route path="manage-products" element={<Products />} />
+              <Route path="manage-customers" element={<Users />} />
+            </Route>
+          </Route>
         </Route>
+
 
         {/* ===== AUTH (ngoài Layout) ===== */}
         <Route path="/login" element={<SignIn />} />

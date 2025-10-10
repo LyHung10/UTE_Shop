@@ -1,4 +1,4 @@
-import {updateAvatar, updateProfileService} from "../services/user.service";
+import {changePassword, updateAvatar, updateProfileService} from "../services/user.service";
 import db from "../models";
 
 export async function getProfile(req, res) {
@@ -28,6 +28,22 @@ export async function updateProfileController(req, res) {
       last_name,
       phone_number,
     });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(err.status || 400).json({
+      success: false,
+      error: err.message,
+    });
+  }
+}
+
+export async function changePasswordController(req, res) {
+  try {
+    const userId = req.user?.sub;
+    const { password, newPassword } = req.body;
+
+    const result = await changePassword(userId, password, newPassword );
 
     return res.status(200).json(result);
   } catch (err) {

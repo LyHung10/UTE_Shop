@@ -11,18 +11,21 @@ import ScrollToTop from "@/admin/components/common/ScrollToTop.jsx";
 import AuthProvider from "@/app/providers/AuthProvider.jsx";
 import {HelmetProvider} from "react-helmet-async";
 import {ThemeProvider} from "@/admin/context/ThemeContext.jsx";
+import PermissionProvider from "@/app/providers/PermissionProvider.jsx";
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
             {/*<StrictMode>*/}
                 <BrowserRouter>
                     <AuthProvider>
-                        <HelmetProvider>
-                            <ThemeProvider>
-                                <ScrollToTop />
-                                <App />
-                            </ThemeProvider>
-                        </HelmetProvider>
+                        <PermissionProvider>
+                            <HelmetProvider>
+                                <ThemeProvider>
+                                    <ScrollToTop />
+                                    <App />
+                                </ThemeProvider>
+                            </HelmetProvider>
+                        </PermissionProvider>
                     </AuthProvider>
                 </BrowserRouter>
             {/*</StrictMode>*/}

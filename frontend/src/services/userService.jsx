@@ -4,10 +4,17 @@ const getUser = () => {
     return axios.get("api/users/profile");
 }
 
-const updateProfile = async (payload) => {
-    const res = await axios.patch("api/users/profile", payload);
-    return res;
+const updateProfile =  (payload) => {
+    return  axios.patch("api/users/profile", payload);
 };
+
+const postChangePassword = (password, newPassword) => {
+    return  axios.post("api/users/change-password", {
+        password,
+        newPassword
+    });
+}
+
 
 const updateAvatar = async (file) => {
     const formData = new FormData();
@@ -18,4 +25,4 @@ const updateAvatar = async (file) => {
     return res.data;
 };
 
-export {getUser, updateAvatar, updateProfile}
+export {getUser, updateAvatar, updateProfile, postChangePassword}

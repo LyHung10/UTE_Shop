@@ -171,7 +171,7 @@ const Header = () => {
                             <Popover className="relative">
                                 <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors duration-200 rounded-lg hover:bg-white/10">
                                     <MenuIcon className="w-4 h-4" />
-                                    Danh mục sản phẩm
+                                    DANH MỤC SẢN PHẨM
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                                 </PopoverButton>
 
@@ -202,14 +202,14 @@ const Header = () => {
                                 className="px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10"
                                 whileHover={{ scale: 1.05 }}
                             >
-                                Bộ sưu tập
+                                THỜI TRANG KHÁC
                             </motion.button>
 
                             <motion.button
                                 className="px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10"
                                 whileHover={{ scale: 1.05 }}
                             >
-                                Về chúng tôi
+                                VỀ CHÚNG TÔI
                             </motion.button>
                         </nav>
                     </div>

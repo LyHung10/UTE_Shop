@@ -269,11 +269,13 @@ const ProductDetail = () => {
             <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <div className="flex items-center text-sm text-gray-600">
-                        <span className="hover:text-blue-600 transition-colors cursor-pointer">Home</span>
+                        <span className="hover:text-blue-600 transition-colors cursor-pointer"
+                              onClick={() => navigate("/")}
+                        >Home</span>
                         <span className="mx-2 text-gray-400">/</span>
-                        <span className="hover:text-blue-600 transition-colors cursor-pointer">Shop</span>
-                        <span className="mx-2 text-gray-400">/</span>
-                        <span className="hover:text-blue-600 transition-colors cursor-pointer">Electronics</span>
+                        <span className="hover:text-blue-600 transition-colors cursor-pointer"
+                              onClick={() => navigate(`/category/${product?.category?.slug}`)}
+                        >{product?.category.name}</span>
                         <span className="mx-2 text-gray-400">/</span>
                         <span className="text-orange-500 font-medium">{product?.name}</span>
                     </div>
