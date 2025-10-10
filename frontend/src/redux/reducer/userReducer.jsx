@@ -7,6 +7,7 @@ const INITIAL_STATE = {
     phone_number: null,
     gender: null,
     image: null,
+    loyalty_points: 0
 };
 
 const authReducer = (state = INITIAL_STATE, action) => {
@@ -20,6 +21,7 @@ const authReducer = (state = INITIAL_STATE, action) => {
                 phone_number: action.payload.phone_number,
                 gender: action.payload.gender,
                 image: action.payload.image,
+                loyalty_points: action.payload.loyalty_points
             };
 
         default:

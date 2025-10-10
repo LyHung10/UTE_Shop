@@ -7,7 +7,31 @@ class VoucherService {
         const voucher = await Voucher.create(voucherData);
 
         // 2. Trả về voucher vừa tạo
-        return await Voucher.findByPk(voucher.id);
+        const newVoucher =  await Voucher.findByPk(voucher.id);
+        if (newVoucher)
+        {
+            if (newVoucher.userId)
+            {
+                return {
+                    success: true,
+                    message: "Đổi voucher thành công"
+                }
+            }
+            else
+            {
+                return {
+                    success: true,
+                    message: "Tạo voucher thành công"
+                }
+            }
+        }
+        else
+        {
+            return {
+                success: false,
+                message: "Tạo voucher thất bại"
+            }
+        }
     }
 
     async validateVoucher(voucherCode, orderTotal, transaction) {

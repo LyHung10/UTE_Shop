@@ -3,6 +3,7 @@ import express from 'express';
 import OrderController from '../controllers/orderController';
 import userController from '../controllers/adminController.js';
 import { authenticateToken, authAdmin } from '../middleware/auth.js';
+import voucherController from "../controllers/voucherController";
 
 const router = express.Router();
 
@@ -19,7 +20,7 @@ router.use(authAdmin);
 
 // Lấy user by ID
 router.get('/:id', userController.getUserById);
-
+router.post('/add', voucherController.addVoucher);
 // Lấy thống kê users
 router.get('/stats/summary', userController.getUserStats);
 

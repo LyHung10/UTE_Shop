@@ -32,6 +32,7 @@ import Orders from "@/admin/pages/Manage/Orders.jsx";
 import Products from "@/admin/pages/Manage/Products.jsx";
 import Users from "@/admin/pages/Manage/Users.jsx";
 import SearchPage from "./features/product/pages/SearchPage.jsx";
+import RewardStore from "@/features/user/pages/RewardStore.jsx";
 function App() {
   return (
     <>
@@ -49,6 +50,7 @@ function App() {
               <Route path="profile" element={<UserProfile />} />
               <Route path="product-favorites" element={<FavoritesPage />} />
               <Route path="orders/:orderId/review" element={<ReviewPage />} />
+              <Route path="gift" element={<RewardStore />} />
             </Route>
             <Route path="cart" element={<ShoppingCart />} />
             <Route path="checkout" element={<CheckoutPage />} />

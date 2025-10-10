@@ -23,7 +23,7 @@ export async function getProfile(req, res) {
     const userId = req.user.sub; // lấy ID từ accessToken
 
     const user = await db.User.findByPk(userId, {
-      attributes: ["id", "first_name", "last_name", "email", "phone_number", "gender", "image"] // chỉ trả những field cần thiết
+      attributes: ["id", "first_name", "last_name", "email", "phone_number", "gender", "image","loyalty_points"] // chỉ trả những field cần thiết
     });
 
     if (!user) return res.status(404).json({ message: "User not found" });

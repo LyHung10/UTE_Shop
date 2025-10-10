@@ -13,6 +13,8 @@ import {
   getTopDiscountProducts,
 } from "@/services/productService.jsx"
 import { useEffect, useState } from "react"
+import {fetchUser} from "@/redux/action/userAction.jsx";
+import {useDispatch} from "react-redux";
 
 export default function HomePage() {
   const [listTopNewestProducts, setListTopNewestProducts] = useState([])
@@ -41,7 +43,9 @@ export default function HomePage() {
     fetchTopMostViewedProducts()
     fetchListBestSellingProducts()
   }
+  const dispatch = useDispatch();
   useEffect(() => {
+    dispatch(fetchUser());
     loadData()
   }, [])
   return (

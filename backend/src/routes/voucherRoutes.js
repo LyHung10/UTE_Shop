@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.use(authenticateToken);
 // POST /api/vouchers
-router.post("/add", voucherController.addVoucher);
+router.post("/gift", voucherController.addUserVoucher);
 router.get("/my", voucherController.getUserVouchers);
 
 export default router;
