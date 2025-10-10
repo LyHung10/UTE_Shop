@@ -12,6 +12,7 @@ import {
     ShieldCheck,
     LogOut, Gift,
 } from "lucide-react";
+import {useSelector} from "react-redux";
 
 const sections = [
     {
@@ -31,21 +32,28 @@ const sections = [
     {
         title: "Bảo mật",
         items: [
-            { label: "Đổi mật khẩu", to: "/user/security", icon: ShieldCheck },
+            { label: "Đổi mật khẩu", to: "/user/change-password", icon: ShieldCheck },
         ],
     },
 ];
 
 const UserSidebar = () => {
+    const user = useSelector((state) => state.user);
     return (
         <aside className="hidden lg:block bg-white rounded-2xl border border-gray-200 shadow-sm">
             {/* Header */}
             <div className="px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500" />
+                    <div className="relative h-10 w-10 rounded-full p-[2px] bg-gradient-to-br from-indigo-500 to-fuchsia-500">
+                        <img
+                            src={user?.image}
+                            alt="Avatar"
+                            className="h-full w-full rounded-full object-cover"
+                        />
+                    </div>
                     <div>
                         <p className="text-sm text-gray-500">Xin chào,</p>
-                        <p className="text-sm font-semibold text-gray-900">User</p>
+                        <p className="text-sm font-semibold text-gray-900">{user.first_name}</p>
                     </div>
                 </div>
             </div>

@@ -1,22 +1,5 @@
-import { updateUserService } from "../services/user.service";
+import {updateAvatar, updateProfileService} from "../services/user.service";
 import db from "../models";
-
-export async function updateUser(req, res) {
-  try {
-    // Lấy userId trực tiếp từ payload token
-    const userId = req.user.sub; // chú ý phải đúng key khi sign token
-
-    // Gọi service để update
-    const updatedUser = await updateUserService(userId, req.body);
-
-    res.json({
-      message: "User updated successfully",
-      user: updatedUser
-    });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-}
 
 export async function getProfile(req, res) {
   try {
@@ -32,6 +15,37 @@ export async function getProfile(req, res) {
   } catch (err) {
     console.error("GetProfile error:", err);
     res.status(500).json({ message: err.message });
+  }
+}
+
+export async function updateProfileController(req, res) {
+  try {
+    const userId = req.user?.sub;
+    const { first_name, last_name, phone_number } = req.body;
+
+    const result = await updateProfileService(userId, {
+      first_name,
+      last_name,
+      phone_number,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(err.status || 400).json({
+      success: false,
+      error: err.message,
+    });
+  }
+}
+
+export async function uploadUserAvatar(req, res) {
+  try {
+    const userId = req.user?.sub;
+    const updated = await updateAvatar(userId, req.file);
+    return res.json(updated);
+  } catch (err) {
+    console.error("uploadUserAvatar error:", err);
+    return res.status(err.status || 500).json({ message: err.message || "Upload error" });
   }
 }
 

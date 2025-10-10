@@ -139,8 +139,8 @@ export default function SignUpForm() {
     }
 
     // Nếu hợp lệ, gọi API
-    const { email, password } = form;
-    const data = await postSignup(email, password);
+    const { email, password, fname, lname  } = form;
+    const data = await postSignup(email, password, fname, lname );
 
     if (data && data.message === "Đã gửi OTP tới email") {
       dispatch(authOTP({ email }));

@@ -6,10 +6,12 @@ const postLogin = (email, password) => {
         password: password
     });
 }
-const postSignup = (email, password) => {
+const postSignup = (email, password, first_name, last_name) => {
     return axios.post("api/auth/register", {
-        email: email,
-        password: password
+        email,
+        password,
+        first_name,
+        last_name,
     });
 }
 const postAuthOtp = (email, otp) => {

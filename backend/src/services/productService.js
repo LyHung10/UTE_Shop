@@ -252,8 +252,6 @@ class ProductService {
         });
     }
 
-
-
     async getSimilarProducts(productId, limit = 12) {
         const id = Number(productId);
         if (!Number.isFinite(id)) return [];
