@@ -17,5 +17,4 @@ router.put("/upload-image", parser.single("avatar"), uploadUserAvatar);
 router.patch("/profile", updateProfileController);
 router.post("/change-password", changePasswordController);
 router.get("/profile", getProfile);
-router.post('/reset-password', authController.resetPassword);
 export default router;

@@ -21,6 +21,7 @@ const addGiftVoucher = async (voucherData) => {
         start_date: voucherData.start_date ?? new Date(),
         end_date: voucherData.end_date ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: voucherData.status ?? "active",
+        points: voucherData.points
     });
 }
 export {getUserVouchers, addGiftVoucher}

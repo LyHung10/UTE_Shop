@@ -60,7 +60,6 @@ function App() {
               <Route path="cart" element={<ShoppingCart />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="payment/completed" element={<PaymentCompleted />} />
-              <Route path="resetpassword" element={<ResetPassword />} />
               <Route path="add/addresses" element={<AddAddress />} />
             </Route>
           </Route>
@@ -92,6 +91,7 @@ function App() {
         <Route path="/login" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<AuthOtp />} />
+        <Route path="resetpassword" element={<ResetPassword />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

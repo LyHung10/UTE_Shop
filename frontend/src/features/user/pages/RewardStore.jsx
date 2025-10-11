@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Gift, TicketPercent, Loader2, Star } from "lucide-react";
-import { useSelector } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import { toast } from "react-toastify";
 import {addGiftVoucher} from "@/services/voucherService.jsx";
+import {fetchUser} from "@/redux/action/userAction.jsx";
 
 const GIFT_VOUCHERS = [
     {
@@ -108,6 +109,7 @@ const GIFT_VOUCHERS = [
 
 const RewardStore = () => {
     const user = useSelector((state) => state.user);
+    const dispatch = useDispatch();
     const [loadingSlug, setLoadingSlug] = useState(null);
     const userPoints = user?.loyalty_points; // ví dụ người dùng có 600 điểm
     const handleRedeem = async (voucher) => {
@@ -128,6 +130,7 @@ const RewardStore = () => {
             min_order_value: voucher.min_order_value,
             status: "active",
             image: voucher.image,
+            point: voucher.points_required
         };
 
         try {
@@ -147,7 +150,9 @@ const RewardStore = () => {
             setLoadingSlug(null);
         }
     };
-
+    useEffect(() => {
+        dispatch(fetchUser());
+    }, []);
     return (
         <div className="w-full bg-gray-50">
             <div className="max-w-6xl my-10 mx-auto px-6 space-y-8">

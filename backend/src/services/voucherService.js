@@ -1,6 +1,3 @@
-import {Voucher} from "../models/index.js";
-import { Sequelize } from "sequelize"; // ✅ thêm dòng này
-
 class VoucherService {
     async createVoucher(voucherData) {
         // 1. Tạo voucher
@@ -157,6 +154,75 @@ class VoucherService {
             },
             data,
         };
+    }
+
+    async redeemVoucherForUser({ userId, voucherPayload, points = 10000 }) {
+        if (!voucherPayload?.slug) {
+            throw Object.assign(new Error('Thiếu slug voucher'), { statusCode: 400 });
+        }
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+        return await sequelize.transaction(async (t) => {
+            // 1) Không cho đổi cùng 1 voucher (slug) lặp trong cùng tháng
+            const existingVoucher = await Voucher.findOne({
+                where: {
+                    slug: voucherPayload.slug,
+                    user_id: userId,
+                    created_at: { [Op.between]: [startOfMonth, endOfMonth] },
+                },
+                transaction: t,
+                lock: t.LOCK.UPDATE, // tránh race condition
+            });
+
+            if (existingVoucher) {
+                throw Object.assign(
+                    new Error('Bạn đã đổi voucher này trong tháng này rồi. Hãy thử lại vào tháng sau!'),
+                    { statusCode: 400 }
+                );
+            }
+
+            // 2) Trừ điểm loyal_point (nếu có yêu cầu trừ)
+            let user = await User.findByPk(userId, { transaction: t, lock: t.LOCK.UPDATE });
+            if (!user) {
+                throw Object.assign(new Error('Không tìm thấy người dùng'), { statusCode: 404 });
+            }
+
+            const spend = Number(points ?? 0);
+            if (spend < 0) {
+                throw Object.assign(new Error('Giá trị điểm không hợp lệ'), { statusCode: 400 });
+            }
+
+            if (spend > 0) {
+                const currentPoints = Number(user.loyal_point ?? 0);
+                if (currentPoints < spend) {
+                    throw Object.assign(new Error('Điểm tích lũy không đủ để đổi voucher'), { statusCode: 400 });
+                }
+                user.loyal_point = currentPoints - spend;
+                await user.save({ transaction: t });
+            }
+
+            // 3) Tạo voucher cho user
+            const voucherData = {
+                ...voucherPayload,
+                user_id: userId,
+            };
+
+            const voucher = await Voucher.create(voucherData, { transaction: t });
+
+            // Tuỳ ý: trả về user.loyal_point mới để FE update ngay
+            return {
+                success: true,
+                message: 'Đổi voucher thành công',
+                data: {
+                    voucher,
+                    user: { id: user.id, loyal_point: user.loyal_point },
+                    spent_points: spend,
+                },
+            };
+        });
     }
 }
 

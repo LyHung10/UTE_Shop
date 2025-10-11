@@ -57,7 +57,6 @@ const ShoppingCart = () => {
             calculateShippingFee(selectedAddress.id);
             handleVoucher();
         }
-
     }, [shippingFee, selectedAddress, couponCode]);
 
     const fetchAddresses = async () => {
@@ -131,7 +130,6 @@ const ShoppingCart = () => {
         });
     };
 
-    const subtotal = Number(cart?.total ?? 0);
     const subtotal = cart.items?.reduce((sum, item) => {
         const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
         const priceToUse = flashSaleInfo?.isActive
@@ -420,7 +418,7 @@ const ShoppingCart = () => {
                                                     <button
                                                         onClick={() => {
                                                             handleUpdateItem(item.id, Math.max(1, item.qty - 1))
-                                                            setCouponCode('');
+                                                            handleVoucher();
                                                         }}
                                                         className="w-8 h-8 rounded-xl bg-white hover:bg-gray-200 flex items-center justify-center text-gray-700 transition-all shadow-sm"
                                                     >
@@ -432,7 +430,7 @@ const ShoppingCart = () => {
                                                     <button
                                                         onClick={() => {
                                                             handleUpdateItem(item.id, Math.max(1, item.qty + 1))
-                                                            setCouponCode('')
+                                                            handleVoucher();
                                                         }}
                                                         className="w-8 h-8 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 flex items-center justify-center text-white transition-all shadow-md"
                                                     >
@@ -499,7 +497,7 @@ const ShoppingCart = () => {
                                 {cart.discount > 0 && (
                                     <div className="flex justify-between text-green-600 bg-green-50 p-3 rounded-xl">
                                         <span className="font-medium">Giảm giá</span>
-                                        <span className="font-bold">-{cart.discount.toLocaleString()}đ</span>
+                                        <span className="font-bold">-{Math.floor(cart.discount).toLocaleString()}đ</span>
                                     </div>
                                 )}
 
@@ -552,7 +550,7 @@ const ShoppingCart = () => {
                             <div className="mb-6">
                                 <label className="block text-sm font-semibold text-gray-900 mb-3">Mã giảm giá</label>
                                 <VoucherSelector setCouponCode={setCouponCode}
-                                    couponCode={couponCode}
+                                    couponCode={cart.appliedVoucher}
                                     statusVoucher={statusVoucher}
                                 />
                             </div>

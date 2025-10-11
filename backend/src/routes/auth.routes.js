@@ -12,6 +12,7 @@ router.post('/verify-otp', authController.verifyOtp);
 router.post('/login', authController.login);
 // Quên mật khẩu
 router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 
 router.post('/refresh', authController.refreshToken);
 

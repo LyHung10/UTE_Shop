@@ -39,7 +39,6 @@ export default function OrderDetail() {
         const shipping_fee = Number(o?.shipping_fee ?? 0);
 
         // “discount” phía server là tiền giảm do voucher đã tính
-        const voucher_discount = Number(o?.discount ?? 0);
         const discount = 0; // giữ field discount cho UI cũ (nếu sau này có các giảm giá khác)
 
         return {
@@ -54,17 +53,11 @@ export default function OrderDetail() {
             receiver_phone: addrDetail?.phone_order || null,
             shipping_address: addrText || null,
 
-            // phí/giảm
-            shipping_fee,
-            discount,                // giữ field cũ
-            voucher_discount,        // hiển thị “Voucher từ shop”
-            voucher_id: o?.voucher_id ?? null,
+            discount: o.discount,
 
-            // thanh toán
             payment_method: o?.payment_method || null,
             payment_status: o?.payment_status || null,
 
-            // items
             items
         };
     };
@@ -108,16 +101,14 @@ export default function OrderDetail() {
     const discount = Number(data.discount || 0);
 
     // voucher từ shop = order.discount của server
-    const voucher = Number(data.voucher_discount || 0);
 
     // tổng tiền: ưu tiên server; nếu thiếu thì tự tính
-    const computedGrand = (subtotal + shipping - discount - voucher);
+    const computedGrand = (subtotal + shipping - discount );
     const grandTotal = Number.isFinite(Number(data.total_amount))
         ? Number(data.total_amount)
         : computedGrand;
-
-    // flag để luôn hiển thị voucher nếu có voucher_id dù giá trị = 0
-    const shouldShowVoucherLine = (data.voucher_id != null) || voucher > 0;
+    console.log(grandTotal,tax,discount,subtotal);
+    console.log(data)
 
     return (
         <div className="flex flex-col gap-4">
@@ -249,25 +240,16 @@ export default function OrderDetail() {
                     <div className="flex items-center justify-between">
                         <span className="text-gray-600">Phí vận chuyển</span>
                         <span className="font-medium text-gray-900">
-                            {formatPrice(grandTotal - tax - discount - subtotal)}
+                            {formatPrice(grandTotal - tax + discount - subtotal)}
+
                         </span>
                     </div>
 
                     {discount > 0 && (
                         <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Giảm giá</span>
-                            <span className="font-medium text-emerald-700">
-                                - {formatPrice(discount)}
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Luôn hiển thị “Voucher từ shop” khi có voucher_id, kể cả số tiền 0 */}
-                    {shouldShowVoucherLine && (
-                        <div className="flex items-center justify-between">
                             <span className="text-gray-600">Voucher</span>
                             <span className="font-medium text-emerald-700">
-                                - {formatPrice(voucher)}
+                                - {formatPrice(discount)}
                             </span>
                         </div>
                     )}
