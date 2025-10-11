@@ -365,8 +365,14 @@ const Header = () => {
                             </motion.button>
                         ) : (
                             <Menu as="div" className="relative">
-                                <Menu.Button className="flex items-center gap-2 p-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-200">
-                                    <User className="w-5 h-5" />
+                                <Menu.Button className="flex items-center gap-2 p-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-200">
+                                    <div className="relative h-10 w-10">
+                                        <img
+                                            src={user?.image}
+                                            alt="Avatar"
+                                            className="h-full w-full rounded-full object-cover"
+                                        />
+                                    </div>
                                 </Menu.Button>
 
                                 <Menu.Items className="absolute right-0 mt-2 w-64 glass rounded-xl shadow-2xl border border-blue-500/20 overflow-hidden">

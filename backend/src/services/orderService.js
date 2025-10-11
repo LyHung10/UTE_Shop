@@ -1154,5 +1154,27 @@ class OrderService {
             };
         });
     }
+
+    static async updateQuantity(userId, itemId, qty) {
+        if (!itemId || qty < 1) throw new Error('Invalid itemId or quantity');
+
+        // Cập nhật qty
+        const orderItem = await OrderItem.findOne({
+            where: { id: itemId },
+            include: [
+                { model: Order, where: { user_id: userId, status: 'pending' } }
+            ]
+        });
+
+        if (!orderItem) throw new Error('Cart item not found');
+
+        orderItem.qty = qty;
+        await orderItem.save();
+
+        // Lấy lại toàn bộ cart với Product + images + tính tiền
+        const cart = await OrderService.getCart(userId);
+
+        return cart;
+    }
 }
 export default OrderService;

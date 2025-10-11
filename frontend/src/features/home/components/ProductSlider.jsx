@@ -162,22 +162,6 @@ const ProductSlider = ({ listProducts, nameTop, slidesPerViewDesktop = 4, showFl
             )}
           </Swiper>
         </div>
-
-        <motion.div
-          className="text-center mt-12"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          <Button
-            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl animate-glow"
-            onClick={() => navigate("/products")}
-            type="button"
-          >
-            Xem tất cả sản phẩm
-          </Button>
-        </motion.div>
       </div>
     </section>
   );

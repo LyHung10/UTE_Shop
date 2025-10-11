@@ -133,7 +133,7 @@ const ShoppingCart = () => {
         });
     };
 
-    const subtotal = Number(cart?.finalTotal ?? 0);
+    const subtotal = Number(cart?.total ?? 0);
     const discount = Number(cart?.discount ?? 0);
     const fee = Number(shippingFee ?? 0);
     const tax = subtotal > 0 ? 40000 : 0;
