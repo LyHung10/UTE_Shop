@@ -1,3 +1,8 @@
+import { Op } from "sequelize";
+import {Voucher, User} from "../models/index.js";
+import {sequelize} from "../config/configdb";
+
+
 class VoucherService {
     async createVoucher(voucherData) {
         // 1. Tạo voucher
@@ -196,11 +201,12 @@ class VoucherService {
             }
 
             if (spend > 0) {
-                const currentPoints = Number(user.loyal_point ?? 0);
+                const currentPoints = Number(user.loyalty_points ?? 0);
+                console.log(currentPoints,"Restastf");
                 if (currentPoints < spend) {
                     throw Object.assign(new Error('Điểm tích lũy không đủ để đổi voucher'), { statusCode: 400 });
                 }
-                user.loyal_point = currentPoints - spend;
+                user.loyalty_points = currentPoints - spend;
                 await user.save({ transaction: t });
             }
 
@@ -216,11 +222,6 @@ class VoucherService {
             return {
                 success: true,
                 message: 'Đổi voucher thành công',
-                data: {
-                    voucher,
-                    user: { id: user.id, loyal_point: user.loyal_point },
-                    spent_points: spend,
-                },
             };
         });
     }

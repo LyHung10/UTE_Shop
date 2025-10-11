@@ -1,6 +1,4 @@
 import voucherService from "../services/voucherService";
-import {Voucher} from "../models/index.js";
-import { Op } from "sequelize";
 
 class VoucherController {
     async addVoucher(req, res) {

@@ -138,6 +138,7 @@ const RewardStore = () => {
             if (res.success)
             {
                 toast.success(`🎉 Đổi thành công voucher ${voucher.slug}!`);
+                dispatch(fetchUser());
             }
             else
             {
@@ -150,9 +151,6 @@ const RewardStore = () => {
             setLoadingSlug(null);
         }
     };
-    useEffect(() => {
-        dispatch(fetchUser());
-    }, []);
     return (
         <div className="w-full bg-gray-50">
             <div className="max-w-6xl my-10 mx-auto px-6 space-y-8">
