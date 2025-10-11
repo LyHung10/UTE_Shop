@@ -29,7 +29,7 @@ const ShoppingCart = () => {
     const [couponCode, setCouponCode] = useState("");
     const [favorites, setFavorites] = useState(new Set());
     const { getProductFlashSaleInfo } = useFlashSale();
-    const [statusVoucher , setStatusVoucher] = useState(true);
+    const [statusVoucher, setStatusVoucher] = useState(true);
 
     useEffect(() => {
         fetchAddresses();
@@ -44,18 +44,16 @@ const ShoppingCart = () => {
     }, []);
 
     const handleVoucher = async () => {
-        const  res = await dispatch(fetchCart(couponCode, selectedAddress?.id, shippingFee));
-        if (!res.success)
-        {
+        const res = await dispatch(fetchCart(couponCode, selectedAddress?.id, shippingFee));
+        if (!res.success) {
             toast.info(res.message);
             setStatusVoucher(false);
         }
         else setStatusVoucher(true);
     }
 
-    useEffect( () => {
-        if (selectedAddress)
-        {
+    useEffect(() => {
+        if (selectedAddress) {
             calculateShippingFee(selectedAddress.id);
             handleVoucher();
         }
@@ -134,6 +132,14 @@ const ShoppingCart = () => {
     };
 
     const subtotal = Number(cart?.total ?? 0);
+    const subtotal = cart.items?.reduce((sum, item) => {
+        const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+        const priceToUse = flashSaleInfo?.isActive
+            ? Number(flashSaleInfo.flashProduct.flash_price)
+            : Number(item.price);
+        return sum + priceToUse * item.qty;
+    }, 0) ?? 0;
+
     const discount = Number(cart?.discount ?? 0);
     const fee = Number(shippingFee ?? 0);
     const tax = subtotal > 0 ? 40000 : 0;
@@ -501,26 +507,26 @@ const ShoppingCart = () => {
                                     const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
                                     return flashSaleInfo?.isActive;
                                 }) && (
-                                    <div className="flex justify-between text-orange-600 bg-orange-50 p-3 rounded-xl border border-orange-200">
-                                        <span className="font-medium flex items-center gap-2">
-                                            <Zap className="w-4 h-4" />
-                                            Tiết kiệm Flash Sale
-                                        </span>
-                                        <span className="font-bold">
-                                            -{(() => {
-                                                let totalFlashSaving = 0;
-                                                cart.items?.forEach(item => {
-                                                    const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
-                                                    if (flashSaleInfo?.isActive) {
-                                                        const saving = (flashSaleInfo.flashProduct.original_price - flashSaleInfo.flashProduct.flash_price) * item.qty;
-                                                        totalFlashSaving += saving;
-                                                    }
-                                                });
-                                                return totalFlashSaving.toLocaleString();
-                                            })()}đ
-                                        </span>
-                                    </div>
-                                )}
+                                        <div className="flex justify-between text-orange-600 bg-orange-50 p-3 rounded-xl border border-orange-200">
+                                            <span className="font-medium flex items-center gap-2">
+                                                <Zap className="w-4 h-4" />
+                                                Tiết kiệm Flash Sale
+                                            </span>
+                                            <span className="font-bold">
+                                                -{(() => {
+                                                    let totalFlashSaving = 0;
+                                                    cart.items?.forEach(item => {
+                                                        const flashSaleInfo = getProductFlashSaleInfo(item.Product?.id);
+                                                        if (flashSaleInfo?.isActive) {
+                                                            const saving = (flashSaleInfo.flashProduct.original_price - flashSaleInfo.flashProduct.flash_price) * item.qty;
+                                                            totalFlashSaving += saving;
+                                                        }
+                                                    });
+                                                    return totalFlashSaving.toLocaleString();
+                                                })()}đ
+                                            </span>
+                                        </div>
+                                    )}
 
                                 <div className="border-t-2 border-gray-200 pt-4">
                                     <div className="flex justify-between items-center">
@@ -546,8 +552,8 @@ const ShoppingCart = () => {
                             <div className="mb-6">
                                 <label className="block text-sm font-semibold text-gray-900 mb-3">Mã giảm giá</label>
                                 <VoucherSelector setCouponCode={setCouponCode}
-                                                 couponCode = {couponCode}
-                                                 statusVoucher= {statusVoucher}
+                                    couponCode={couponCode}
+                                    statusVoucher={statusVoucher}
                                 />
                             </div>
 
