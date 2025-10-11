@@ -66,6 +66,7 @@ class ProductController {
         original_price: req.body.original_price,
         discount_percent: req.body.discount_percent,
         is_active: req.body.is_active,
+        try_on: req.body.try_on,
         featured: req.body.featured,
         category_id: req.body.category_id,
       };
