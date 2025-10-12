@@ -15,8 +15,10 @@ import {
 import { useEffect, useState } from "react"
 import {fetchUser} from "@/redux/action/userAction.jsx";
 import {useDispatch} from "react-redux";
+import {useNavigate} from "react-router-dom";
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const [listTopNewestProducts, setListTopNewestProducts] = useState([])
   const [listTopDiscountProducts, setListTopDiscountProducts] = useState([])
   const [listTopMostViewedProducts, setListTopMostViewedProducts] = useState([])
@@ -100,14 +102,16 @@ export default function HomePage() {
                   <div className="flex items-center">
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     Shop Now
+                    <ArrowRight className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
                   </div>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={()=>  navigate("/category/all")}
                   className="border-2 border-blue-300 text-blue-700 hover:bg-blue-50 px-7 py-5 rounded-xl text-base font-semibold transition-all hover:scale-105 min-h-12"
                 >
-                  View Collections
+                  All Products
                 </Button>
               </div>
 

@@ -21,6 +21,31 @@ class ProductController {
     }
   }
 
+  async getDistinctSizesAndColors(req, res, next) {
+    try {
+      // Ưu tiên đọc slug từ params nếu có (ví dụ: /categories/:slug/filters)
+      // Hoặc từ query (?categorySlug=...)
+      const { slug } = req.params;
+      const { categorySlug: qsSlug, onlyActive = "true" } = req.query;
+
+      const opts = {
+        categorySlug: qsSlug ?? slug ?? null,
+        // "false" (string) => false, còn lại true
+        onlyActive: String(onlyActive).toLowerCase() !== "false",
+      };
+
+      const { sizes, colors } = await productService.getDistinctSizesAndColors(opts);
+
+      res.json({
+        success: true,
+        sizes,
+        colors,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getTopDiscount(req, res, next) {
     try {
       const products = await productService.getTopDiscount();
@@ -133,10 +158,41 @@ class ProductController {
       // sort: 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
       const sort = typeof req.query.sort === "string" ? req.query.sort : undefined;
 
+      // ====== NEW: price filters ======
+      // Hỗ trợ:
+      // - ?priceMin=100000&priceMax=300000
+      // - ?priceRange=0-200000&priceRange=300000-500000 (nhiều khoảng)
+      // - hoặc ?priceRange=0-200000,300000-500000 (dạng CSV)
+      const toNumberOrUndef = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : undefined;
+      };
+
+      const priceMin = toNumberOrUndef(req.query.priceMin);
+      const priceMax = toNumberOrUndef(req.query.priceMax);
+
+      // priceRange có thể là string đơn, CSV, hoặc mảng nhiều giá trị
+      const rawPriceRange = req.query.priceRange;
+      let priceRange;
+      if (Array.isArray(rawPriceRange)) {
+        priceRange = rawPriceRange.filter(Boolean).map((s) => s.trim()).filter(Boolean);
+        if (!priceRange.length) priceRange = undefined;
+      } else if (typeof rawPriceRange === "string" && rawPriceRange.trim()) {
+        const arr = rawPriceRange
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        priceRange = arr.length > 1 ? arr : arr[0]; // service chấp nhận string hoặc array
+      }
+      // ====== END price filters ======
+
       const data = await productService.getProductsByCategorySlug(slug, page, limit, {
         sizes,
         colors,
         sort,
+        ...(priceMin !== undefined ? { priceMin } : {}),
+        ...(priceMax !== undefined ? { priceMax } : {}),
+        ...(priceRange !== undefined ? { priceRange } : {}),
       });
 
       return res.json({

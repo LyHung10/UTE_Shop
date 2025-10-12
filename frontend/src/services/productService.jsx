@@ -27,18 +27,25 @@ const getProductById = (id) => {
 const getProductsByCategorySlug = (
     category,      // slug danh mục
     page = 1,      // trang hiện tại
-    params = {}    // { sizes, colors, sort, limit }
+    params = {}    // { sizes, colors, sort, limit, priceMin, priceMax, priceRange }
 ) => {
-    const { sizes, colors, sort } = params;
+    const { sizes, colors, sort, priceMin, priceMax, priceRange } = params;
 
-    // chuẩn hóa tham số, vì backend chấp nhận dạng "M,L" hoặc mảng
+    // Chuẩn hoá vì backend chấp nhận "M,L" hoặc mảng
     const toCSV = (v) => Array.isArray(v) ? v.join(",") : v;
+
+    // priceRange: có thể truyền string "min-max" hoặc mảng ["min-max","min-max"]
+    // -> giữ nguyên: nếu là array để axios serialize thành nhiều param; nếu string thì gửi string.
+    const has = (v) => v !== undefined && v !== null && v !== "";
 
     return axios.get(`/api/products/${category}/${page}`, {
         params: {
             sizes: toCSV(sizes),
             colors: toCSV(colors),
             sort,
+            ...(has(priceMin)  ? { priceMin: Number(priceMin) } : {}),
+            ...(has(priceMax)  ? { priceMax: Number(priceMax) } : {}),
+            ...(has(priceRange) ? { priceRange } : {}), // string hoặc array đều OK với controller
         },
     });
 };
@@ -47,7 +54,17 @@ const getSimilarProducts = (productId) => {
     return axios.get(`api/products/${productId}/similar`);
 };
 
+const getDistinctSizesAndColors = (opts = {}) => {
+    const { categorySlug, onlyActive } = opts; // onlyActive mặc định backend = true
+    return axios.get("api/products/filters", {
+        params: {
+            ...(categorySlug ? { categorySlug } : {}),
+            ...(onlyActive !== undefined ? { onlyActive } : {}),
+        },
+    });
+};
+
 export {
     getTopDiscount, getNewestProducts, getTopDiscountProducts, getMostViewedProducts, getBestSellingProducts,
-    getProductById, getProductsByCategorySlug, getSimilarProducts
+    getProductById, getProductsByCategorySlug, getSimilarProducts, getDistinctSizesAndColors
 };

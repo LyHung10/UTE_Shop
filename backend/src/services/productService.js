@@ -349,7 +349,7 @@ class ProductService {
         slug,
         page = 1,
         limit = 20,
-        opts = {} // { sizes, colors, sort }
+        opts = {} // { sizes, colors, sort, priceMin, priceMax, priceRange }
     ) {
         const offset = (page - 1) * limit;
 
@@ -370,16 +370,12 @@ class ProductService {
 
         // SIZES: mảng JSON các chuỗi
         if (sizesArr?.length) {
-            // Ưu tiên JSON_OVERLAPS (MySQL 8.0.17+)
-            // CAST('[...]' AS JSON) để so sánh array với array
+            // JSON_OVERLAPS(sizes, ['S','M']) — nếu không khả dụng sẽ fallback OR JSON_CONTAINS phía dưới
             andConds.push(
-                // JSON_OVERLAPS(sizes, ['S','M']) = 1
-                // fallback dưới sẽ xử lý nếu môi trường không hỗ trợ OVERLAPS
                 fn(
                     "IF",
                     fn(
                         "COALESCE",
-                        // thử gọi JSON_OVERLAPS, nếu không có sẽ trả NULL
                         fn(
                             "JSON_OVERLAPS",
                             col("sizes"),
@@ -392,32 +388,78 @@ class ProductService {
                 )
             );
 
-            // Fallback an toàn (vẫn hoạt động nếu OVERLAPS không khả dụng):
-            // (JSON_CONTAINS(sizes, '"S"') OR JSON_CONTAINS(sizes, '"M"') ...)
+            // Fallback: (JSON_CONTAINS(sizes, '"S"') OR JSON_CONTAINS(sizes, '"M"') ...)
             const sizeOr = {
-                [Op.or]: sizesArr.map((s) =>
-                    // JSON_CONTAINS(array, '"value"') => 1 nếu mảng chứa giá trị
-                    // Sequelize.where(fn('JSON_CONTAINS', col('sizes'), '"M"'), 1)
-                    // (dùng JSON.stringify để có chuỗi kèm dấu ngoặc kép đúng)
-                    // Lưu ý: JSON_CONTAINS trả 1/0 nên so sánh = 1
-                    ({ [Op.and]: [literal(`JSON_CONTAINS(sizes, ${JSON.stringify(JSON.stringify(s))}) = 1`)] })
-                ),
+                [Op.or]: sizesArr.map((s) => ({
+                    [Op.and]: [
+                        literal(`JSON_CONTAINS(sizes, ${JSON.stringify(JSON.stringify(s))}) = 1`)
+                    ]
+                })),
             };
             andConds.push(sizeOr);
         }
 
         // COLORS: mảng JSON các object { name, class }
         if (colorsArr?.length) {
-            // Tìm theo name: JSON_SEARCH(colors, 'one', 'Red', NULL, '$[*].name') IS NOT NULL
+            // JSON_SEARCH(colors, 'one', 'Red', NULL, '$[*].name') IS NOT NULL
             const colorOr = {
-                [Op.or]: colorsArr.map((c) =>
-                    // Sequelize.where(fn('JSON_SEARCH', col('colors'), 'one', c, null, '$[*].name'), { [Op.ne]: null })
-                    // Dùng literal cho gọn:
-                    ({ [Op.and]: [literal(`JSON_SEARCH(colors, 'one', ${JSON.stringify(c)}, NULL, '$[*].name') IS NOT NULL`)] })
-                ),
+                [Op.or]: colorsArr.map((c) => ({
+                    [Op.and]: [
+                        literal(`JSON_SEARCH(colors, 'one', ${JSON.stringify(c)}, NULL, '$[*].name') IS NOT NULL`)
+                    ]
+                })),
             };
             andConds.push(colorOr);
         }
+
+        // ==== [A.3] PRICE FILTER (trên field `price`) ====
+        const sanitizeNumber = (v) => {
+            const n = Number(v);
+            return Number.isFinite(n) && n >= 0 ? n : null;
+        };
+
+        // Hỗ trợ:
+        // - opts.priceMin / opts.priceMax (số)
+        // - opts.priceRange: "min-max" hoặc ["min-max", "min-max", ...]
+        let priceCond = null;
+
+        if (opts?.priceRange) {
+            const toRanges = (val) => Array.isArray(val) ? val : [val];
+            const ranges = toRanges(opts.priceRange)
+                .map((r) => {
+                    if (typeof r !== "string") return null;
+                    const [a, b] = r.split("-").map((x) => sanitizeNumber(x?.trim()));
+                    if (a === null && b === null) return null;
+                    // Chuẩn hóa min/max
+                    let min = a ?? 0;
+                    let max = b ?? Number.MAX_SAFE_INTEGER;
+                    if (min > max) [min, max] = [max, min];
+                    return { min, max };
+                })
+                .filter(Boolean);
+
+            if (ranges.length) {
+                // (price BETWEEN min AND max) OR ...
+                priceCond = {
+                    [Op.or]: ranges.map(({ min, max }) => ({
+                        price: { [Op.between]: [min, max] }
+                    })),
+                };
+            }
+        } else if (opts?.priceMin != null || opts?.priceMax != null) {
+            let min = sanitizeNumber(opts.priceMin);
+            let max = sanitizeNumber(opts.priceMax);
+            if (!(min === null && max === null)) {
+                if (min === null) min = 0;
+                if (max === null) max = Number.MAX_SAFE_INTEGER;
+                if (min > max) [min, max] = [max, min];
+                priceCond = { price: { [Op.between]: [min, max] } };
+            }
+        }
+
+        if (priceCond) andConds.push(priceCond);
+
+        // ==== END PRICE FILTER ====
 
         const productWhere = andConds.length ? { [Op.and]: andConds } : {};
 
@@ -434,22 +476,25 @@ class ProductService {
             case "newest":
                 order = [["created_at", "DESC"]];
                 break;
-            case "rating":
-                useRatingGroup = true; // <== BỔ SUNG để sort theo rating thực sự chạy
-                break;
-            case "popularity":
             default:
                 order = [["sale_count", "DESC"]];
                 break;
         }
 
+        const categoryInclude = {
+            model: Category,
+            as: "category",
+            attributes: ["id", "name", "slug"],
+        };
+
+// Chỉ filter khi slug có giá trị thực sự và KHÔNG phải 'all'
+        if (slug && slug !== "all") {
+            categoryInclude.where = { slug };
+            categoryInclude.required = true; // inner join khi lọc theo danh mục
+        }
+
         const baseIncludes = [
-            {
-                model: Category,
-                as: "category",
-                attributes: ["id", "name", "slug"],
-                where: { slug },
-            },
+            categoryInclude,
             {
                 model: ProductImage,
                 as: "images",
@@ -517,6 +562,88 @@ class ProductService {
             },
         };
     }
+
+    async getDistinctSizesAndColors(opts = {}) {
+        const { categorySlug = null, onlyActive = true } = opts;
+
+        const where = {};
+        if (onlyActive) where.is_active = true;
+
+        const include = [];
+        if (categorySlug && categorySlug !== "all") {
+            include.push({
+                model: Category,
+                as: "category",
+                attributes: ["id", "name", "slug"],
+                where: { slug: categorySlug },
+            });
+        }
+
+        // Chỉ lấy 2 field cần thiết để nhẹ query
+        const rows = await Product.findAll({
+            where,
+            include,
+            attributes: ["sizes", "colors"],
+            raw: true,
+        });
+
+        // Helpers
+        const parseMaybeJSON = (v) => {
+            if (v == null) return null;
+            if (typeof v === "string") {
+                try { return JSON.parse(v); } catch { return null; }
+            }
+            return v; // đã là JSON
+        };
+
+        // Thu thập & khử trùng lặp
+        const sizeSet = new Set();
+        const colorMap = new Map(); // key: `${name}|${cls}` (lowercase) → value: {name, class}
+
+        for (const r of rows) {
+            const sizes = parseMaybeJSON(r.sizes) ?? r.sizes;
+            if (Array.isArray(sizes)) {
+                for (const s of sizes) {
+                    if (typeof s === "string") {
+                        const key = s.trim();
+                        if (key) sizeSet.add(key);
+                    }
+                }
+            }
+
+            const colors = parseMaybeJSON(r.colors) ?? r.colors;
+            if (Array.isArray(colors)) {
+                for (let c of colors) {
+                    if (!c) continue;
+                    if (typeof c === "string") {
+                        try { c = JSON.parse(c); } catch { continue; }
+                    }
+                    const name = (c.name ?? "").trim();
+                    const cls  = (c.class ?? c.className ?? "").trim();
+                    if (!name) continue;
+                    const k = `${name}|${cls}`.toLowerCase();
+                    if (!colorMap.has(k)) colorMap.set(k, { name, class: cls });
+                }
+            }
+        }
+
+        // Sắp xếp đẹp mắt
+        const preferredSizeOrder = ["XXS","XS","S","M","L","XL","2XL","3XL","4XL","One Size"];
+        const sizes = [...sizeSet].sort((a, b) => {
+            const ia = preferredSizeOrder.indexOf(a);
+            const ib = preferredSizeOrder.indexOf(b);
+            if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            // nếu không thuộc order ưu tiên → sort chữ cái/ số tự nhiên
+            return a.localeCompare(b, "vi", { numeric: true, sensitivity: "base" });
+        });
+
+        const colors = [...colorMap.values()].sort((a, b) =>
+            a.name.localeCompare(b.name, "vi", { sensitivity: "base" })
+        );
+
+        return { sizes, colors };
+    }
+
 }
 
 export default new ProductService();

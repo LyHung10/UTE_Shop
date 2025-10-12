@@ -200,12 +200,19 @@ class OrderService {
             // === Tính discount nếu có voucher ===
             let discount = 0;
             if (order.voucher_id) {
-                const v = await Voucher.findByPk(order.voucher_id);
-                if (v) {
-                    const result = await voucherService.validateVoucher(v.slug, subtotal);
-                    if (result?.valid) discount = Number(result.discount || 0);
+                const voucher = await Voucher.findByPk(order.voucher_id);
+                if (voucher) {
+                    if (voucher.discount_type === 'percent') {
+                        discount = (subtotal * voucher.discount_value) / 100;
+                        if (voucher.max_discount && discount > voucher.max_discount) {
+                            discount = voucher.max_discount;
+                        }
+                    } else if (voucher.discount_type === 'fixed') {
+                        discount = voucher.discount_value;
+                    }
                 }
             }
+            console.log(discount);
 
             // === Format danh sách sản phẩm ===
             const mappedItems = items.map((it) => {

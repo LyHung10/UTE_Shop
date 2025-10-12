@@ -3,32 +3,62 @@ import Sort from "@/features/product/components/Sort.jsx";
 import Filter from "@/features/product/components/Filter.jsx";
 import ListProducts from "@/features/product/components/ListProducts.jsx";
 import {useParams} from "react-router-dom";
-import {getProductsByCategorySlug} from "@/services/productService.jsx";
+import {getDistinctSizesAndColors, getProductsByCategorySlug} from "@/services/productService.jsx";
 import {Pagination} from "antd";
 const ProductCategories = () => {
-    const { category} = useParams();
+    const { category } = useParams();
 
-    // NEW: parent quản lý filters & sort
-    const [selectedColors, setSelectedColors] = useState([]);   // ví dụ: ["Blue","Red"]
-    const [selectedSizes, setSelectedSizes] = useState([]);     // ví dụ: ["M","L"]
-    const [sortKey, setSortKey] = useState("");                 // "popularity" | "rating" | "newest" | "price_asc" | "price_desc"
+    const [selectedColors, setSelectedColors] = useState([]);
+    const [selectedSizes, setSelectedSizes] = useState([]);
+    const [sortKey, setSortKey] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+
+    // NEW: state giá
+    const [priceMin, setPriceMin] = useState(0);
+    const [priceMax, setPriceMax] = useState(5000000);
+
+    const [sizeOptions, setSizeOptions] = useState([]);   // ["S","M","L",...]
+    const [colorOptions, setColorOptions] = useState([]); // ["Red","Blue",...]
 
     const [listCategoryProducts, setListCategoryProducts] = useState([]);
     const [categoryName, setCategoryName] = useState("");
 
-    const [pagination,setPagination] = useState({
-            totalItems: 0,
-            totalPages: 0,
-            pageSize: 0,
+    const [pagination, setPagination] = useState({
+        totalItems: 0,
+        totalPages: 0,
+        pageSize: 0,
+    });
+
+    const fetchFilters = async () => {
+        try {
+            // backend: GET /api/products/filters?categorySlug={category}
+            const res = await getDistinctSizesAndColors({ categorySlug: category });
+            // controller trả: { success: true, sizes, colors }
+            const sizes = res?.sizes ?? [];
+            const colorsRaw = res?.colors ?? []; // [{name, class}, ...]
+
+            // Map color object -> just names & dedupe (vì FilterType đang nhận list string)
+            const colorNames = [...new Set(colorsRaw.map((c) => c?.name).filter(Boolean))];
+
+            setSizeOptions(sizes);
+            setColorOptions(colorNames);
+
+            // Nếu lựa chọn hiện tại không còn trong options mới → loại bỏ
+            setSelectedSizes((prev) => prev.filter((s) => sizes.includes(s)));
+            setSelectedColors((prev) => prev.filter((c) => colorNames.includes(c)));
+        } catch (e) {
+            console.error("Fetch filters error:", e);
+            setSizeOptions([]);
+            setColorOptions([]);
         }
-    );
+    };
+
 
     const toggleColor = (color) => {
         setSelectedColors(prev =>
             prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
         );
-        setCurrentPage(1); // đổi filter -> về trang 1
+        setCurrentPage(1);
     };
 
     const toggleSize = (size) => {
@@ -43,17 +73,28 @@ const ProductCategories = () => {
         setCurrentPage(1);
     };
 
+    // NEW: thay đổi giá
+    const handlePriceChange = ({ min, max }) => {
+        setPriceMin(min);
+        setPriceMax(max);
+        setCurrentPage(1);
+    };
+
     const fetchListCategoryProducts = async () => {
-        // NEW: truyền filters & sort vào query
         const res = await getProductsByCategorySlug(category, currentPage, {
             sizes: selectedSizes,
             colors: selectedColors,
             sort: sortKey,
+
+            // NEW:
+            priceMin,
+            priceMax,
         });
 
         setListCategoryProducts(res.data.products);
         if (res?.data?.products.length > 0) {
-            setCategoryName(res?.data?.products[0].category.name);
+            if (category==="all") setCategoryName("Tất cả sản phẩm");
+            else setCategoryName(res?.data?.products[0].category.name);
         }
         setPagination({
             totalItems: res.data.pagination.totalItems,
@@ -63,8 +104,14 @@ const ProductCategories = () => {
     };
 
     useEffect(() => {
+        fetchFilters();
+        // reset trang về 1 khi đổi danh mục
+        setCurrentPage(1);
+    }, [category]);
+
+    useEffect(() => {
         fetchListCategoryProducts();
-    }, [currentPage, category, selectedColors, selectedSizes, sortKey]);
+    }, [currentPage, category, selectedColors, selectedSizes, sortKey, priceMin, priceMax]); // NEW: deps giá
 
     return (
         <>
@@ -79,10 +126,18 @@ const ProductCategories = () => {
                         <h2 id="products-heading" className="sr-only">Products</h2>
                         <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-5 items-start">
                             <Filter
+
+                                colorOptions={colorOptions}
+                                sizeOptions={sizeOptions}
+
                                 selectedColors={selectedColors}
                                 onToggleColor={toggleColor}
                                 selectedSizes={selectedSizes}
                                 onToggleSize={toggleSize}
+
+                                priceMin={priceMin}
+                                priceMax={priceMax}
+                                onPriceChange={handlePriceChange}
                             />
                             <div className="lg:col-span-4 flex flex-col gap-6">
                                 <ListProducts listProducts={listCategoryProducts} />
@@ -120,6 +175,6 @@ const ProductCategories = () => {
                 </main>
             </div>
         </>
-    )
-}
-export default  ProductCategories
+    );
+};
+export default ProductCategories;
