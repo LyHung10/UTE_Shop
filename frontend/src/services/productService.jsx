@@ -43,8 +43,8 @@ const getProductsByCategorySlug = (
             sizes: toCSV(sizes),
             colors: toCSV(colors),
             sort,
-            ...(has(priceMin)  ? { priceMin: Number(priceMin) } : {}),
-            ...(has(priceMax)  ? { priceMax: Number(priceMax) } : {}),
+            ...(has(priceMin) ? { priceMin: Number(priceMin) } : {}),
+            ...(has(priceMax) ? { priceMax: Number(priceMax) } : {}),
             ...(has(priceRange) ? { priceRange } : {}), // string hoặc array đều OK với controller
         },
     });
@@ -67,7 +67,8 @@ const getAllProducts = (page = 1, limit = 100) => {
     return axios.get("api/products", {
         params: { page, limit }
     });
-}export {
+}
+export {
     getTopDiscount, getNewestProducts, getTopDiscountProducts, getMostViewedProducts, getBestSellingProducts,
-    getProductById, getProductsByCategorySlug, getSimilarProducts, getDistinctSizesAndColors,getAllProducts
+    getProductById, getProductsByCategorySlug, getSimilarProducts, getDistinctSizesAndColors, getAllProducts
 };
