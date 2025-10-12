@@ -98,7 +98,7 @@ class VoucherService {
         // WHERE: chỉ public (user_id IS NULL) hoặc của chính user
         const baseScope = "(user_id IS NULL OR user_id = :userId)";
         const activeClause = onlyActive
-            ? " AND status = 'active' AND start_date <= NOW() AND end_date >= NOW()"
+            ? " AND status = 'active' AND start_date <= NOW() AND end_date >= NOW() AND usage_limit > 0"
             : "";
         const whereSql = `${baseScope}${activeClause}`;
 

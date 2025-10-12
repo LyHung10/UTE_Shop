@@ -8,6 +8,8 @@ router.post("/add", parser.array('images', 5), productController.addProduct);
 
 // 1. 8 sản phẩm được xem nhiều nhất
 router.get("/most-viewed", productController.getMostViewed);
+router.get("/filters", productController.getDistinctSizesAndColors);
+
 
 // 2. 4 sản phẩm khuyến mãi cao nhất
 router.get("/top-discount", productController.getTopDiscount);

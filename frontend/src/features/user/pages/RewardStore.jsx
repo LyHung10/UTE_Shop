@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import { Gift, TicketPercent, Loader2, Star } from "lucide-react";
 import {useDispatch, useSelector} from "react-redux";
 import { toast } from "react-toastify";
@@ -109,11 +109,20 @@ const GIFT_VOUCHERS = [
 
 const RewardStore = () => {
     const user = useSelector((state) => state.user);
+    const authStatus = useSelector((state) => state.authStatus);
     const dispatch = useDispatch();
     const [loadingSlug, setLoadingSlug] = useState(null);
-    const userPoints = user?.loyalty_points; // ví dụ người dùng có 600 điểm
+
     const handleRedeem = async (voucher) => {
-        if (userPoints < voucher.points_required) {
+        const now = new Date();
+        const user_slug =
+            voucher.slug +
+            authStatus.id +
+            now.getDate().toString().padStart(2, '0') +
+            (now.getMonth() + 1).toString().padStart(2, '0') +
+            now.getFullYear().toString().slice(-2);
+
+        if (user?.loyalty_points < voucher.points_required) {
             toast.warning("Bạn chưa đủ điểm để đổi voucher này!");
             return;
         }
@@ -122,7 +131,7 @@ const RewardStore = () => {
 
         const payload = {
             name: voucher.name,
-            slug: voucher.slug,
+            slug: user_slug,
             description: voucher.description,
             discount_type: voucher.discount_type,
             discount_value: voucher.discount_value,
@@ -137,7 +146,7 @@ const RewardStore = () => {
             const res = await addGiftVoucher(payload);
             if (res.success)
             {
-                toast.success(`🎉 Đổi thành công voucher ${voucher.slug}!`);
+                toast.success(`🎉 Đổi thành công voucher`);
                 dispatch(fetchUser());
             }
             else
@@ -169,7 +178,7 @@ const RewardStore = () => {
                         <div className="text-sm text-gray-600">Điểm hiện tại</div>
                         <div className="text-2xl font-bold text-indigo-600 flex items-center justify-end gap-1">
                             <Star className="w-5 h-5 text-amber-400" />
-                            {userPoints} điểm
+                            {user?.loyalty_points} điểm
                         </div>
                     </div>
                 </div>
@@ -177,7 +186,7 @@ const RewardStore = () => {
                 {/* Grid vouchers */}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {GIFT_VOUCHERS.map((v) => {
-                        const canRedeem = userPoints >= v.points_required;
+                        const canRedeem = user?.loyalty_points >= v.points_required;
                         const loading = loadingSlug === v.slug;
 
                         return (
