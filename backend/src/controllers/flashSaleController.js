@@ -1,5 +1,5 @@
 // controllers/flashSaleController.js
-const { FlashSale, FlashSaleProduct, Product, ProductImage, Inventory, Review, sequelize } = require('../models');
+const { FlashSale, FlashSaleProduct, Product, ProductImage, Inventory, Review, sequelize, Category } = require('../models');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 
@@ -7,7 +7,7 @@ class FlashSaleController {
     // Lấy flash sale hiện tại và sắp tới
     static async getCurrentFlashSales(req, res) {
         try {
-            const now = moment().tz('Asia/Ho_Chi_Minh').toDate(); // Sử dụng timezone VN
+            const now = moment().tz('Asia/Ho_Chi_Minh').toDate();
 
             const flashSales = await FlashSale.findAll({
                 where: {
@@ -33,7 +33,23 @@ class FlashSaleController {
                         model: FlashSaleProduct,
                         as: 'flash_sale_products',
                         where: { is_active: true },
-                        required: false
+                        required: false,
+                        // 🎯 BỎ ORDER Ở ĐÂY VÌ SEQUELIZE KHÔNG ÁP DỤNG TỐT
+                        include: [
+                            {
+                                model: Product,
+                                as: 'product',
+                                attributes: ['id', 'name', 'description', 'slug'],
+                                include: [
+                                    {
+                                        model: ProductImage,
+                                        as: 'images',
+                                        attributes: ['id', 'url', 'alt', 'sort_order'],
+                                        required: false
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ]
             });
@@ -51,10 +67,54 @@ class FlashSaleController {
                     status = 'ended';
                 }
 
-                return {
+                // 🎯 SẮP XẾP THỦ CÔNG FLASH SALE PRODUCTS THEO sort_order
+                const sortedFlashSaleProducts = flashSale.flash_sale_products
+                    ?.slice() // Tạo bản copy để không ảnh hưởng đến original array
+                    .sort((a, b) => {
+                        // Ưu tiên sort_order trước
+                        if (a.sort_order !== b.sort_order) {
+                            return a.sort_order - b.sort_order;
+                        }
+                        // Nếu sort_order bằng nhau, sắp xếp theo thời gian tạo
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    }) || [];
+
+                // Transform data để gửi về client
+                const transformedFlashSale = {
                     ...flashSale.toJSON(),
-                    calculatedStatus: status // Thêm status tính toán
+                    calculatedStatus: status,
+                    // 🎯 DÙNG MẢNG ĐÃ SẮP XẾP
+                    products: sortedFlashSaleProducts.map(product => {
+                        // Sắp xếp ảnh sản phẩm theo sort_order
+                        const sortedProductImages = product.product?.images
+                            ?.slice()
+                            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) || [];
+
+                        const primaryImage = sortedProductImages[0];
+
+                        return {
+                            // Thông tin từ flash_sale_products
+                            id: product.id,
+                            product_id: product.product_id,
+                            flash_price: product.flash_price,
+                            original_price: product.original_price,
+                            stock_flash_sale: product.stock_flash_sale,
+                            limit_per_user: product.limit_per_user,
+                            sort_order: product.sort_order,
+
+                            // Thông tin từ product
+                            product_name: product.product?.name,
+                            product_description: product.product?.description,
+                            product_slug: product.product?.slug,
+
+                            // Lấy ảnh từ product
+                            product_image: primaryImage?.url || null,
+                            product_image_alt: primaryImage?.alt || product.product?.name
+                        };
+                    })
                 };
+
+                return transformedFlashSale;
             });
 
             return res.json({
@@ -402,6 +462,7 @@ class FlashSaleController {
     }
 
     // API cho admin - Thêm sản phẩm vào flash sale
+    // controllers/flashSaleController.js - Sửa hàm addProductToFlashSale
     static async addProductToFlashSale(req, res) {
         const transaction = await sequelize.transaction();
         try {
@@ -416,6 +477,79 @@ class FlashSaleController {
                 });
             }
 
+            const productIds = products.map(p => p.product_id);
+
+            // 🎯 KIỂM TRA TRÙNG SẢN PHẨM TRONG FLASH SALE
+            const existingProducts = await FlashSaleProduct.findAll({
+                where: {
+                    flash_sale_id: id,
+                    product_id: productIds
+                },
+                attributes: ['product_id'],
+                raw: true
+            });
+
+            const existingProductIds = existingProducts.map(p => p.product_id);
+            const duplicateIds = productIds.filter(id => existingProductIds.includes(id));
+
+            if (duplicateIds.length > 0) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Sản phẩm đã tồn tại trong flash sale: ${duplicateIds.join(', ')}`,
+                    duplicate_ids: duplicateIds
+                });
+            }
+
+            // 🎯 KIỂM TRA SỐ LƯỢNG TỒN KHO THỰC TẾ
+            const inventories = await Inventory.findAll({
+                where: { product_id: productIds },
+                attributes: ['product_id', 'stock', 'reserved'],
+                raw: true
+            });
+
+            const stockErrors = [];
+            for (const product of products) {
+                const inventory = inventories.find(inv => inv.product_id === product.product_id);
+                if (!inventory) {
+                    stockErrors.push(`Sản phẩm ${product.product_id} không tồn tại trong kho`);
+                    continue;
+                }
+
+                const availableStock = inventory.stock - inventory.reserved;
+                if (product.stock_flash_sale > availableStock) {
+                    stockErrors.push(`Sản phẩm ${product.product_id}: Số lượng flash sale (${product.stock_flash_sale}) vượt quá tồn kho khả dụng (${availableStock})`);
+                }
+            }
+
+            if (stockErrors.length > 0) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'Lỗi kiểm tra tồn kho',
+                    errors: stockErrors
+                });
+            }
+
+            // KIỂM TRA SẢN PHẨM CÓ TỒN TẠI
+            const existingProductCheck = await Product.findAll({
+                where: { id: productIds, is_active: true },
+                attributes: ['id'],
+                raw: true
+            });
+
+            const existingValidIds = existingProductCheck.map(p => p.id);
+            const invalidIds = productIds.filter(id => !existingValidIds.includes(id));
+
+            if (invalidIds.length > 0) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Không tìm thấy sản phẩm hoặc sản phẩm không active: ${invalidIds.join(', ')}`,
+                    invalid_ids: invalidIds
+                });
+            }
+
             const flashSaleProducts = products.map(product => ({
                 flash_sale_id: parseInt(id),
                 product_id: product.product_id,
@@ -426,16 +560,13 @@ class FlashSaleController {
                 sort_order: product.sort_order || 0
             }));
 
-            await FlashSaleProduct.bulkCreate(flashSaleProducts, {
-                transaction,
-                updateOnDuplicate: ['flash_price', 'original_price', 'stock_flash_sale', 'limit_per_user', 'sort_order', 'updated_at']
-            });
-
+            await FlashSaleProduct.bulkCreate(flashSaleProducts, { transaction });
             await transaction.commit();
 
             return res.json({
                 success: true,
-                message: 'Thêm sản phẩm vào flash sale thành công'
+                message: 'Thêm sản phẩm vào flash sale thành công',
+                added_count: products.length
             });
         } catch (error) {
             await transaction.rollback();
@@ -447,7 +578,45 @@ class FlashSaleController {
             });
         }
     }
+    // API cho admin - Xóa flash sale
+    static async deleteFlashSale(req, res) {
+        const transaction = await sequelize.transaction();
+        try {
+            const { id } = req.params;
 
+            const flashSale = await FlashSale.findByPk(id);
+            if (!flashSale) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy flash sale'
+                });
+            }
+
+            // Xóa các sản phẩm trong flash sale trước
+            await FlashSaleProduct.destroy({
+                where: { flash_sale_id: id },
+                transaction
+            });
+
+            // Xóa flash sale
+            await flashSale.destroy({ transaction });
+
+            await transaction.commit();
+
+            return res.json({
+                success: true,
+                message: 'Xóa flash sale thành công'
+            });
+        } catch (error) {
+            await transaction.rollback();
+            console.error('[deleteFlashSale] error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi server',
+                error: error.message
+            });
+        }
+    }
     // Service: Cập nhật trạng thái flash sale tự động
     static async updateFlashSaleStatus() {
         try {
@@ -479,6 +648,128 @@ class FlashSaleController {
             console.log('✅ Đã cập nhật trạng thái flash sale');
         } catch (error) {
             console.error('❌ Lỗi cập nhật trạng thái flash sale:', error);
+        }
+    }
+
+    static async searchProducts(req, res) {
+        try {
+            const { q: searchTerm, limit = 20 } = req.query;
+
+            if (!searchTerm || searchTerm.trim() === '') {
+                return res.json({
+                    success: true,
+                    data: []
+                });
+            }
+
+            // Build where condition - CHỈ TÌM THEO NAME VÀ ID
+            const whereCondition = {
+                is_active: true
+            };
+
+            // Kiểm tra nếu searchTerm là số (tìm theo ID)
+            const searchTermAsNumber = parseInt(searchTerm);
+            if (!isNaN(searchTermAsNumber)) {
+                // Tìm theo ID
+                whereCondition.id = searchTermAsNumber;
+            } else {
+                // Tìm theo tên
+                whereCondition.name = {
+                    [Op.like]: `%${searchTerm}%`
+                };
+            }
+
+            // Tìm kiếm sản phẩm
+            const products = await Product.findAll({
+                where: whereCondition,
+                include: [
+                    {
+                        model: ProductImage,
+                        as: 'images',
+                        attributes: ['id', 'url', 'alt', 'sort_order'],
+                        required: false
+                    },
+                    {
+                        model: Inventory,
+                        as: 'inventory',
+                        attributes: ['stock', 'reserved'],
+                        required: false
+                    },
+                    {
+                        model: Category,
+                        as: 'category',
+                        attributes: ['id', 'name'],
+                        required: false
+                    }
+                ],
+                attributes: [
+                    'id',
+                    'name',
+                    'price',
+                    'description',
+                    'slug',
+                    'is_active',
+                    'featured',
+                    'view_count',
+                    'sale_count'
+                ],
+                order: [
+                    ['name', 'ASC']
+                ],
+                limit: parseInt(limit)
+            });
+
+            // Transform data
+            const transformedProducts = products.map(product => {
+                const productJSON = product.toJSON();
+
+                // Lấy ảnh chính (sắp xếp theo sort_order)
+                const sortedImages = productJSON.images?.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                const primaryImage = sortedImages?.[0];
+
+                return {
+                    id: productJSON.id,
+                    name: productJSON.name,
+                    price: productJSON.price,
+                    description: productJSON.description,
+                    slug: productJSON.slug,
+
+                    // Thông tin ảnh
+                    images: productJSON.images,
+                    image: primaryImage?.url || null,
+                    image_alt: primaryImage?.alt || productJSON.name,
+
+                    // Thông tin inventory
+                    stock: productJSON.inventory?.stock || 0,
+                    reserved: productJSON.inventory?.reserved || 0,
+                    available_stock: (productJSON.inventory?.stock || 0) - (productJSON.inventory?.reserved || 0),
+
+                    // Thông tin category
+                    category: productJSON.category,
+
+                    // Thông tin khác từ product
+                    is_active: productJSON.is_active,
+                    featured: productJSON.featured,
+                    view_count: productJSON.view_count,
+                    sale_count: productJSON.sale_count,
+
+                    // Trạng thái tồn kho
+                    in_stock: (productJSON.inventory?.stock || 0) > 0
+                };
+            });
+
+            return res.json({
+                success: true,
+                data: transformedProducts
+            });
+
+        } catch (error) {
+            console.error('[searchProducts] error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi server khi tìm kiếm sản phẩm',
+                error: error.message
+            });
         }
     }
 }

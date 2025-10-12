@@ -47,7 +47,12 @@ const getSimilarProducts = (productId) => {
     return axios.get(`api/products/${productId}/similar`);
 };
 
+const getAllProducts = (page = 1, limit = 100) => {
+    return axios.get("api/products", {
+        params: { page, limit }
+    });
+}
 export {
     getTopDiscount, getNewestProducts, getTopDiscountProducts, getMostViewedProducts, getBestSellingProducts,
-    getProductById, getProductsByCategorySlug, getSimilarProducts
+    getProductById, getProductsByCategorySlug, getSimilarProducts, getAllProducts
 };

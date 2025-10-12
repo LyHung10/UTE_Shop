@@ -36,6 +36,9 @@ import RewardStore from "@/features/user/pages/RewardStore.jsx";
 import ChangePassword from "@/features/user/pages/ChangePassword.jsx";
 import UserRoute from "@/app/guards/UserRoute.jsx";
 import AdminRoute from "@/app/guards/AdminRoute.jsx";
+import FlashSale from "./admin/pages/Manage/FlashSale.jsx";
+import CreateFlashSale from "./admin/pages/Manage/CreateFlashSale.jsx";
+import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx";
 function App() {
   return (
     <>
@@ -82,6 +85,9 @@ function App() {
               <Route path="manage-orders" element={<Orders />} />
               <Route path="manage-products" element={<Products />} />
               <Route path="manage-customers" element={<Users />} />
+              <Route path="manage-flashsales" element={<FlashSale />} />
+              <Route path="manage-flashsales/create" element={<CreateFlashSale />} />
+              <Route path="manage-flashsales/:id/products" element={<AddFlashSaleProducts />} />
             </Route>
           </Route>
         </Route>
@@ -102,6 +108,7 @@ function App() {
         autoClose={1500}
         theme="light"
         transition={Bounce}
+        style={{ zIndex: 99999 }}
       />
     </>
   );

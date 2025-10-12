@@ -13,6 +13,7 @@ import {
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
 import {BoxIcon, Package, User2Icon} from "lucide-react";
+import { Zap, Flame, TrendingUp, Clock, Bolt } from "lucide-react";
 
 
 const navItems = [
@@ -50,6 +51,11 @@ const othersItems = [
     path: "/admin/manage-customers",
   },
   {
+    icon: <Flame />,
+    name: "Flash Sales",
+    path: "/admin/manage-flashsales",
+  },
+  {
     icon: <Package/>,
     name: "Orders",
     path: "/admin/manage-orders",
@@ -59,6 +65,7 @@ const othersItems = [
     name: "Products",
     path: "/admin/manage-products",
   },
+  
 ];
 
 const AppSidebar = () => {
