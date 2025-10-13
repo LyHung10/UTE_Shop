@@ -254,6 +254,25 @@ class OrderController {
                 return res.status(500).json({success: false, message: 'Unexpected error'});
             }
 
+
+            return res.status(200).json(result);
+        } catch (err) {
+            console.error('[cancelOrder] error:', err);
+            return res.status(500).json({
+                success: false,
+                message: err.message || 'Internal Server Error',
+            });
+        }
+    }
+
+    static async cancelAdminOrder(req, res) {
+        try {
+            const {orderId} = req.body;
+            const result = await OrderService.cancelAdminOrder(orderId);
+            if (!result) {
+                return res.status(500).json({success: false, message: 'Unexpected error'});
+            }
+
             if (result.success === false) {
                 const msg = (result.message || '').toLowerCase();
                 const notFound = msg.includes('không tìm thấy');

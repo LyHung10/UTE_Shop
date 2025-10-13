@@ -39,6 +39,8 @@ import AdminRoute from "@/app/guards/AdminRoute.jsx";
 import FlashSale from "./admin/pages/Manage/FlashSale.jsx";
 import CreateFlashSale from "./admin/pages/Manage/CreateFlashSale.jsx";
 import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx";
+import Categories from "@/admin/pages/Manage/Categories.jsx";
+import Vouchers from "@/admin/pages/Manage/Vouchers.jsx";
 function App() {
   return (
     <>
@@ -83,6 +85,8 @@ function App() {
               <Route path="notification" element={<AdminNotificationSender />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="manage-orders" element={<Orders />} />
+              <Route path="manage-vouchers" element={<Vouchers />} />
+              <Route path="manage-categories" element={<Categories />} />
               <Route path="manage-products" element={<Products />} />
               <Route path="manage-customers" element={<Users />} />
               <Route path="manage-flashsales" element={<FlashSale />} />

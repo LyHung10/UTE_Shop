@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { message, Modal } from "antd";
 import {
     getAdminDetailOrder,
-    getAllOrders, putConfirmCODPayment,
+    getAllOrders, postCancelAdminOrder, putConfirmCODPayment,
     putConfirmOrder, putShippingOrder,
     // putChangeOrderStatus, // nếu bạn có API đổi trạng thái
     // deleteOrder,          // nếu bạn có API xoá
@@ -89,9 +89,9 @@ const Orders = () => {
     // Handler: xoá đơn
     const handleCancel = async (record) => {
         try {
-            // await deleteOrder(record.orderId);
-            message.success("Đã xoá đơn hàng (demo)");
-            // Sau khi xoá gọi lại fetch
+            const res = await postCancelAdminOrder(record.orderId);
+            if (res.success === true) toast.success(res.message);
+            if (res.success === false) toast.info(res.message);
             fetchData();
         } catch (e) {
             console.error(e);

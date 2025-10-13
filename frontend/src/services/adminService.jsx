@@ -24,8 +24,13 @@ const getAdminDetailOrder = (orderId) => {
     return axios.get(`api/admin/order/${orderId}/detail`);
 };
 
+const postCancelAdminOrder = (orderId) => {
+    return axios.post(`api/admin/order/cancel-order`,{orderId});
+};
+
 export {
-    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmCODPayment, getAdminDetailOrder
+    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmCODPayment, getAdminDetailOrder,
+    postCancelAdminOrder
 };
 
 // Flash Sale

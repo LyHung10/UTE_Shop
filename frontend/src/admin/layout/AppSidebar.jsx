@@ -12,7 +12,7 @@ import {
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
-import {BoxIcon, Package, User2Icon} from "lucide-react";
+import {BoxIcon, Package, User2Icon, FolderTree, TicketPercent} from "lucide-react";
 import { Zap, Flame, TrendingUp, Clock, Bolt } from "lucide-react";
 
 
@@ -31,16 +31,6 @@ const navItems = [
     icon: <PaperPlaneIcon/>,
     name: "Notifications",
     path: "/admin/notification",
-  },
-  {
-    icon: <UserCircleIcon/>,
-    name: "User Profile",
-    path: "/admin/profile",
-  },
-  {
-    icon: <CalenderIcon/>,
-    name: "Calendar",
-    path: "/calendar",
   },
 ];
 
@@ -61,11 +51,20 @@ const othersItems = [
     path: "/admin/manage-orders",
   },
   {
+    icon: <FolderTree/>,
+    name: "Categories",
+    path: "/admin/manage-categories",
+  },
+  {
     icon: <BoxIcon/>,
     name: "Products",
     path: "/admin/manage-products",
   },
-  
+  {
+    icon: <TicketPercent/>,
+    name: "Vouchers",
+    path: "/admin/manage-vouchers",
+  },
 ];
 
 const AppSidebar = () => {

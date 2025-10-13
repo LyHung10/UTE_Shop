@@ -14,6 +14,7 @@ router.get('/users', userController.getUsers);
 router.use(authenticateToken);
 router.use(authAdmin);
 router.put('/confirm-order', OrderController.confirmOrder);
+router.post('/order/cancel-order', OrderController.cancelAdminOrder);
 router.get('/order/:orderId/detail',OrderController.getAdminDetailOrder);
 router.put('/shipping-order', OrderController.confirmShippingOrder);
 router.get('/orders', OrderController.getAllOrders);

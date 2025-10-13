@@ -8,7 +8,7 @@ const getUserVouchers = (page = 1) => {
     });
 };
 
-const addGiftVoucher = async (voucherData) => {
+const addGiftVoucher =  (voucherData) => {
     return axios.post("api/vouchers/gift", {
         name: voucherData.name,
         slug: voucherData.slug,
@@ -24,4 +24,24 @@ const addGiftVoucher = async (voucherData) => {
         points: voucherData.points
     });
 }
-export {getUserVouchers, addGiftVoucher}
+
+ const getListVouchers = (params) => {
+    // hỗ trợ query phân trang/tìm kiếm nếu cần
+    return axios.get("/api/vouchers", { params });
+};
+
+ const postCreateVoucher = (data) => {
+    return axios.post("/api/vouchers", data);
+};
+
+ const putUpdateVoucher = (id, data) => {
+    return axios.put(`/api/vouchers/${id}`, data);
+};
+
+ const deleteVoucher = (id) => {
+    return axios.delete(`/api/vouchers/${id}`);
+};
+
+export {getUserVouchers, addGiftVoucher, getListVouchers, putUpdateVoucher,postCreateVoucher,
+        deleteVoucher,
+}

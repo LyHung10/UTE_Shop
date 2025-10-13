@@ -4,7 +4,7 @@ const { Order, OrderItem, Product, ProductImage, Inventory, Payment, User, Vouch
 import paymentService from './paymentService.js';
 import voucherService from "./voucherService";
 import esult, { implodeEntry } from "nodemailer-express-handlebars/.yarn/releases/yarn-1.22.22";
-import Op from "sequelize";
+import { Op } from "sequelize";
 class OrderService {
     static async getUserOrders(userId, options = {}) {
         const {
@@ -16,8 +16,13 @@ class OrderService {
             sort = '-created_at'
         } = options;
 
-        const where = { user_id: userId };
-        if (status) where.status = status;
+        const where = {
+            user_id: userId,
+            ...(status
+                    ? { status }
+                    : { status: { [Op.ne]: 'PENDING' } }
+            )
+        };
 
         if (from || to) {
             where.created_at = {};
@@ -1001,6 +1006,9 @@ class OrderService {
 
     static async getAllOrders() {
         const orders = await Order.findAll({
+            where: {
+                status: { [Op.ne]: 'PENDING' } // Loại bỏ đơn hàng PENDING
+            },
             include: [
                 {
                     model: User,
@@ -1130,6 +1138,74 @@ class OrderService {
             }
 
             // 5) Hoàn tác voucher usage nếu có
+            if (order.voucher_id) {
+                const v = await Voucher.findByPk(order.voucher_id, {
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+                if (v) {
+                    v.usage_limit = (Number(v.usage_limit) || 0) + 1;
+                    v.used_count = Math.max((Number(v.used_count) || 0) - 1, 0);
+                    await v.save({ transaction: t });
+                }
+            }
+
+            const payment = order.Payment;
+            if (payment) {
+                const method = payment.method
+                const pstatus = payment.status
+
+                if (method === "COD" && pstatus.toUpperCase() === "PENDING") {
+                    payment.status = "CANCELLED";
+                    await payment.save({ transaction: t });
+                } else if (method === "VNPAY" && pstatus === "PAID") {
+                    payment.status = "REFUND_PENDING";
+                    await payment.save({ transaction: t });
+                }
+            }
+            order.status = "CANCELLED";
+            await order.save({ transaction: t });
+
+            return {
+                success: true,
+                message: `Đã hủy đơn hàng #${order.id} thành công.`,
+            };
+        });
+    }
+
+    static async cancelAdminOrder(orderId) {
+        return await Order.sequelize.transaction(async (t) => {
+            // 1) Tìm order thuộc user và khóa ghi
+            const order = await Order.findOne({
+                where: { id: orderId },
+                include: [
+                    { model: OrderItem, include: [Product] },
+                    { model: Payment }
+                ],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+            console.log(order.status);
+            if (order.status !== "NEW" && order.status !== "PACKING") {
+                return { success: false, message: "Chỉ có thể hủy đơn hàng mới tạo hoặc đang được đóng gói." };
+            }
+
+            for (const item of order.OrderItems || []) {
+                const inv = await Inventory.findOne({
+                    where: { product_id: item.product_id },
+                    transaction: t,
+                    lock: t.LOCK.UPDATE
+                });
+
+                // Có thể đơn hàng chưa từng reserve (tùy flow), nhưng theo checkoutCOD bạn đã reserve
+                if (inv) {
+                    const currReserved = Number(inv.reserved) || 0;
+                    const qty = Number(item.qty) || 0;
+                    inv.reserved = Math.max(currReserved - qty, 0);
+                    await inv.save({ transaction: t });
+                }
+            }
+
             if (order.voucher_id) {
                 const v = await Voucher.findByPk(order.voucher_id, {
                     transaction: t,
