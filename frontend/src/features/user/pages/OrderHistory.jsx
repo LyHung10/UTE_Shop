@@ -76,7 +76,6 @@ const OrderHistory = () => {
     const cleaned = filtered
         .map(order => ({
             ...order,
-            items: order.items.filter(it => it.status !== "COMMENTED")
         }))
         .filter(order => order.items.length > 0);
 

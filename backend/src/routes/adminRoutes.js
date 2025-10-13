@@ -7,17 +7,16 @@ import voucherController from "../controllers/voucherController";
 
 const router = express.Router();
 
-router.put('/confirm-order', OrderController.confirmOrder);
-router.put('/shipping-order', OrderController.confirmShippingOrder);
-router.get('/orders', OrderController.getAllOrders);
+
 // Lấy danh sách users (có search, pagination)
 router.get('/users', userController.getUsers);
 // Tất cả routes đều cần admin
 router.use(authenticateToken);
 router.use(authAdmin);
-
-
-
+router.put('/confirm-order', OrderController.confirmOrder);
+router.get('/order/:orderId/detail',OrderController.getAdminDetailOrder);
+router.put('/shipping-order', OrderController.confirmShippingOrder);
+router.get('/orders', OrderController.getAllOrders);
 // Lấy user by ID
 router.get('/:id', userController.getUserById);
 router.post('/add', voucherController.addVoucher);

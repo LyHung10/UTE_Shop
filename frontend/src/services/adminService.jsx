@@ -11,8 +11,21 @@ const getAlUsers = () => {
 const putConfirmOrder = (id) => {
     return axios.put(`api/admin/confirm-order`, { id });
 };
+
+const putShippingOrder = (id) => {
+    return axios.put(`api/admin/shipping-order`, { id });
+};
+
+const putConfirmCODPayment = (orderId) => {
+    return axios.put(`api/orders/${orderId}/confirm-cod`);
+};
+
+const getAdminDetailOrder = (orderId) => {
+    return axios.get(`api/admin/order/${orderId}/detail`);
+};
+
 export {
-    getAllOrders, putConfirmOrder, getAlUsers
+    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmCODPayment, getAdminDetailOrder
 };
 
 // Flash Sale

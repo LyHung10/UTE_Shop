@@ -162,9 +162,12 @@ class OrderService {
 
     static async getDetailOrder(userId, orderId) {
         try {
+            const whereClause = userId
+                ? { id: orderId, user_id: userId }
+                : { id: orderId };
             // === Tìm đơn hàng thuộc user ===
             const order = await Order.findOne({
-                where: { id: orderId, user_id: userId },
+                where: whereClause,
                 include: [
                     {
                         model: OrderItem,
@@ -1072,7 +1075,7 @@ class OrderService {
                 message: "Đơn hàng hàng đã được giao trước đó"
             }
         }
-
+        console.log(order.status);
         return {
             success: true,
             message: `Đang vận chuyển đơn hàng ${order.id}!`

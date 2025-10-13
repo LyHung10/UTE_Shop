@@ -60,6 +60,30 @@ class OrderController {
         }
     }
 
+    static async getAdminDetailOrder(req, res) {
+        try {
+            const orderId = req.params.orderId;
+            const result = await OrderService.getDetailOrder(null, orderId);
+
+            // Không tìm thấy hoặc service báo fail
+            if (!result || result.success === false || !result.data) {
+                return res.status(404).json({
+                    success: false,
+                    message: result?.message || "Không tìm thấy đơn hàng này."
+                });
+            }
+
+            // Trả đúng format từ service: { success, message, data: { order, address, items } }
+            return res.json(result);
+        } catch (err) {
+            console.error('[getDetailOrder] error:', err);
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'Bad request'
+            });
+        }
+    }
+
     static async addToCart(req, res) {
         try {
             const userId = req.user.sub; // middleware auth
@@ -142,7 +166,7 @@ class OrderController {
             const result = await OrderService.confirmCODPayment(orderId);
             res.json({
                 success: true,
-                message: "COD payment confirmed",
+                message: "Xác nhận thanh toán COD, giao hàng thành công",
                 order: result.order,
                 payment: result.payment
             });
