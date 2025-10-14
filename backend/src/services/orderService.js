@@ -763,7 +763,7 @@ class OrderService {
 
             order.status = "NEW";
             order.total_amount = total - discount + tax + fee;
-
+            console.log(order.total_amount);
             if (appliedVoucher) {
                 order.voucher_id = appliedVoucher.id;
             }
