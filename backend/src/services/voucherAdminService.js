@@ -49,7 +49,7 @@ function sanitizeVoucherPayload(raw) {
 
 /** Validate format slug (chữ thường, số, dấu -, không khoảng trắng) */
 function isValidSlug(slug) {
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+    return /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(slug);
 }
 
 /** Validate logic nghiệp vụ; ném lỗi nếu sai */
@@ -80,7 +80,7 @@ async function validateVoucherPayload(payload, { isUpdate = false, currentId = n
         errs.push("status chỉ nhận 'active' hoặc 'inactive'");
     }
     if (!isValidSlug(payload.slug)) {
-        errs.push("Slug không hợp lệ (chỉ chữ thường, số và dấu gạch nối)");
+        errs.push("Slug không hợp lệ (chỉ chữ hoa, số)");
     }
 
     // Số không âm

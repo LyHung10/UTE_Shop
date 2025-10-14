@@ -16,8 +16,8 @@ const putShippingOrder = (id) => {
     return axios.put(`api/admin/shipping-order`, { id });
 };
 
-const putConfirmCODPayment = (orderId) => {
-    return axios.put(`api/orders/${orderId}/confirm-cod`);
+const putConfirmOrderComplete = (orderId) => {
+    return axios.put(`api/orders/${orderId}/confirm-completed`);
 };
 
 const getAdminDetailOrder = (orderId) => {
@@ -29,7 +29,7 @@ const postCancelAdminOrder = (orderId) => {
 };
 
 export {
-    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmCODPayment, getAdminDetailOrder,
+    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmOrderComplete, getAdminDetailOrder,
     postCancelAdminOrder
 };
 
@@ -104,3 +104,6 @@ export const searchProducts = async (searchTerm, limit = 20) => {
         throw error;
     }
 };
+
+export class putConfirmCODPayment {
+}

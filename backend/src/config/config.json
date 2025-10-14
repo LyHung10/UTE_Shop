@@ -5,14 +5,17 @@
     "database": "ute_shop",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "timezone": "+07:00"
+    "timezone": "+07:00",
+    "logging": false
   },
   "test": {
     "username": "root",
     "password": "103204",
     "database": "database_test",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false
+
   },
   "production": {
     "username": "root",
@@ -20,6 +23,7 @@
     "database": "ute_shop",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "timezone": "+07:00"
+    "timezone": "+07:00",
+    "logging": false
   }
 }

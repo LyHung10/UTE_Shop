@@ -3,7 +3,7 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import { SiMoneygram } from "react-icons/si";
 import { RiSecurePaymentLine } from "react-icons/ri";
 import { ImSpinner8 } from "react-icons/im";
-import {checkoutCOD, confirmCODPayment, fetchCart} from "@/redux/action/cartAction.jsx"; // COD còn dùng
+import {checkoutCOD, checkoutVnpay, confirmCODPayment, fetchCart} from "@/redux/action/cartAction.jsx"; // COD còn dùng
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "../../../utils/axiosCustomize.jsx";
@@ -60,9 +60,7 @@ const PaymentMethodPage = () => {
                 if (res.success)
                 {
                     const orderId = res.data?.order?.id;
-                    toast.success(`Đặt hàng COD thành công! OrderID: ${orderId}`);
-                    // dispatch({ type: 'CLEAR_CART' });
-                    // dispatch({ type: 'SET_CART_COUNT', payload: 0 });
+                    toast.success(`Đặt hàng COD thành công! Mã đơn: #${orderId}`);
                     dispatch(fetchCart(cart.appliedVoucher, cart.addressId, cart.shippingFee));
                     navigate("/payment/completed");
                 }
@@ -72,19 +70,15 @@ const PaymentMethodPage = () => {
             }
             else if (selectedMethod === "vnpay") {
                 // ---------------- VNPay ----------------
-                // gọi API backend tạo order và lấy paymentUrl
-                const res = await axios.post("api/orders/checkout/vnpay", cart.items);
-                const { orderId, paymentUrl } = res;
-
-                if (!paymentUrl) {
-                    alert("Không tạo được payment URL");
-                    return;
+                const res = await dispatch(checkoutVnpay(cart.appliedVoucher, cart.addressId, cart.shippingFee));
+                if (res.success)
+                {
+                    window.location.href = res.data?.paymentUrl;
+                    dispatch(fetchCart(cart.appliedVoucher, cart.addressId, cart.shippingFee));
                 }
-
-                // redirect sang VNPay
-                window.location.href = paymentUrl;
-                dispatch({ type: 'CLEAR_CART' });
-                dispatch({ type: 'SET_CART_COUNT', payload: 0 });
+                else {
+                    toast.info(res.message);
+                }
             }
         } catch (err) {
             console.error("Checkout error:", err);

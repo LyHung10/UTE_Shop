@@ -153,17 +153,16 @@ class OrderController {
             const result = await OrderService.checkoutCOD(userId, voucherCode, addressId, shippingFee);
             res.status(201).json(result);
         } catch (err) {
-            console.error("Checkout COD error:", err);
             return res.status(400).json({
                 error: err.message || "Checkout thất bại."
             });
         }
     }
 
-    static async confirmCODPayment(req, res) {
+    static async confirmOrderCompleted(req, res) {
         try {
             const { orderId } = req.params;
-            const result = await OrderService.confirmCODPayment(orderId);
+            const result = await OrderService.confirmOrderCompleted(orderId);
             res.json({
                 success: true,
                 message: "Xác nhận thanh toán COD, giao hàng thành công",
@@ -175,41 +174,17 @@ class OrderController {
             res.status(400).json({ error: err.message });
         }
     }
-
-
     ////////////////////
     static async checkoutVNPay(req, res) {
         try {
             const userId = req.user.sub;
-            const result = await OrderService.checkoutVNPay(userId);
-
-            res.status(201).json({
-                success: true,
-                message: "Checkout VNPay success",
-                order: result.order,
-                payment: result.payment,
-                paymentUrl: result.paymentUrl
-            });
+            const { voucherCode, addressId, shippingFee} = req.body;
+            const result = await OrderService.checkoutVNPay(userId, voucherCode, addressId, shippingFee);
+            res.status(201).json(result);
         } catch (err) {
-            console.error(err);
-            res.status(400).json({ error: err.message });
-        }
-    }
-
-    static async confirmVNPay(req, res) {
-        try {
-            const { orderId } = req.params;
-            const result = await OrderService.confirmVNPayPayment(orderId, req.query);
-
-            res.json({
-                success: true,
-                message: "VNPay payment confirmed",
-                order: result.order,
-                payment: result.payment
+            return res.status(400).json({
+                error: err.message || "Checkout Vnpay thất bại."
             });
-        } catch (err) {
-            console.error(err);
-            res.status(400).json({ error: err.message });
         }
     }
 

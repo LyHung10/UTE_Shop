@@ -1,13 +1,14 @@
 import axios from "../../utils/axiosCustomize.jsx";
 import {
-    UPDATE_QTY, REMOVE_FROM_CART, CLEAR_CART, FETCH_CART,
-    SET_CART_ERROR, SET_CART_LOADING, CONFIRM_COD_SUCCESS, CONFIRM_COD_FAIL,
-    CHECKOUT_COD_SUCCESS, CHECKOUT_COD_FAIL,
-    RESET_CART,
-    CREATE_VNPAY_ORDER_SUCCESS, CREATE_VNPAY_ORDER_FAIL
+    CHECKOUT_COD_FAIL,
+    CONFIRM_COD_FAIL,
+    CONFIRM_COD_SUCCESS,
+    FETCH_CART,
+    REMOVE_FROM_CART,
+    SET_CART_ERROR,
+    SET_CART_LOADING
 } from "./actionTypes";
-import {getCart, postCheckoutCOD} from "@/services/cartService.jsx";
-import {toast} from "react-toastify";
+import {getCart, postCheckoutCOD, postCheckoutVnpay} from "@/services/cartService.jsx";
 
 export const addToCart = (productId, qty, color, size) => async (dispatch) => {
         try {
@@ -48,53 +49,24 @@ export const updateQuantity = (itemId, qty) => async (dispatch) => {
     }
 };
 
-// Xóa sản phẩm khỏi giỏ
 export const removeFromCart = (itemId) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
         await axios.delete(`api/orders/cart/${itemId}`);
-        // Fetch lại cart sau khi delete
         dispatch(fetchCart());
         dispatch({ type: SET_CART_LOADING, payload: false });
     } catch (err) {
         console.error("Error removing from cart:", err);
         dispatch({ type: SET_CART_ERROR, payload: err.message });
-        // Fallback: remove from local state only
         dispatch({ type: REMOVE_FROM_CART, payload: itemId });
         dispatch({ type: SET_CART_LOADING, payload: false });
     }
 };
 
-// Xóa toàn bộ giỏ hàng
-export const clearCart = () => async (dispatch) => {
-    try {
-        dispatch({ type: SET_CART_LOADING, payload: true });
-
-        await axios.delete('api/orders/cart');
-        dispatch({ type: CLEAR_CART });
-
-        dispatch({ type: SET_CART_LOADING, payload: false });
-    } catch (err) {
-        console.error("Error clearing cart:", err);
-        dispatch({ type: SET_CART_ERROR, payload: err.message });
-
-        // Fallback: clear local state only
-        dispatch({ type: CLEAR_CART });
-        dispatch({ type: SET_CART_LOADING, payload: false });
-    }
-};
-// redux/action/cartAction.js
-export const resetCart = () => ({
-    type: RESET_CART
-});
-
-// Lấy giỏ hàng từ server
 export const fetchCart = (voucherId, addressId, shippingFee) => async (dispatch) => {
     try {
         dispatch({ type: SET_CART_LOADING, payload: true });
         const res = await getCart(voucherId);
-
-        // Đảm bảo data có đúng structure
         const cartData = res || {};
         dispatch({
             type: FETCH_CART,
@@ -128,19 +100,20 @@ export const fetchCart = (voucherId, addressId, shippingFee) => async (dispatch)
     }
 };
 
-
-// Checkout COD
 export const checkoutCOD = (voucherCode, addressId, shippingFee) => async (dispatch) => {
     try {
-        const res = await postCheckoutCOD(voucherCode, addressId, shippingFee);
-        dispatch({
-            type: "CHECKOUT_COD_SUCCESS",
-            payload: res,
-        });
-        return res;
+        return await postCheckoutCOD(voucherCode, addressId, shippingFee);
     } catch (err) {
-        console.error("checkoutCOD error", err);
         dispatch({ type: "CHECKOUT_COD_FAIL" });
+        throw err;
+    }
+};
+
+export const checkoutVnpay = (voucherCode, addressId, shippingFee) => async (dispatch) => {
+    try {
+        return await postCheckoutVnpay(voucherCode, addressId, shippingFee);
+    } catch (err) {
+        dispatch({ type: "CHECKOUT_Vnpay_FAIL" });
         throw err;
     }
 };
@@ -161,18 +134,6 @@ export const confirmCODPayment = (orderId) => async (dispatch) => {
     } catch (err) {
         console.error("confirmCODPayment error", err);
         dispatch({ type: "CONFIRM_COD_FAIL" });
-        throw err;
-    }
-};
-
-export const createVNPayOrder = (items) => async (dispatch) => {
-    try {
-        const res = await axios.post("api/orders/checkout/vnpay", { items });
-        dispatch({ type: CREATE_VNPAY_ORDER_SUCCESS, payload: res });
-        return res; // { orderId, paymentUrl }
-    } catch (err) {
-        dispatch({ type: CREATE_VNPAY_ORDER_FAIL });
-        console.error("VNPay checkout error:", err);
         throw err;
     }
 };

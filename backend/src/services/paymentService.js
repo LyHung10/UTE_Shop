@@ -1,5 +1,7 @@
-import { VNPay, ProductCode, VnpLocale, dateFormat, ignoreLogger } from "vnpay";
+import {dateFormat, ignoreLogger, ProductCode, VNPay, VnpLocale} from "vnpay";
 import dotenv from 'dotenv';
+import {v4 as uuidv4} from 'uuid';
+import OrderService from "./orderService"; // ✅ Thêm dòng này
 dotenv.config();
 
 const vnpay = new VNPay({
@@ -23,12 +25,12 @@ class PaymentService {
         }
 
         // VNPay requires amount in VND cents (multiply by 100)
-        const vnpAmount = Math.round(amount * 100);
-
+        const vnpAmount = Math.round(amount);
+        const txnRef = uuidv4().replace(/-/g, '').slice(0, 20);
         const paymentData = {
             vnp_Amount: vnpAmount,
             vnp_IpAddr: order.ip,
-            vnp_TxnRef: order.id.toString(),
+            vnp_TxnRef: txnRef,
             vnp_OrderInfo: order.description,
             vnp_OrderType: ProductCode.Other,
             vnp_ReturnUrl: process.env.VNP_RETURN_URL,
@@ -41,12 +43,32 @@ class PaymentService {
     }
 
     async verifyPayment(query) {
+        let verify;
+        const rawOrderInfo = decodeURIComponent(query.vnp_OrderInfo || '');
+        const match = rawOrderInfo.match(/#(\d+)/); // tìm số sau dấu #
+        const orderId = match ? parseInt(match[1], 10) : null;
         try {
-            const result = vnpay.verifyReturnUrl(query);
-            return result;
+            verify = vnpay.verifyReturnUrl(query);
+            if (!verify.isVerified) {
+                return {
+                    success: false,
+                    message: 'Xác thực tính toàn vẹn dữ liệu thất bại'
+                }
+            }
+            if (!verify.isSuccess) {
+                await OrderService.cancelAdminOrder(orderId);
+                return {
+                    success: false,
+                    message: 'Đơn hàng thanh toán thất bại'
+                }
+            }
         } catch (error) {
-            throw error;
+            return {
+                success: false,
+                error: 'Đơn hàng thanh toán thất bại'
+            }
         }
+        return await OrderService.confirmVNPayPayment(orderId);
     }
 }
 

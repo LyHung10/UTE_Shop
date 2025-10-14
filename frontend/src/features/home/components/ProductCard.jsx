@@ -16,6 +16,16 @@ const ProductCard = ({ product }) => {
   const avgRating = parseFloat(product?.avg_rating) || 0;
   const reviewCount = parseInt(product?.review_count) || 0;
 
+  const createdAtStr = product?.createdAt;
+  console.log(createdAtStr);
+  const isNew = (() => {
+    if (!createdAtStr) return false;
+    const created = new Date(createdAtStr).getTime();
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    return now - created <= sevenDays;
+  })();
+
   // Kiểm tra flash sale
   useEffect(() => {
     const info = getProductFlashSaleInfo(product.id);
@@ -56,11 +66,21 @@ const ProductCard = ({ product }) => {
             </div>
           )}
 
-          {/* Discount badge - Hiển thị khi không có flash sale */}
-          {product.discount_percent && !localFlashSaleInfo && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
-              -{product.discount_percent}%
-            </div>
+          {/* Discount + NEW badge */}
+          {(product.discount_percent || isNew) && (
+              <div className="absolute top-2 left-2 flex items-center gap-2">
+                {product.discount_percent && !localFlashSaleInfo && (
+                    <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                      -{product.discount_percent}%
+                    </div>
+                )}
+
+                {isNew && (
+                    <div className="bg-yellow-400 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                      NEW
+                    </div>
+                )}
+              </div>
           )}
 
           {/* Overlay buttons */}

@@ -5,10 +5,7 @@ import { useEffect, useState } from "react";
 import { message, Modal } from "antd";
 import {
     getAdminDetailOrder,
-    getAllOrders, postCancelAdminOrder, putConfirmCODPayment,
-    putConfirmOrder, putShippingOrder,
-    // putChangeOrderStatus, // nếu bạn có API đổi trạng thái
-    // deleteOrder,          // nếu bạn có API xoá
+    getAllOrders, postCancelAdminOrder, putConfirmOrder, putConfirmOrderComplete, putShippingOrder,
 } from "@/services/adminService.jsx";
 import {toast} from "react-toastify";
 import {formatDateTime, formatPrice} from "@/utils/format.jsx";
@@ -77,7 +74,7 @@ const Orders = () => {
     const handleCompleteOrder = async (record) =>
     {
         try {
-            const res = await putConfirmCODPayment(record.orderId);
+            const res = await putConfirmOrderComplete(record.orderId);
             if (res.success === true) toast.success(res.message);
             if (res.success === false) toast.info(res.message);
             fetchData();

@@ -279,19 +279,6 @@ const Vouchers = () => {
                             </Form.Item>
                         </Col>
 
-                        <Col xs={24} md={12}>
-                            <Form.Item
-                                label="Slug"
-                                name="slug"
-                                rules={[
-                                    { required: true, message: "Vui lòng nhập slug" },
-                                    { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: "Chỉ chữ thường, số và '-'" },
-                                ]}
-                            >
-                                <Input placeholder="vd: giam-10" />
-                            </Form.Item>
-                        </Col>
-
                         <Col span={24}>
                             <Form.Item label="Mô tả" name="description">
                                 <Input.TextArea placeholder="Mô tả ngắn..." autoSize={{ minRows: 3 }} />

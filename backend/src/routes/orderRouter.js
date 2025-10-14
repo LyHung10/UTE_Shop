@@ -15,7 +15,6 @@ router.put('/cart',OrderController.updateQuantity);
 router.delete('/cart/:itemId',OrderController.removeItem);
 router.delete('/cart',OrderController.clearCart);
 router.post("/checkout/cod",OrderController.checkoutCOD);
-router.put("/:orderId/confirm-cod",OrderController.confirmCODPayment);
+router.put("/:orderId/confirm-completed",OrderController.confirmOrderCompleted);
 router.post("/checkout/vnpay",OrderController.checkoutVNPay);
-router.put("/:orderId/confirm-vnpay",OrderController.confirmVNPay);
 export default router;
