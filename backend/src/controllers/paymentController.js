@@ -1,6 +1,4 @@
 import paymentService from "../services/paymentService.js";
-
-// tạo thanh toán
 export const createPayment = async (req, res) => {
     try {
         const { orderId, amount, description } = req.body;
@@ -22,15 +20,25 @@ export const createPayment = async (req, res) => {
 // check callback từ VNPAY
 export const checkPayment = async (req, res) => {
     try {
-        // verify SecureHash (nếu muốn)
         const result = await paymentService.verifyPayment(req.query);
-
-        return res.status(200).json({
-            message: "Nhận callback thành công",
-            data: result,
-        });
+        if (result.success)
+        {
+            return res.redirect(`http://localhost:5173/payment/completed`);
+        }
+        else
+        {
+            return res.redirect(`http://localhost:5173`);
+        }
     } catch (err) {
         console.error(err);
-        return res.status(400).json({ error: "Payment verification failed" });
+        return res.status(400).json({ error: "Thanh toán thất bại!" });
     }
 };
+
+
+export const vnpayReturn= async (req, res) => {
+    console.log(req.query);
+};
+
+
+

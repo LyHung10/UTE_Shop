@@ -107,9 +107,11 @@ export default function OrderDetail() {
     const grandTotal = Number.isFinite(Number(data.total_amount))
         ? Number(data.total_amount)
         : computedGrand;
-    console.log(grandTotal,tax,discount,subtotal);
-    console.log(data)
-
+    // Kiểm tra nếu tất cả item đều đã có comment
+    const allCommented = Array.isArray(data.items) && data.items.length > 0
+        ? data.items.every(it => it.status === "COMMENTED")
+        : false;
+    console.log(data.items);
     return (
         <div className="flex flex-col gap-4">
             {/* Header */}
@@ -151,9 +153,9 @@ export default function OrderDetail() {
 
                 {/* Actions */}
                 <div className="mt-4 flex flex-wrap gap-2 md:justify-end">
-                    {(s === "DELIVERED" || s === "COMPLETED") && (
+                    {(s === "COMPLETED" && !allCommented) && (
                         <button
-                            onClick={() => navigate(`/user/orders/${data.id}/review`)}  // Thêm /user/ prefix
+                            onClick={() => navigate(`/user/orders/${data.id}/review`)}
                             className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-medium text-white hover:bg-amber-600">
                             <Star className="h-4 w-4" /> Đánh giá
                         </button>

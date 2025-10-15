@@ -60,6 +60,30 @@ class OrderController {
         }
     }
 
+    static async getAdminDetailOrder(req, res) {
+        try {
+            const orderId = req.params.orderId;
+            const result = await OrderService.getDetailOrder(null, orderId);
+
+            // Không tìm thấy hoặc service báo fail
+            if (!result || result.success === false || !result.data) {
+                return res.status(404).json({
+                    success: false,
+                    message: result?.message || "Không tìm thấy đơn hàng này."
+                });
+            }
+
+            // Trả đúng format từ service: { success, message, data: { order, address, items } }
+            return res.json(result);
+        } catch (err) {
+            console.error('[getDetailOrder] error:', err);
+            return res.status(400).json({
+                success: false,
+                error: err.message || 'Bad request'
+            });
+        }
+    }
+
     static async addToCart(req, res) {
         try {
             const userId = req.user.sub; // middleware auth
@@ -129,20 +153,19 @@ class OrderController {
             const result = await OrderService.checkoutCOD(userId, voucherCode, addressId, shippingFee);
             res.status(201).json(result);
         } catch (err) {
-            console.error("Checkout COD error:", err);
             return res.status(400).json({
                 error: err.message || "Checkout thất bại."
             });
         }
     }
 
-    static async confirmCODPayment(req, res) {
+    static async confirmOrderCompleted(req, res) {
         try {
             const { orderId } = req.params;
-            const result = await OrderService.confirmCODPayment(orderId);
+            const result = await OrderService.confirmOrderCompleted(orderId);
             res.json({
                 success: true,
-                message: "COD payment confirmed",
+                message: "Xác nhận thanh toán COD, giao hàng thành công",
                 order: result.order,
                 payment: result.payment
             });
@@ -151,41 +174,17 @@ class OrderController {
             res.status(400).json({ error: err.message });
         }
     }
-
-
     ////////////////////
     static async checkoutVNPay(req, res) {
         try {
             const userId = req.user.sub;
-            const result = await OrderService.checkoutVNPay(userId);
-
-            res.status(201).json({
-                success: true,
-                message: "Checkout VNPay success",
-                order: result.order,
-                payment: result.payment,
-                paymentUrl: result.paymentUrl
-            });
+            const { voucherCode, addressId, shippingFee} = req.body;
+            const result = await OrderService.checkoutVNPay(userId, voucherCode, addressId, shippingFee);
+            res.status(201).json(result);
         } catch (err) {
-            console.error(err);
-            res.status(400).json({ error: err.message });
-        }
-    }
-
-    static async confirmVNPay(req, res) {
-        try {
-            const { orderId } = req.params;
-            const result = await OrderService.confirmVNPayPayment(orderId, req.query);
-
-            res.json({
-                success: true,
-                message: "VNPay payment confirmed",
-                order: result.order,
-                payment: result.payment
+            return res.status(400).json({
+                error: err.message || "Checkout Vnpay thất bại."
             });
-        } catch (err) {
-            console.error(err);
-            res.status(400).json({ error: err.message });
         }
     }
 
@@ -230,6 +229,25 @@ class OrderController {
                 return res.status(500).json({success: false, message: 'Unexpected error'});
             }
 
+
+            return res.status(200).json(result);
+        } catch (err) {
+            console.error('[cancelOrder] error:', err);
+            return res.status(500).json({
+                success: false,
+                message: err.message || 'Internal Server Error',
+            });
+        }
+    }
+
+    static async cancelAdminOrder(req, res) {
+        try {
+            const {orderId} = req.body;
+            const result = await OrderService.cancelAdminOrder(orderId);
+            if (!result) {
+                return res.status(500).json({success: false, message: 'Unexpected error'});
+            }
+
             if (result.success === false) {
                 const msg = (result.message || '').toLowerCase();
                 const notFound = msg.includes('không tìm thấy');
@@ -243,6 +261,15 @@ class OrderController {
                 success: false,
                 message: err.message || 'Internal Server Error',
             });
+        }
+    }
+
+    static async checkHasNewOrders(req, res) {
+        try {
+            const result = await OrderService.checkHasNewOrders();
+            res.status(201).json(result);
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
         }
     }
 }

@@ -1,164 +1,186 @@
-// components/common/DataTableAntd.jsx
 import React from "react";
-import { Table, Space, Tooltip, Button } from "antd";
+import { Table, Tag, Space, Button, Tooltip, Popconfirm } from "antd";
 import {
-    PencilIcon,     // edit (nếu cần sau này)
-    TrashBinIcon,   // delete -> Cancel dùng icon thùng rác cho nhanh
-    CheckLineIcon,  // confirm
-} from "@/admin/icons/index.js";
-import {EyeIcon, XCircle} from "lucide-react";
+    EyeOutlined,
+    CheckCircleOutlined,
+    RetweetOutlined,
+    InfoCircleOutlined, CloseOutlined, CloseCircleOutlined,
+} from "@ant-design/icons";
+import {XCircle} from "lucide-react";
 
-/**
- * Props:
- *  - columns, dataSource, rowKey, loading, pagination, scroll, size (như cũ)
- *  - statusKey?: string = "status"     // tên field trạng thái trong record
- *  - forceActions?: ('view'|'confirm'|'cancel'|'edit'|'delete')[] | null
- *      => nếu truyền thì sẽ dùng đúng list này, bỏ qua logic theo trạng thái
- *  - onView?(record), onConfirm?(record), onCancel?(record),
- *    onEdit?(record), onDelete?(record)  // (delete để dành nếu bạn muốn)
- *  - renderActions?(record)  // custom toàn bộ cụm actions
- */
-export default function DataTable({
-                                      columns = [],
-                                      dataSource = [],
-                                      rowKey = "id",
-                                      loading = false,
-                                      pagination = { pageSize: 20 },
-                                      statusKey = "status",
-                                      forceActions = null, // nếu set -> override mapping theo trạng thái
-                                      onView,
-                                      onConfirm,
-                                      onCancel,
-                                      onEdit,      // optional
-                                      onDelete,    // optional
-                                      renderActions,
-                                      scroll,
-                                      size = "middle",
-                                  }) {
-    const Btn = ({ title, onClick, className, icon }) => (
-        <Tooltip title={title}>
-            <Button
-                type="default"
-                size="small"
-                onClick={onClick}
-                className={`
-          !p-0 size-8 rounded-full border
-          ${className}
-        `}
-                icon={icon}
-            />
-        </Tooltip>
-    );
+const VND = new Intl.NumberFormat("vi-VN");
 
-    // Chuẩn hoá status (tránh typo/hoa thường)
-    const normalizeStatus = (s) => String(s || "").trim().toLowerCase();
+const STATUS_COLOR = {
+    NEW: "gold",
+    PACKING: "blue",
+    SHIPPING: "lime",
+    COMPLETED: "green",
+    CANCELLED: "red",
+};
 
-    // Mapping action theo trạng thái
-    // new, packing -> view + confirm + cancel
-    // shipping, completed, canceled -> view
-    const getActionsByStatus = (record) => {
-        if (Array.isArray(forceActions)) return forceActions;
+const OrderDataTable = ({
+                            data = [],
+                            loading = false,
+                            onViewInfo = () => {},
+                            onConfirmPacking = () => {},
+                            onConfirmShippingOrder = () => {},
+                            onConfirmCompletedOrder = () => {},
+                            onCancel = () => {},
+                        }) => {
 
-        const st = normalizeStatus(record?.[statusKey]);
-        if (st === "new" || st === "packing") {
-            return ["view", "confirm", "cancel"];
-        }
-        // shipping / completed / canceled -> chỉ view
-        return ["view"];
-    };
 
-    const makeActions = (record) => {
-        const acts = getActionsByStatus(record);
+    const columns = [
+        {
+            title: "Order ID",
+            dataIndex: "orderId",
+            key: "orderId",
+            width: 80,
+            align: "center",
+            render: (v) => <span className="font-medium">#{v}</span>,
+        },
+        {
+            title: "Customer",
+            dataIndex: "userName",
+            key: "userName",
+            width: 150,
+            align: "center",
+            ellipsis: true,
+        },
+        {
+            title: "Address",
+            dataIndex: "address",
+            key: "address",
+            ellipsis: true,
+            render: (v) => v || <span className="text-gray-400">—</span>,
+        },
+        {
+            title: "Total",
+            dataIndex: "totalAmount",
+            key: "totalAmount",
+            width: 140,
+            align: "center",
+            render: (v) => `${VND.format(Number(v || 0))}₫`,
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+            align: "center",
+            width: 130,
 
-        // Nếu bạn muốn “delete” action khác “cancel”, có thể thêm ở đây.
-        return (
-            <Space size="small" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                {acts.includes("view") && (
-                    <Btn
-                        onClick={() => onView?.(record)}
-                        className="
-              text-gray-700 border-gray-200 hover:!bg-gray-100
-              dark:text-gray-200 dark:border-white/10 dark:hover:!bg-white/10
-            "
-                        icon={<EyeIcon className="size-4" />}
-                    />
-                )}
+            // ✅ thêm filter cho Status
+            filters: [
+                { text: "NEW", value: "NEW" },
+                { text: "PACKING", value: "PACKING" },
+                { text: "SHIPPING", value: "SHIPPING" },
+                { text: "COMPLETED", value: "COMPLETED" },
+                { text: "CANCELLED", value: "CANCELLED" },
+            ],
 
-                {acts.includes("confirm") && (
-                    <Btn
-                        onClick={() => onConfirm?.(record)}
-                        className="
-              text-green-600 border-green-200 hover:!bg-green-50
-              dark:text-green-400 dark:border-green-900/40 dark:hover:!bg-green-900/20
-            "
-                        icon={<CheckLineIcon className="size-4" />}
-                    />
-                )}
+            // ✅ logic lọc: chỉ hiển thị hàng có status trùng giá trị filter
+            onFilter: (value, record) => record.status === value,
 
-                {acts.includes("cancel") && (
-                    <Btn
-                        onClick={() => onCancel?.(record)}
-                        className="
-              text-red-600 border-red-200 hover:!bg-red-50
-              dark:text-red-400 dark:border-red-900/40 dark:hover:!bg-red-900/20
-            "
-                        icon={<XCircle className="size-4" />}
-                    />
-                )}
+            render: (s) => {
+                const color = STATUS_COLOR[s] || "default";
+                return <Tag color={color}>{s}</Tag>;
+            },
+        },
+        {
+            title: "Actions",
+            key: "actions",
+            fixed: "right",
+            width: 210,
+            render: (_, record) => {
+                const st = record.status; // "NEW" | "PACKING" | "SHIPPING" | "COMPLETED" | ...
 
-                {/* Nếu sau này cần edit/delete thuần: */}
-                {acts.includes("edit") && (
-                    <Btn
-                        onClick={() => onEdit?.(record)}
-                        className="
-              text-blue-600 border-blue-200 hover:!bg-blue-50
-              dark:text-blue-400 dark:border-blue-900/40 dark:hover:!bg-blue-900/20
-            "
-                        icon={<PencilIcon className="size-4" />}
-                    />
-                )}
-                {acts.includes("delete") && (
-                    <Btn
-                        onClick={() => onDelete?.(record)}
-                        className="
-              text-red-600 border-red-200 hover:!bg-red-50
-              dark:text-red-400 dark:border-red-900/40 dark:hover:!bg-red-900/20
-            "
-                        icon={<TrashBinIcon className="size-4" />}
-                    />
-                )}
-            </Space>
-        );
-    };
+                const canConfirmPacking = st === "NEW";                 // NEW -> PACKING
+                const canToShipping     = st === "PACKING";             // PACKING -> SHIPPING
+                const canComplete       = st === "SHIPPING";             // PACKING -> COMPLETED (theo yêu cầu)
+                const canCancel         = st === "NEW" || st === "PACKING"; // chỉ NEW & PACKING được hủy
 
-    const actionCol = {
-        title: "Actions",
-        key: "_actions",
-        dataIndex: "_actions",
-        fixed: "right",
-        width: 180,
-        align: "center",
-        render: (_, record) =>
-            typeof renderActions === "function" ? renderActions(record) : makeActions(record),
-    };
+                return (
+                    <Space>
+                        {/* Info: luôn có */}
+                        <Tooltip title="Chi tiết đơn hàng">
+                            <Button icon={<InfoCircleOutlined />} onClick={() => onViewInfo(record)} />
+                        </Tooltip>
 
-    const mergedCols = [...columns, actionCol];
+                        {/* NEW -> PACKING */}
+                        {canConfirmPacking && (
+                            <Popconfirm
+                                title="Xác nhận chuyển sang PACKING?"
+                                okText="Xác nhận"
+                                cancelText="Hủy"
+                                onConfirm={() => onConfirmPacking(record)}
+                            >
+                                <Tooltip title="Xác nhận packing">
+                                    <Button icon={<CheckCircleOutlined />}>
+                                        Packing
+                                    </Button>
+                                </Tooltip>
+                            </Popconfirm>
+                        )}
+
+                        {/* PACKING -> SHIPPING */}
+                        {canToShipping && (
+                            <Popconfirm
+                                title="Xác nhận chuyển sang SHIPPING?"
+                                okText="Chuyển"
+                                cancelText="Hủy"
+                                onConfirm={() => onConfirmShippingOrder(record)}
+                            >
+                                <Tooltip title="Chuyển shipping">
+                                    <Button icon={<RetweetOutlined />}>Shipping</Button>
+                                </Tooltip>
+                            </Popconfirm>
+                        )}
+
+                        {/* PACKING -> COMPLETED (chỉ khi PACKING) */}
+                        {canComplete && (
+                            <Popconfirm
+                                title="Đánh dấu đơn hàng hoàn thành?"
+                                okText="Hoàn thành"
+                                cancelText="Hủy"
+                                onConfirm={() => onConfirmCompletedOrder(record)}
+                            >
+                                <Tooltip title="Hoàn thành đơn">
+                                    <Button icon={<CheckCircleOutlined />}>Complete</Button>
+                                </Tooltip>
+                            </Popconfirm>
+                        )}
+
+                        {/* HỦY: chỉ NEW & PACKING */}
+                        {canCancel && (
+                            <Popconfirm
+                                title="Xác nhận hủy đơn hàng?"
+                                okText="Hủy đơn"
+                                cancelText="Đóng"
+                                onConfirm={() => onCancel(record)}
+                            >
+                                <Tooltip title="Hủy đơn hàng">
+                                    <Button danger icon={<CloseCircleOutlined />}></Button>
+                                </Tooltip>
+                            </Popconfirm>
+                        )}
+                    </Space>
+                );
+            },
+        },
+    ];
 
     return (
         <Table
-            size={size}
-            columns={mergedCols}
-            dataSource={dataSource}
-            rowKey={rowKey}
+            rowKey={(r) => r.orderId}
+            columns={columns}
+            dataSource={data}
             loading={loading}
-            pagination={pagination}
-            scroll={scroll}
-            className="
-        rounded-2xl border border-gray-200 dark:border-white/10
-        bg-white dark:bg-[#1a1a1a]
-        [&_.ant-table-thead_th]:!bg-gray-50 dark:[&_.ant-table-thead_th]:!bg-gray-800
-        [&_.ant-table-cell]:!text-gray-700 dark:[&_.ant-table-cell]:!text-gray-200
-      "
+            scroll={{ x: 900 }}
+            pagination={{
+                pageSize: 15,
+                showSizeChanger: false,
+            }}
         />
     );
-}
+};
+
+export default OrderDataTable;

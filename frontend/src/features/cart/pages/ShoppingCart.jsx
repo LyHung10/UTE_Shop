@@ -354,7 +354,8 @@ const ShoppingCart = () => {
                                                             : 'https://via.placeholder.com/150'
                                                     }
                                                     alt={item.Product?.name}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-full cursor-pointer h-full object-cover"
+                                                    onClick={() => navigate(`/product/${item.Product?.id}`)}
                                                 />
 
                                                 {/* Flash Sale Badge trên ảnh */}

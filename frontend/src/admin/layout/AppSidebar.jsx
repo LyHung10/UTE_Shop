@@ -12,41 +12,31 @@ import {
 } from "../icons/index.js";
 import { useSidebar } from "../context/SidebarContext.jsx";
 import { Link, useLocation } from "react-router-dom";
-import {BoxIcon, Package, User2Icon} from "lucide-react";
+import { BoxIcon, Package, User2Icon, FolderTree, TicketPercent } from "lucide-react";
 import { Zap, Flame, TrendingUp, Clock, Bolt } from "lucide-react";
-
+import { getCheckHasNewOrders } from "@/services/adminService.jsx";
 
 const navItems = [
   {
-    icon: <GridIcon/>,
+    icon: <GridIcon />,
     name: "Dashboard",
     path: "/admin",
   },
   {
-    icon: <ChatIcon/>,
+    icon: <ChatIcon />,
     name: "Chat",
     path: "/admin/chat",
   },
   {
-    icon: <PaperPlaneIcon/>,
+    icon: <PaperPlaneIcon />,
     name: "Notifications",
     path: "/admin/notification",
-  },
-  {
-    icon: <UserCircleIcon/>,
-    name: "User Profile",
-    path: "/admin/profile",
-  },
-  {
-    icon: <CalenderIcon/>,
-    name: "Calendar",
-    path: "/calendar",
   },
 ];
 
 const othersItems = [
   {
-    icon: <User2Icon/>,
+    icon: <User2Icon />,
     name: "Customer",
     path: "/admin/manage-customers",
   },
@@ -56,16 +46,25 @@ const othersItems = [
     path: "/admin/manage-flashsales",
   },
   {
-    icon: <Package/>,
+    icon: <Package />,
     name: "Orders",
     path: "/admin/manage-orders",
   },
   {
-    icon: <BoxIcon/>,
+    icon: <FolderTree />,
+    name: "Categories",
+    path: "/admin/manage-categories",
+  },
+  {
+    icon: <BoxIcon />,
     name: "Products",
     path: "/admin/manage-products",
   },
-  
+  {
+    icon: <TicketPercent />,
+    name: "Vouchers",
+    path: "/admin/manage-vouchers",
+  },
 ];
 
 const AppSidebar = () => {
@@ -75,11 +74,27 @@ const AppSidebar = () => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [subMenuHeight, setSubMenuHeight] = useState({});
   const subMenuRefs = useRef({});
+  const [hasNewOrder, setHasNewOrder] = useState(false);
 
   const isActive = useCallback(
       (path) => location.pathname === path,
       [location.pathname]
   );
+
+  // ✅ Sửa đọc axios response: dùng res.data
+  useEffect(() => {
+    const fetchHasNew = async () => {
+      try {
+        const res = await getCheckHasNewOrders();
+        const success = res?.success ?? true; // nếu backend không trả success, coi như true
+        const flag = res?.hasNewOrder ?? false;
+        if (success) setHasNewOrder(!!flag);
+      } catch (e) {
+        setHasNewOrder(false); // im lặng nếu lỗi, không hiển thị huy hiệu
+      }
+    };
+    fetchHasNew();
+  }, []);
 
   useEffect(() => {
     let submenuMatched = false;
@@ -142,9 +157,7 @@ const AppSidebar = () => {
                               ? "menu-item-active"
                               : "menu-item-inactive"
                       } cursor-pointer ${
-                          !isExpanded && !isHovered
-                              ? "lg:justify-center"
-                              : "lg:justify-start"
+                          !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
                       }`}
                   >
               <span
@@ -157,13 +170,20 @@ const AppSidebar = () => {
                 {nav.icon}
               </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                        <span className="menu-item-text">{nav.name}</span>
+                        <span className="menu-item-text flex items-center gap-2">
+                  {nav.name}
+                          {/* (Tùy chọn) Nếu sau này Orders có submenu, vẫn có thể hiện badge ở đây */}
+                          {nav.name === "Orders" && hasNewOrder && (
+                              <span className="px-1.5 py-0.5 text-[10px] leading-none rounded-full bg-rose-600 text-white animate-pulse">
+                      NEW
+                    </span>
+                          )}
+                </span>
                     )}
                     {(isExpanded || isHovered || isMobileOpen) && (
                         <ChevronDownIcon
                             className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                                openSubmenu?.type === menuType &&
-                                openSubmenu?.index === index
+                                openSubmenu?.type === menuType && openSubmenu?.index === index
                                     ? "rotate-180 text-brand-500"
                                     : ""
                             }`}
@@ -188,7 +208,15 @@ const AppSidebar = () => {
                   {nav.icon}
                 </span>
                         {(isExpanded || isHovered || isMobileOpen) && (
-                            <span className="menu-item-text">{nav.name}</span>
+                            // ✅ Gắn badge "NEW" cạnh chữ Orders tại nhánh Link (đúng nơi render)
+                            <span className="menu-item-text flex items-center gap-2">
+                    {nav.name}
+                              {nav.name === "Orders" && hasNewOrder && (
+                                  <span className="px-1.5 py-0.5 text-[10px] leading-none rounded-full bg-rose-400 text-white animate-pulse">
+                        NEW
+                      </span>
+                              )}
+                  </span>
                         )}
                       </Link>
                   )
@@ -307,9 +335,7 @@ const AppSidebar = () => {
               <div>
                 <h2
                     className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                        !isExpanded && !isHovered
-                            ? "lg:justify-center"
-                            : "justify-start"
+                        !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                     }`}
                 >
                   {isExpanded || isHovered || isMobileOpen ? (
@@ -323,9 +349,7 @@ const AppSidebar = () => {
               <div className="">
                 <h2
                     className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                        !isExpanded && !isHovered
-                            ? "lg:justify-center"
-                            : "justify-start"
+                        !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                     }`}
                 >
                   {isExpanded || isHovered || isMobileOpen ? (

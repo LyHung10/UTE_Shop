@@ -39,9 +39,10 @@ import AdminRoute from "@/app/guards/AdminRoute.jsx";
 import FlashSale from "./admin/pages/Manage/FlashSale.jsx";
 import CreateFlashSale from "./admin/pages/Manage/CreateFlashSale.jsx";
 import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx";
+import Categories from "@/admin/pages/Manage/Categories.jsx";
+import Vouchers from "@/admin/pages/Manage/Vouchers.jsx";
 import ProductList from "./admin/pages/Manage/ProductList.jsx";
-import ProductForm from "./admin/pages/Manage/ProductForm.jsx";
-function App() {
+import ProductForm from "./admin/pages/Manage/ProductForm.jsx";function App() {
   return (
     <>
       <Routes>
@@ -60,6 +61,7 @@ function App() {
                 <Route path="product-favorites" element={<FavoritesPage />} />
                 <Route path="orders/:orderId/review" element={<ReviewPage />} />
                 <Route path="gift" element={<RewardStore />} />
+                <Route path="my-vouchers" element={<MyVoucher />} />
                 <Route path="change-password" element={<ChangePassword />} />
               </Route>
               <Route path="cart" element={<ShoppingCart />} />
@@ -85,6 +87,7 @@ function App() {
               <Route path="notification" element={<AdminNotificationSender />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="manage-orders" element={<Orders />} />
+             
               <Route path="manage-customers" element={<Users />} />
               <Route path="manage-flashsales" element={<FlashSale />} />
               <Route path="manage-flashsales/create" element={<CreateFlashSale />} />

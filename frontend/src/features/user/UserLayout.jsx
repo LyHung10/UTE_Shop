@@ -1,7 +1,14 @@
 import {Outlet} from "react-router-dom";
 import UserSidebar from "@/features/user/UserSidebar.jsx";
+import {fetchUser} from "@/redux/action/userAction.jsx";
+import {useDispatch} from "react-redux";
+import {useEffect} from "react";
 
 const UserLayout = () => {
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(fetchUser());
+    }, []);
     return(
         <div className="bg-[#f3f4f6]">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -39,11 +39,8 @@ export function authenticateToken(req, res, next) {
 
   jwt.verify(token, process.env.JWT_ACCESS_SECRET, (err, payload) => {
     if (err) {
-      console.log("JWT verify error:", err);
       return res.status(401).json({ message: "Token is not valid" });
     }
-    console.log("Token received:", token);
-
     req.user = payload; // payload token
     next();
   });

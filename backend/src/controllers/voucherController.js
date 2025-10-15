@@ -1,4 +1,5 @@
 import voucherService from "../services/voucherService";
+import VoucherAdminService from "../services/VoucherAdminService.js";
 
 class VoucherController {
     async addVoucher(req, res) {
@@ -103,6 +104,42 @@ class VoucherController {
             });
         }
     }
+
+    async createVoucher  (req, res)  {
+        try {
+            const result = await VoucherAdminService.create(req.body);
+            res.json(result);
+        } catch (e) {
+            res.status(e.statusCode || 500).json({ success: false, message: e.message });
+        }
+    };
+
+    async updateVoucher (req, res)  {
+        try {
+            const result = await VoucherAdminService.update(req.params.id, req.body);
+            res.json(result);
+        } catch (e) {
+            res.status(e.statusCode || 500).json({ success: false, message: e.message });
+        }
+    };
+
+    async deleteVoucher  (req, res)  {
+        try {
+            const result = await VoucherAdminService.remove(req.params.id);
+            res.json(result);
+        } catch (e) {
+            res.status(e.statusCode || 500).json({ success: false, message: e.message });
+        }
+    };
+
+    async listVouchers  (req, res)  {
+        try {
+            const result = await VoucherAdminService.list(req.query);
+            res.json(result);
+        } catch (e) {
+            res.status(500).json({ success: false, message: e.message });
+        }
+    };
 }
 
 module.exports = new VoucherController();

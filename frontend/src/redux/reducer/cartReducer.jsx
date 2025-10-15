@@ -27,23 +27,6 @@ export default function cartReducer(state = initialState, action) {
   switch (action.type) {
     case RESET_CART:
       return initialState;
-    case CHECKOUT_COD_SUCCESS:
-      return {
-        ...state,
-        order: action.payload.order,
-        payment: action.payload.payment,
-      };
-
-    case CONFIRM_COD_SUCCESS:
-      return {
-        ...state,
-        order: action.payload.order,
-        payment: action.payload.payment,
-      };
-
-    case CHECKOUT_COD_FAIL:
-    case CONFIRM_COD_FAIL:
-      return { ...state, error: "Something went wrong" };
 
     case FETCH_CART:
       return {

@@ -10,7 +10,7 @@ import {
     Heart,
     Ticket,
     ShieldCheck,
-    LogOut, Gift,
+    LogOut, Gift, TicketPercent,
 } from "lucide-react";
 import {useDispatch, useSelector} from "react-redux";
 import {doLogout} from "@/redux/action/authAction.jsx";
@@ -22,6 +22,7 @@ const sections = [
             { label: "Tài khoản của tôi", to: "/user/profile", icon: UserRound },
             { label: "Điểm tích lũy", to: "/user/gift", icon: Gift },
             { label: "Yêu thích", to: "/user/product-favorites", icon: Heart },
+            { label: "Mã giám giá", to: "/user/my-vouchers", icon: TicketPercent },
         ],
     },
     {

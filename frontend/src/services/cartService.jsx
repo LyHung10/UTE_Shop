@@ -13,4 +13,10 @@ const postCheckoutCOD = (voucherCode, addressId, shippingFee) => {
     return axios.post(url, data);
 };
 
-export { getCart, postCheckoutCOD}
+const postCheckoutVnpay = (voucherCode, addressId, shippingFee) => {
+    const url = `api/orders/checkout/vnpay`;
+    const data = voucherCode ? { voucherCode, addressId, shippingFee} : {addressId, shippingFee};
+    return axios.post(url, data);
+};
+
+export { getCart, postCheckoutCOD, postCheckoutVnpay}

@@ -11,8 +11,30 @@ const getAlUsers = () => {
 const putConfirmOrder = (id) => {
     return axios.put(`api/admin/confirm-order`, { id });
 };
+
+const putShippingOrder = (id) => {
+    return axios.put(`api/admin/shipping-order`, { id });
+};
+
+const putConfirmOrderComplete = (orderId) => {
+    return axios.put(`api/orders/${orderId}/confirm-completed`);
+};
+
+const getCheckHasNewOrders = () => {
+    return axios.get(`api/admin/check-neworder`);
+};
+
+const getAdminDetailOrder = (orderId) => {
+    return axios.get(`api/admin/order/${orderId}/detail`);
+};
+
+const postCancelAdminOrder = (orderId) => {
+    return axios.post(`api/admin/order/cancel-order`,{orderId});
+};
+
 export {
-    getAllOrders, putConfirmOrder, getAlUsers
+    getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmOrderComplete, getAdminDetailOrder,
+    postCancelAdminOrder, getCheckHasNewOrders
 };
 
 // Flash Sale
@@ -84,3 +106,6 @@ export const searchProducts = async (searchTerm, limit = 20) => {
         throw error;
     }
 };
+
+export class putConfirmCODPayment {
+}
