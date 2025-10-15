@@ -36,9 +36,9 @@ const navItems = [
 
 const othersItems = [
   {
-    icon: <User2Icon />,
-    name: "Customer",
-    path: "/admin/manage-customers",
+    icon: <BoxIcon />,
+    name: "Products",
+    path: "/admin/manage-products",
   },
   {
     icon: <Flame />,
@@ -56,9 +56,9 @@ const othersItems = [
     path: "/admin/manage-categories",
   },
   {
-    icon: <BoxIcon />,
-    name: "Products",
-    path: "/admin/manage-products",
+    icon: <User2Icon />,
+    name: "Customer",
+    path: "/admin/manage-customers",
   },
   {
     icon: <TicketPercent />,

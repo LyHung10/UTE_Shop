@@ -29,7 +29,6 @@ import NotFound from "@/NotFound.jsx";
 import SignIn from "@/features/auth/pages/SignIn.jsx";
 import SignUp from "@/features/auth/pages/SignUp.jsx";
 import Orders from "@/admin/pages/Manage/Orders.jsx";
-import Products from "@/admin/pages/Manage/Products.jsx";
 import Users from "@/admin/pages/Manage/Users.jsx";
 import SearchPage from "./features/product/pages/SearchPage.jsx";
 import RewardStore from "@/features/user/pages/RewardStore.jsx";
@@ -42,7 +41,10 @@ import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx"
 import Categories from "@/admin/pages/Manage/Categories.jsx";
 import Vouchers from "@/admin/pages/Manage/Vouchers.jsx";
 import ProductList from "./admin/pages/Manage/ProductList.jsx";
-import ProductForm from "./admin/pages/Manage/ProductForm.jsx";function App() {
+import ProductForm from "./admin/pages/Manage/ProductForm.jsx";
+import MyVoucher from "@/features/user/pages/MyVoucher.jsx";
+
+function App() {
   return (
     <>
       <Routes>
@@ -87,12 +89,11 @@ import ProductForm from "./admin/pages/Manage/ProductForm.jsx";function App() {
               <Route path="notification" element={<AdminNotificationSender />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="manage-orders" element={<Orders />} />
-             
+              <Route path="manage-categories" element={<Categories />} />
               <Route path="manage-customers" element={<Users />} />
               <Route path="manage-flashsales" element={<FlashSale />} />
               <Route path="manage-flashsales/create" element={<CreateFlashSale />} />
               <Route path="manage-flashsales/:id/products" element={<AddFlashSaleProducts />} />
-              <Route path="products" element={<Products />} />
               <Route path="manage-products" element={<ProductList />} />
               <Route path="manage-products/add" element={<ProductForm />} />
               <Route path="manage-products/edit/:id" element={<ProductForm />} />

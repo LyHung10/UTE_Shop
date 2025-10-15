@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import { PageHeader } from '@ant-design/pro-components';
 import { UploadOutlined, PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import adminProductService from '@/services/adminProductService';
 import { toast } from 'react-toastify';
 
@@ -467,12 +467,13 @@ const ProductForm = () => {
                 onBack={() => navigate('/admin/manage-products')}
                 breadcrumb={{
                     items: [
-                        { title: 'Quản lý' },
-                        { title: 'Sản phẩm', path: '/admin/manage-products' },
+                        { title: <Link to="/admin/manage-products">Quản lý sản phẩm</Link> },
                         { title: isEdit ? 'Cập nhật' : 'Thêm mới' },
                     ],
                 }}
             />
+
+
 
             {/* Debug Info */}
             <div style={{
