@@ -3,14 +3,18 @@ import express from "express";
 import parser from '../middleware/multerCloudinary.js';
 
 const router = express.Router();
+
+router.put('/:id', parser.array('images', 10), productController.updateProduct);
+router.delete('/:id', productController.deleteProduct);
+router.put('/:id/images', parser.array('images', 10), productController.updateProductImages);
+
 // Upload sản phẩm (cũng nên để trước /:id)
-router.post("/add", parser.array('images', 5), productController.addProduct);
+router.post("/add", parser.array('images', 10), productController.addProduct);
+router.get('/', productController.getProducts);
 
 // 1. 8 sản phẩm được xem nhiều nhất
 router.get("/most-viewed", productController.getMostViewed);
 router.get("/filters", productController.getDistinctSizesAndColors);
-
-
 // 2. 4 sản phẩm khuyến mãi cao nhất
 router.get("/top-discount", productController.getTopDiscount);
 
@@ -33,6 +37,6 @@ router.get("/:slug/:page", productController.getProductsByCategorySlug);
 router.get("/:id", productController.getProductById);
 
 // Tất cả sản phẩm (phân trang)
-router.get("/", productController.getAllProducts);
+router.get("/all", productController.getAllProducts);
 
 export default router;

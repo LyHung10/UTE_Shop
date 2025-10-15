@@ -1,5 +1,6 @@
 import productService from "../services/productService";
-
+import { Op } from "sequelize";
+import { Product, Category, ProductImage, Inventory } from "../models";
 class ProductController {
   async getMostViewed(req, res, next) {
     try {
@@ -80,31 +81,6 @@ class ProductController {
     }
   }
 
-  async addProduct(req, res) {
-    try {
-      const productData = {
-        name: req.body.name,
-        slug: req.body.slug,
-        short_description: req.body.short_description,
-        description: req.body.description,
-        price: req.body.price,
-        original_price: req.body.original_price,
-        discount_percent: req.body.discount_percent,
-        is_active: req.body.is_active,
-        try_on: req.body.try_on,
-        featured: req.body.featured,
-        category_id: req.body.category_id,
-      };
-
-      const product = await productService.createProductWithImages(productData, req.files);
-
-      res.status(201).json(product);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Thêm sản phẩm thất bại', error: error.message });
-    }
-  };
-
   async getNewestProducts(req, res, next) {
     try {
       const products = await productService.getNewestProducts();
@@ -132,10 +108,10 @@ class ProductController {
       const pageFromParams = parseInt(req.params.page, 10);
       const pageFromQuery = parseInt(req.query.page, 10);
       const page = Number.isFinite(pageFromParams)
-          ? pageFromParams
-          : Number.isFinite(pageFromQuery)
-              ? pageFromQuery
-              : 1;
+        ? pageFromParams
+        : Number.isFinite(pageFromQuery)
+          ? pageFromQuery
+          : 1;
 
       const limitQ = parseInt(req.query.limit, 10);
       const limit = Number.isFinite(limitQ) ? limitQ : 20;
@@ -145,9 +121,9 @@ class ProductController {
         if (Array.isArray(v)) return v.filter(Boolean);
         if (typeof v === "string") {
           return v
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean);
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
         }
         return undefined;
       };
@@ -179,9 +155,9 @@ class ProductController {
         if (!priceRange.length) priceRange = undefined;
       } else if (typeof rawPriceRange === "string" && rawPriceRange.trim()) {
         const arr = rawPriceRange
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         priceRange = arr.length > 1 ? arr : arr[0]; // service chấp nhận string hoặc array
       }
       // ====== END price filters ======
@@ -228,5 +204,325 @@ class ProductController {
         .json({ error: err.message || "Internal Server Error" });
     }
   }
+
+  // Phần cho Admin
+  async addProduct(req, res) {
+    try {
+      // Hàm chuyển đổi color name thành object với class
+      const mapColorToObject = (colorName) => {
+        const colorMap = {
+          'Red': 'bg-gradient-to-br from-red-400 to-red-600',
+          'Blue': 'bg-gradient-to-br from-blue-400 to-blue-600',
+          'Black': 'bg-gradient-to-br from-gray-800 to-black',
+          'Gray': 'bg-gradient-to-br from-gray-400 to-gray-600',
+          'Brown': 'bg-gradient-to-br from-yellow-600 to-yellow-800',
+          'White': 'bg-gradient-to-br from-gray-100 to-white border border-gray-300',
+          'Silver': 'bg-gradient-to-br from-gray-300 to-gray-400',
+          'Gold': 'bg-gradient-to-br from-yellow-300 to-yellow-500',
+          'Green': 'bg-gradient-to-br from-green-400 to-green-600',
+          'Yellow': 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+          'Orange': 'bg-gradient-to-br from-orange-400 to-orange-600',
+          'Purple': 'bg-gradient-to-br from-purple-400 to-purple-600',
+          'Pink': 'bg-gradient-to-br from-pink-400 to-pink-600',
+        };
+
+        // Mặc định nếu không tìm thấy
+        const defaultClass = 'bg-gradient-to-br from-gray-400 to-gray-600';
+
+        return {
+          name: colorName,
+          class: colorMap[colorName] || defaultClass
+        };
+      };
+
+      const productData = {
+        name: req.body.name,
+        slug: req.body.slug,
+        short_description: req.body.short_description,
+        description: req.body.description,
+        price: req.body.price,
+        original_price: req.body.original_price,
+        discount_percent: req.body.discount_percent,
+        is_active: req.body.is_active,
+        tryon: req.body.tryon,
+        featured: req.body.featured,
+        category_id: req.body.category_id,
+        // Sửa phần colors ở đây
+        colors: req.body.colors ? JSON.parse(req.body.colors).map(color => mapColorToObject(color)) : [],
+        sizes: req.body.sizes ? JSON.parse(req.body.sizes) : []
+      };
+
+      const inventoryData = {
+        stock: req.body.stock || 0,
+        reserved: req.body.reserved || 0
+      };
+
+      const product = await productService.createProductWithImages(
+        productData,
+        req.files,
+        inventoryData // Truyền inventoryData vào
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Thêm sản phẩm thành công',
+        data: product
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Thêm sản phẩm thất bại',
+        error: error.message
+      });
+    }
+  }
+  // Lấy danh sách sản phẩm với phân trang và filter
+  async getProducts(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+        category_id,
+        is_active,
+        featured
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+
+      let whereCondition = {};
+
+      // Tìm kiếm theo tên
+      if (search) {
+        whereCondition.name = { [Op.like]: `%${search}%` };
+      }
+
+      // Filter theo category
+      if (category_id) {
+        whereCondition.category_id = category_id;
+      }
+
+      // Filter theo trạng thái
+      if (is_active !== undefined) {
+        whereCondition.is_active = is_active === 'true';
+      }
+
+      if (featured !== undefined) {
+        whereCondition.featured = featured === 'true';
+      }
+
+      const { count, rows: products } = await Product.findAndCountAll({
+        where: whereCondition,
+        include: [
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: ProductImage,
+            as: 'images',
+            attributes: ['id', 'url', 'alt', 'sort_order']
+          },
+          {
+            model: Inventory,
+            as: 'inventory',
+            attributes: ['id', 'stock', 'reserved']
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      res.json({
+        success: true,
+        data: products,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(count / limit),
+          totalItems: count
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách sản phẩm',
+        error: error.message
+      });
+    }
+  };
+
+  // Cập nhật sản phẩm
+  async updateProduct(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Hàm chuyển đổi color name thành object với class
+      const mapColorToObject = (colorName) => {
+        const colorMap = {
+          'Red': 'bg-gradient-to-br from-red-400 to-red-600',
+          'Blue': 'bg-gradient-to-br from-blue-400 to-blue-600',
+          'Black': 'bg-gradient-to-br from-gray-800 to-black',
+          'Gray': 'bg-gradient-to-br from-gray-400 to-gray-600',
+          'Brown': 'bg-gradient-to-br from-yellow-600 to-yellow-800',
+          'White': 'bg-gradient-to-br from-gray-100 to-white border border-gray-300',
+          'Silver': 'bg-gradient-to-br from-gray-300 to-gray-400',
+          'Gold': 'bg-gradient-to-br from-yellow-300 to-yellow-500',
+          'Green': 'bg-gradient-to-br from-green-400 to-green-600',
+          'Yellow': 'bg-gradient-to-br from-yellow-400 to-yellow-600',
+          'Orange': 'bg-gradient-to-br from-orange-400 to-orange-600',
+          'Purple': 'bg-gradient-to-br from-purple-400 to-purple-600',
+          'Pink': 'bg-gradient-to-br from-pink-400 to-pink-600',
+        };
+
+        const defaultClass = 'bg-gradient-to-br from-gray-400 to-gray-600';
+
+        return {
+          name: colorName,
+          class: colorMap[colorName] || defaultClass
+        };
+      };
+
+      // Parse dữ liệu từ form-data
+      const productData = {
+        name: req.body.name,
+        slug: req.body.slug,
+        short_description: req.body.short_description,
+        description: req.body.description,
+        price: req.body.price,
+        original_price: req.body.original_price,
+        discount_percent: req.body.discount_percent,
+        is_active: req.body.is_active,
+        tryon: req.body.tryon, // 👈 Sửa từ try_on thành tryon
+        featured: req.body.featured,
+        category_id: req.body.category_id,
+        colors: req.body.colors ? JSON.parse(req.body.colors).map(color => mapColorToObject(color)) : [], // 👈 Thêm mapColorToObject
+        sizes: req.body.sizes ? JSON.parse(req.body.sizes) : []
+      };
+
+      const product = await Product.findByPk(id);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy sản phẩm'
+        });
+      }
+
+      await product.update(productData);
+
+      // Cập nhật inventory từ stock và reserved
+      if (req.body.stock !== undefined || req.body.reserved !== undefined) {
+        const inventoryData = {};
+
+        if (req.body.stock !== undefined) {
+          inventoryData.stock = parseInt(req.body.stock);
+        }
+
+        if (req.body.reserved !== undefined) {
+          inventoryData.reserved = parseInt(req.body.reserved);
+        }
+
+        await Inventory.update(inventoryData, {
+          where: { product_id: id }
+        });
+      }
+
+      const updatedProduct = await Product.findByPk(id, {
+        include: [
+          { model: ProductImage, as: 'images' },
+          { model: Inventory, as: 'inventory' }
+        ]
+      });
+
+      res.json({
+        success: true,
+        message: 'Cập nhật sản phẩm thành công',
+        data: updatedProduct
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Cập nhật sản phẩm thất bại',
+        error: error.message
+      });
+    }
+  }
+
+  // Xóa sản phẩm
+  async deleteProduct(req, res) {
+    try {
+      const { id } = req.params;
+
+      const product = await Product.findByPk(id);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy sản phẩm'
+        });
+      }
+
+      await product.destroy();
+
+      res.json({
+        success: true,
+        message: 'Xóa sản phẩm thành công'
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Xóa sản phẩm thất bại',
+        error: error.message
+      });
+    }
+  };
+
+  // Cập nhật ảnh sản phẩm
+  async updateProductImages(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng chọn ít nhất một ảnh'
+        });
+      }
+
+      // Xóa ảnh cũ
+      await ProductImage.destroy({ where: { product_id: id } });
+
+      // Thêm ảnh mới
+      const images = req.files.map((file, index) => ({
+        product_id: id,
+        url: file.path,
+        alt: file.originalname,
+        sort_order: index + 1,
+      }));
+
+      await ProductImage.bulkCreate(images);
+
+      const updatedProduct = await Product.findByPk(id, {
+        include: [{ model: ProductImage, as: 'images' }]
+      });
+
+      res.json({
+        success: true,
+        message: 'Cập nhật ảnh sản phẩm thành công',
+        data: updatedProduct
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        success: false,
+        message: 'Cập nhật ảnh sản phẩm thất bại',
+        error: error.message
+      });
+    }
+  };
 }
 export default new ProductController();

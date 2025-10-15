@@ -39,6 +39,8 @@ import AdminRoute from "@/app/guards/AdminRoute.jsx";
 import FlashSale from "./admin/pages/Manage/FlashSale.jsx";
 import CreateFlashSale from "./admin/pages/Manage/CreateFlashSale.jsx";
 import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx";
+import ProductList from "./admin/pages/Manage/ProductList.jsx";
+import ProductForm from "./admin/pages/Manage/ProductForm.jsx";
 function App() {
   return (
     <>
@@ -83,11 +85,14 @@ function App() {
               <Route path="notification" element={<AdminNotificationSender />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="manage-orders" element={<Orders />} />
-              <Route path="manage-products" element={<Products />} />
               <Route path="manage-customers" element={<Users />} />
               <Route path="manage-flashsales" element={<FlashSale />} />
               <Route path="manage-flashsales/create" element={<CreateFlashSale />} />
               <Route path="manage-flashsales/:id/products" element={<AddFlashSaleProducts />} />
+              <Route path="products" element={<Products />} />
+              <Route path="manage-products" element={<ProductList />} />
+              <Route path="manage-products/add" element={<ProductForm />} />
+              <Route path="manage-products/edit/:id" element={<ProductForm />} />
             </Route>
           </Route>
         </Route>

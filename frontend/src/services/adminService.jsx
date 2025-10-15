@@ -23,8 +23,6 @@ export const createFlashSale = (data) => {
 export const updateFlashSale = (id, data) => {
     return axios.put(`api/flash-sales/${id}`, data);
 }
-
-// services/adminService.jsx
 export const addProductToFlashSale = async (flashSaleId, data) => {
     try {
         const response = await axios.post(`api/flash-sales/${flashSaleId}/products`, data);

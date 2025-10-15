@@ -1,4 +1,4 @@
-import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order, User } from "../models/index.js";
+import { OrderItem, Product, ProductImage, Inventory, Review, Category, Order, User, sequelize } from "../models/index.js";
 import { Op, fn, col, literal } from "sequelize";
 
 class ProductService {
@@ -143,7 +143,7 @@ class ProductService {
                 {
                     model: Category,
                     as: "category",
-                    attributes: ["name","slug"]
+                    attributes: ["name", "slug"]
                 }
             ],
         });
@@ -236,26 +236,47 @@ class ProductService {
     }
 
     // 5. Thêm sản phẩm + ảnh cloud
-    async createProductWithImages(productData, files = []) {
+    async createProductWithImages(productData, files = [], inventoryData = {}) {
+    try {
         // 1. Tạo product
         const product = await Product.create(productData);
 
-        // 2. Lưu hình ảnh (nếu có)
+        // 2. Tạo inventory với stock từ inventoryData
+        const inventory = await Inventory.create({
+            product_id: product.id,
+            stock: inventoryData.stock || 0, // Sửa ở đây
+            reserved: inventoryData.reserved || 0 // Sửa ở đây
+        });
+
+        // 3. Lưu hình ảnh (nếu có)
         if (files.length) {
             const images = files.map((file, index) => ({
                 product_id: product.id,
-                url: file.path, // multer-cloudinary trả về path là URL Cloudinary
+                url: file.path,
                 alt: file.originalname,
                 sort_order: index + 1,
             }));
             await ProductImage.bulkCreate(images);
         }
 
-        // 3. Trả về product kèm images
+        // 4. Trả về product kèm images và inventory
         return await Product.findByPk(product.id, {
-            include: [{ model: ProductImage, as: "images" }],
+            include: [
+                { 
+                    model: ProductImage, 
+                    as: "images" 
+                },
+                { 
+                    model: Inventory, 
+                    as: "inventory" 
+                }
+            ],
         });
+
+    } catch (error) {
+        throw error;
     }
+}
 
     async getSimilarProducts(productId, limit = 12) {
         const id = Number(productId);
@@ -487,7 +508,7 @@ class ProductService {
             attributes: ["id", "name", "slug"],
         };
 
-// Chỉ filter khi slug có giá trị thực sự và KHÔNG phải 'all'
+        // Chỉ filter khi slug có giá trị thực sự và KHÔNG phải 'all'
         if (slug && slug !== "all") {
             categoryInclude.where = { slug };
             categoryInclude.required = true; // inner join khi lọc theo danh mục
@@ -619,7 +640,7 @@ class ProductService {
                         try { c = JSON.parse(c); } catch { continue; }
                     }
                     const name = (c.name ?? "").trim();
-                    const cls  = (c.class ?? c.className ?? "").trim();
+                    const cls = (c.class ?? c.className ?? "").trim();
                     if (!name) continue;
                     const k = `${name}|${cls}`.toLowerCase();
                     if (!colorMap.has(k)) colorMap.set(k, { name, class: cls });
@@ -628,7 +649,7 @@ class ProductService {
         }
 
         // Sắp xếp đẹp mắt
-        const preferredSizeOrder = ["XXS","XS","S","M","L","XL","2XL","3XL","4XL","One Size"];
+        const preferredSizeOrder = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "One Size"];
         const sizes = [...sizeSet].sort((a, b) => {
             const ia = preferredSizeOrder.indexOf(a);
             const ib = preferredSizeOrder.indexOf(b);
