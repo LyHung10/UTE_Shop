@@ -41,6 +41,7 @@ import CreateFlashSale from "./admin/pages/Manage/CreateFlashSale.jsx";
 import AddFlashSaleProducts from "./admin/pages/Manage/AddFlashSaleProducts.jsx";
 import Categories from "@/admin/pages/Manage/Categories.jsx";
 import Vouchers from "@/admin/pages/Manage/Vouchers.jsx";
+import MyVoucher from "@/features/user/pages/MyVoucher.jsx";
 function App() {
   return (
     <>
@@ -60,6 +61,7 @@ function App() {
                 <Route path="product-favorites" element={<FavoritesPage />} />
                 <Route path="orders/:orderId/review" element={<ReviewPage />} />
                 <Route path="gift" element={<RewardStore />} />
+                <Route path="my-vouchers" element={<MyVoucher />} />
                 <Route path="change-password" element={<ChangePassword />} />
               </Route>
               <Route path="cart" element={<ShoppingCart />} />

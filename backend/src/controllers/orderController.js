@@ -263,6 +263,15 @@ class OrderController {
             });
         }
     }
+
+    static async checkHasNewOrders(req, res) {
+        try {
+            const result = await OrderService.checkHasNewOrders();
+            res.status(201).json(result);
+        } catch (err) {
+            return res.status(400).json({ message: err.message });
+        }
+    }
 }
 
 export default OrderController;

@@ -472,7 +472,8 @@ const ProductDetail = () => {
                                 </div>
                             )}
                             {/* Ratings */}
-                            <div className="flex items-center gap-4 mb-6">
+                            <div className="flex flex-wrap items-center gap-4 mb-6">
+                                {/* ⭐ Đánh giá sao */}
                                 <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => {
                                         const rating = product?.avg_rating || 0;
@@ -480,14 +481,14 @@ const ProductDetail = () => {
 
                                         return (
                                             <div key={i} className="relative">
-                                                {/* Sao nền (luôn hiển thị) */}
+                                                {/* Sao nền */}
                                                 <Star className="w-5 h-5 text-gray-300" />
 
-                                                {/* Sao vàng (phủ lên tùy theo rating) */}
+                                                {/* Sao vàng (phủ lên theo rating) */}
                                                 <div
                                                     className="absolute top-0 left-0 overflow-hidden"
                                                     style={{
-                                                        width: `${rating >= starNumber ? 100 : rating >= starNumber - 0.5 ? 50 : 0}%`
+                                                        width: `${rating >= starNumber ? 100 : rating >= starNumber - 0.5 ? 50 : 0}%`,
                                                     }}
                                                 >
                                                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -496,13 +497,19 @@ const ProductDetail = () => {
                                         );
                                     })}
                                 </div>
+
+                                {/* ⭐ Số điểm trung bình */}
                                 <span className="text-gray-700 font-medium">
-                                    {(product?.avg_rating || 0).toFixed(1)}/5
+                                        {(product?.avg_rating || 0).toFixed(1)}/5
                                 </span>
-                                <span className="text-gray-500">
-                                    ({product?.review_count || 0} đánh giá)
+                                {/* 📊 Số lượng đánh giá */}
+                                <span className="text-gray-500">({product?.review_count || 0} đánh giá)
+                                </span>
+                                <span className="text-gray-500 border-l border-gray-300 pl-4">
+                                    Đã bán {product?.sale_count || 0}
                                 </span>
                             </div>
+
 
                             <div className="flex items-center gap-4 mb-6">
                                 {/* Giá flash sale nếu có */}

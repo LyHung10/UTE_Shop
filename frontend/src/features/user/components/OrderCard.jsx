@@ -80,7 +80,9 @@ const OrderCard = (props) => {
             <div className="divide-y divide-gray-100">
                 {order.items.map((it) => (
                     <div key={it.product.id} className="flex items-center gap-4 px-4 py-3">
-                        <img src={it.product.image} alt={it.product.name} className="h-16 w-16 rounded-lg object-cover border" />
+                        <img   onClick={() => navigate(`/product/${it.product.id}`)}
+                               src={it.product.image} alt={it.product.name}
+                               className="h-16 cursor-pointer w-16 rounded-lg object-cover border" />
                         <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 line-clamp-1">{it.product.name}</div>
                             <div className="mt-0.5 text-xs text-gray-500">{`${it.color}, ${it.size}`}</div>

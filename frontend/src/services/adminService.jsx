@@ -20,6 +20,10 @@ const putConfirmOrderComplete = (orderId) => {
     return axios.put(`api/orders/${orderId}/confirm-completed`);
 };
 
+const getCheckHasNewOrders = () => {
+    return axios.get(`api/admin/check-neworder`);
+};
+
 const getAdminDetailOrder = (orderId) => {
     return axios.get(`api/admin/order/${orderId}/detail`);
 };
@@ -30,7 +34,7 @@ const postCancelAdminOrder = (orderId) => {
 
 export {
     getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmOrderComplete, getAdminDetailOrder,
-    postCancelAdminOrder
+    postCancelAdminOrder, getCheckHasNewOrders
 };
 
 // Flash Sale

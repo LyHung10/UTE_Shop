@@ -862,7 +862,7 @@ class OrderService {
 
             const user = await User.findByPk(order.user_id, { transaction: t, lock: t.LOCK.UPDATE });
             if (user) {
-                const pointsEarned = Math.floor(order.total_amount / 100);  // mỗi 100k là được 1k
+                const pointsEarned = Math.floor(order.total_amount / 1000);  // mỗi 100k là được 1k
                 user.loyalty_points = (user.loyalty_points || 0) + pointsEarned;
                 console.log(`User ${order.user_id} earned ${pointsEarned} loyalty points, total now ${user.loyalty_points}`);
                 await user.save({ transaction: t });
@@ -1441,6 +1441,27 @@ class OrderService {
         const cart = await OrderService.getCart(userId);
 
         return cart;
+    }
+
+    static async checkHasNewOrders() {
+        try {
+            // Kiểm tra xem có ít nhất 1 đơn hàng ở trạng thái NEW hay không
+            const existingNewOrder = await Order.findOne({
+                where: { status: 'NEW' },
+                attributes: ['id'], // chỉ cần id để tối ưu
+            });
+
+            return {
+                success: true,
+                hasNewOrder: !!existingNewOrder
+            };
+        } catch (error) {
+            console.error("❌ Lỗi khi kiểm tra đơn hàng NEW:", error);
+            return {
+                success: false,
+                message: "Lỗi khi kiểm tra đơn hàng NEW"
+            };
+        }
     }
 }
 export default OrderService;
