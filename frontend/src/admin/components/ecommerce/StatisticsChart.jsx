@@ -1,8 +1,15 @@
+import { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import ChartTab from "../common/ChartTab.jsx";
+import {getStatistics} from "@/services/adminService.jsx";
 
 export default function StatisticsChart() {
-  const options = {
+  const [series, setSeries] = useState([
+    { name: "Sales", data: Array(12).fill(0) },
+    { name: "Revenue", data: Array(12).fill(0) },
+  ]);
+
+  const [options, setOptions] = useState({
     legend: { show: false, position: "top", horizontalAlign: "left" },
     colors: ["#465FFF", "#9CB9FF"],
     chart: {
@@ -27,10 +34,7 @@ export default function StatisticsChart() {
       yaxis: { lines: { show: true } },
     },
     dataLabels: { enabled: false },
-    tooltip: {
-      enabled: true,
-      x: { format: "dd MMM yyyy" },
-    },
+    tooltip: { enabled: true, x: { format: "dd MMM yyyy" } },
     xaxis: {
       type: "category",
       categories: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -39,17 +43,39 @@ export default function StatisticsChart() {
       tooltip: { enabled: false },
     },
     yaxis: {
-      labels: {
-        style: { fontSize: "12px", colors: ["#6B7280"] },
-      },
+      labels: { style: { fontSize: "12px", colors: ["#6B7280"] } },
       title: { text: "", style: { fontSize: "0px" } },
     },
-  };
+  });
 
-  const series = [
-    { name: "Sales",   data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235] },
-    { name: "Revenue", data: [40,  30,  50,  40,  55,  40,  70, 100, 110, 120, 150, 140] },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    getStatistics() // /api/admin/dashboard/statistics?year=2025
+        .then((res) => {
+          if (!mounted) return;
+          const payload = res?.data;
+          if (!payload) return;
+
+          // cập nhật categories nếu backend có trả về
+          if (Array.isArray(payload.categories)) {
+            setOptions((prev) => ({
+              ...prev,
+              xaxis: { ...prev.xaxis, categories: payload.categories },
+            }));
+          }
+
+          // series từ backend: [{name:'Sales', data:[...]}, {name:'Revenue', data:[...]}]
+          if (Array.isArray(payload.series) && payload.series.length) {
+            setSeries(payload.series);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load statistics:", err?.message || err);
+        });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
       <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-gray-800 sm:px-6 sm:pt-6">

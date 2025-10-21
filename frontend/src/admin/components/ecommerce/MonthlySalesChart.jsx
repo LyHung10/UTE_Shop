@@ -2,10 +2,15 @@ import Chart from "react-apexcharts";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {getMonthlySales} from "@/services/adminService.jsx";
 
 export default function MonthlySalesChart() {
-  const options = {
+  const [series, setSeries] = useState([
+    { name: "Sales", data: [0,0,0,0,0,0,0,0,0,0,0,0] },
+  ]);
+
+  const [options, setOptions] = useState({
     colors: ["#465fff"],
     chart: {
       fontFamily: "Outfit, sans-serif",
@@ -41,11 +46,34 @@ export default function MonthlySalesChart() {
       x: { show: false },
       y: { formatter: (val) => `${val}` },
     },
-  };
+  });
 
-  const series = [
-    { name: "Sales", data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112] },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    getMonthlySales() // gọi: /api/admin/dashboard/monthly-sales?year=2025
+        .then((res) => {
+          if (!mounted) return;
+          const payload = res?.data;
+          if (!payload) return;
+
+          // cập nhật series và categories từ API
+          if (Array.isArray(payload.series)) {
+            setSeries(payload.series);
+          }
+          if (Array.isArray(payload.categories)) {
+            setOptions((prev) => ({
+              ...prev,
+              xaxis: { ...prev.xaxis, categories: payload.categories },
+            }));
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load monthly sales:", err?.message || err);
+        });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => setIsOpen(!isOpen);

@@ -32,9 +32,25 @@ const postCancelAdminOrder = (orderId) => {
     return axios.post(`api/admin/order/cancel-order`,{orderId});
 };
 
+const getMetrics = () => {
+    return axios.get(`api/admin/dashboard/metrics`);
+};
+
+const getMonthlySales = () => {
+    return axios.get('/api/admin/dashboard/monthly-sales?year=2025')
+};
+
+const getMonthlyTarget = () => {
+    return axios.get('/api/admin/dashboard/monthly-target')
+};
+
+const getStatistics = () => {
+    return axios.get('/api/admin/dashboard/statistics?year=2025')
+};
+
 export {
     getAllOrders, putConfirmOrder, getAlUsers, putShippingOrder, putConfirmOrderComplete, getAdminDetailOrder,
-    postCancelAdminOrder, getCheckHasNewOrders
+    postCancelAdminOrder, getCheckHasNewOrders, getMetrics, getMonthlySales, getMonthlyTarget, getStatistics
 };
 
 // Flash Sale

@@ -1,41 +1,9 @@
-import { useState } from "react";
-
 const ChartTab = () => {
-    const [selected, setSelected] = useState("optionOne");
-
-    const getButtonClass = (option) =>
-        selected === option
-            ? "shadow-theme-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800"
-            : "text-gray-500 dark:text-gray-400";
-
     return (
-        <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900">
-            <button
-                onClick={() => setSelected("optionOne")}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900 dark:hover:text-white ${getButtonClass(
-                    "optionOne"
-                )}`}
-            >
-                Monthly
-            </button>
-
-            <button
-                onClick={() => setSelected("optionTwo")}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900 dark:hover:text-white ${getButtonClass(
-                    "optionTwo"
-                )}`}
-            >
-                Quarterly
-            </button>
-
-            <button
-                onClick={() => setSelected("optionThree")}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900 dark:hover:text-white ${getButtonClass(
-                    "optionThree"
-                )}`}
-            >
-                Annually
-            </button>
+        <div className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 px-3 py-1.5 shadow-sm ring-1 ring-gray-200 dark:bg-gradient-to-r dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 dark:ring-gray-700">
+      <span className="text-sm font-medium bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-indigo-400 dark:to-blue-400 select-none">
+        Monthly
+      </span>
         </div>
     );
 };
