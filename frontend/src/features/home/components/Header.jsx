@@ -198,12 +198,127 @@ const Header = () => {
                                 </PopoverPanel>
                             </Popover>
 
-                            <motion.button
-                                className="px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10"
-                                whileHover={{ scale: 1.05 }}
-                            >
-                                THỜI TRANG KHÁC
-                            </motion.button>
+                            <Popover className="relative">
+                                <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10">
+                                    THỜI TRANG KHÁC
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-pink-500 group-hover:w-full transition-all duration-300"></span>
+                                </PopoverButton>
+
+                                <PopoverPanel
+                                    className="top-full fixed left-1/2 -translate-x-1/2 w-[1000px] max-w-[90vw]
+                                    glass rounded-2xl shadow-2xl border border-blue-500/20 overflow-hidden z-[60]"
+                                >
+                                    <div className="relative bg-slate-900/60">
+                                        <div className="grid grid-cols-2 gap-x-6 gap-y-8 p-6">
+                                            {/* Cột ảnh nổi bật (giống style mega menu) */}
+                                            <div className="col-start-2 grid grid-cols-2 gap-4">
+                                                <div className="group relative text-sm">
+                                                    <img
+                                                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/mega-menu-category-01.jpg"
+                                                        alt="Bộ sưu tập mới"
+                                                        className="aspect-square w-full rounded-lg object-cover bg-slate-700 group-hover:opacity-80 transition"
+                                                    />
+                                                    <button
+                                                        onClick={() => navigate('/category/all')}
+                                                        className="mt-3 block font-medium text-white group-hover:text-blue-300 transition"
+                                                    >
+                                                        <span aria-hidden="true" className="absolute inset-0 z-10" />
+                                                        Tất cả sản phẩm
+                                                    </button>
+                                                    <p className="mt-1 text-xs text-blue-300/80">Mua ngay</p>
+                                                </div>
+
+                                                <div className="group relative text-sm">
+                                                    <img
+                                                        src="https://tailwindcss.com/plus-assets/img/ecommerce-images/mega-menu-category-02.jpg"
+                                                        alt="Basic Tees"
+                                                        className="aspect-square w-full rounded-lg object-cover bg-slate-700 group-hover:opacity-80 transition"
+                                                    />
+                                                    <button
+                                                        onClick={() => navigate('/search?q=basic-tee')}
+                                                        className="mt-3 block font-medium text-white group-hover:text-blue-300 transition"
+                                                    >
+                                                        <span aria-hidden="true" className="absolute inset-0 z-10" />
+                                                        Basic Tees
+                                                    </button>
+                                                    <p className="mt-1 text-xs text-blue-300/80">Mua ngay</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Cột danh mục */}
+                                            <div className="row-start-1 grid grid-cols-3 gap-x-6 gap-y-8 text-sm">
+                                                <div>
+                                                    <p className="font-medium text-white">ÁO</p>
+                                                    <ul className="mt-4 space-y-3 text-blue-200">
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=ao-nam')} className="hover:text-blue-300">
+                                                                Áo thun
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=quan-nam')} className="hover:text-blue-300">
+                                                                Áo sơ mi
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=ao-thun-nam')} className="hover:text-blue-300">
+                                                                Áo khoác
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-medium text-white">QUẦN</p>
+                                                    <ul className="mt-4 space-y-3 text-blue-200">
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=ao-nu')} className="hover:text-blue-300">
+                                                                Quần Short
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=dam-vay')} className="hover:text-blue-300">
+                                                                Quần dài
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=quan-nu')} className="hover:text-blue-300">
+                                                                Quần Jeans
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-medium text-white">PHỤ KIỆN</p>
+                                                    <ul className="mt-4 space-y-3 text-blue-200">
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=dong-ho')} className="hover:text-blue-300">
+                                                                Nón
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=vi-bop')} className="hover:text-blue-300">
+                                                                Ví & Bóp
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=tui-xach')} className="hover:text-blue-300">
+                                                                Túi xách
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button onClick={() => navigate('/search?q=non-that-lung')} className="hover:text-blue-300">
+                                                                Nón & Thắt lưng
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </PopoverPanel>
+                            </Popover>
 
                             <motion.button
                                 className="px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10"

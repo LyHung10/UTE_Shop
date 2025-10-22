@@ -101,7 +101,7 @@ export default function HomePage() {
                 <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-7 py-5 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 group min-h-12 flex flex-col items-center justify-center gap-1">
                   <div className="flex items-center">
                     <ShoppingBag className="w-4 h-4 mr-2" />
-                    Shop Now
+                    SHOP NOW
                     <ArrowRight className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
                   </div>
 
@@ -111,7 +111,7 @@ export default function HomePage() {
                   onClick={()=>  navigate("/category/all")}
                   className="border-2 border-blue-300 text-blue-700 hover:bg-blue-50 px-7 py-5 rounded-xl text-base font-semibold transition-all hover:scale-105 min-h-12"
                 >
-                  All Products
+                  TẤT CẢ SẢN PHẨM
                 </Button>
               </div>
 
