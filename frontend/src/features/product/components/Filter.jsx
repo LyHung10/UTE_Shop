@@ -14,11 +14,11 @@ export default function Filter({
                                    selectedSizes = [],
                                    onToggleSize = () => {},
                                    priceMin = 0,
-                                   priceMax = 5000000,
+                                   priceMax = 1000000,
                                    onPriceChange = () => {},
                                }) {
     const ABS_MIN = 0;
-    const ABS_MAX = 5000000;
+    const ABS_MAX = 1000000;
     const STEP = 10000;
 
     // cập nhật giá khi kéo slider

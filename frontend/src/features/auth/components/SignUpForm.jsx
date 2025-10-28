@@ -356,7 +356,7 @@ export default function SignUpForm() {
                 <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                   Already have an account?{" "}
                   <Link
-                      to="/signin"  // (tuỳ bạn) đường dẫn hợp lý hơn cho "Sign In"
+                      to="/login"  // (tuỳ bạn) đường dẫn hợp lý hơn cho "Sign In"
                       className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
                     Sign In

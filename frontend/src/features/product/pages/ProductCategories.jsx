@@ -15,7 +15,7 @@ const ProductCategories = () => {
 
     // NEW: state giá
     const [priceMin, setPriceMin] = useState(0);
-    const [priceMax, setPriceMax] = useState(5000000);
+    const [priceMax, setPriceMax] = useState(1000000);
 
     const [sizeOptions, setSizeOptions] = useState([]);   // ["S","M","L",...]
     const [colorOptions, setColorOptions] = useState([]); // ["Red","Blue",...]
