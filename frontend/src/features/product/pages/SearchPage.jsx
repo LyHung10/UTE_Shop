@@ -117,7 +117,7 @@ const SearchPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-32 pb-20">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-16 pb-20">
             <div className="container mx-auto px-4">
                 {/* Search Header */}
                 <motion.div

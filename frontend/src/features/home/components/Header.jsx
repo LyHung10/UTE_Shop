@@ -16,7 +16,7 @@ const Header = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const isAuthenticated = useSelector((state) => state.authStatus.isAuthenticated)
-    const user = useSelector((state)=>state.user)
+    const user = useSelector((state) => state.user)
     const cartCount = useSelector((state) => state.cart.count)
 
     // Search states
@@ -104,7 +104,7 @@ const Header = () => {
 
         // Navigate to search results page
         navigate(`/search?q=${encodeURIComponent(query)}`)
-        
+
         // Reset states
         setSearchQuery("")
         setShowSuggestions(false)
@@ -169,8 +169,7 @@ const Header = () => {
 
                         <nav className="hidden md:flex items-center gap-6">
                             <Popover className="relative">
-                                <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-blue-300 transition-colors duration-200 rounded-lg hover:bg-white/10">
-                                    <MenuIcon className="w-4 h-4" />
+                                <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white hover:text-blue-300 transition-colors duration-200 rounded-lg hover:bg-white/10 font-sans">                                    <MenuIcon className="w-4 h-4" />
                                     DANH MỤC SẢN PHẨM
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                                 </PopoverButton>
@@ -210,8 +209,7 @@ const Header = () => {
                             </Popover>
 
                             <Popover className="relative">
-                                <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10">
-                                    THỜI TRANG KHÁC
+                                <PopoverButton className="group flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white hover:text-blue-300 transition-colors duration-200 rounded-lg hover:bg-white/10 font-sans">                                      THỜI TRANG KHÁC
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-400 to-pink-500 group-hover:w-full transition-all duration-300"></span>
                                 </PopoverButton>
 
@@ -327,7 +325,7 @@ const Header = () => {
                             </Popover>
 
                             <motion.button
-                                className="px-4 py-2 text-sm font-medium text-white hover:text-orange-300 transition-colors duration-200 rounded-lg hover:bg-white/10"
+                                className="group flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white hover:text-blue-300 transition-colors duration-200 rounded-lg hover:bg-white/10 font-sans"
                                 whileHover={{ scale: 1.05 }}
                             >
                                 VỀ CHÚNG TÔI

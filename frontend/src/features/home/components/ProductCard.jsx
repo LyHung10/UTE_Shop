@@ -17,7 +17,6 @@ const ProductCard = ({ product }) => {
   const reviewCount = parseInt(product?.review_count) || 0;
 
   const createdAtStr = product?.createdAt;
-  console.log(createdAtStr);
   const isNew = (() => {
     if (!createdAtStr) return false;
     const created = new Date(createdAtStr).getTime();

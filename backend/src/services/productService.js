@@ -237,46 +237,46 @@ class ProductService {
 
     // 5. Thêm sản phẩm + ảnh cloud
     async createProductWithImages(productData, files = [], inventoryData = {}) {
-    try {
-        // 1. Tạo product
-        const product = await Product.create(productData);
+        try {
+            // 1. Tạo product
+            const product = await Product.create(productData);
 
-        // 2. Tạo inventory với stock từ inventoryData
-        const inventory = await Inventory.create({
-            product_id: product.id,
-            stock: inventoryData.stock || 0, // Sửa ở đây
-            reserved: inventoryData.reserved || 0 // Sửa ở đây
-        });
-
-        // 3. Lưu hình ảnh (nếu có)
-        if (files.length) {
-            const images = files.map((file, index) => ({
+            // 2. Tạo inventory với stock từ inventoryData
+            const inventory = await Inventory.create({
                 product_id: product.id,
-                url: file.path,
-                alt: file.originalname,
-                sort_order: index + 1,
-            }));
-            await ProductImage.bulkCreate(images);
+                stock: inventoryData.stock || 0, // Sửa ở đây
+                reserved: inventoryData.reserved || 0 // Sửa ở đây
+            });
+
+            // 3. Lưu hình ảnh (nếu có)
+            if (files.length) {
+                const images = files.map((file, index) => ({
+                    product_id: product.id,
+                    url: file.path,
+                    alt: file.originalname,
+                    sort_order: index + 1,
+                }));
+                await ProductImage.bulkCreate(images);
+            }
+
+            // 4. Trả về product kèm images và inventory
+            return await Product.findByPk(product.id, {
+                include: [
+                    {
+                        model: ProductImage,
+                        as: "images"
+                    },
+                    {
+                        model: Inventory,
+                        as: "inventory"
+                    }
+                ],
+            });
+
+        } catch (error) {
+            throw error;
         }
-
-        // 4. Trả về product kèm images và inventory
-        return await Product.findByPk(product.id, {
-            include: [
-                { 
-                    model: ProductImage, 
-                    as: "images" 
-                },
-                { 
-                    model: Inventory, 
-                    as: "inventory" 
-                }
-            ],
-        });
-
-    } catch (error) {
-        throw error;
     }
-}
 
     async getSimilarProducts(productId, limit = 12) {
         const id = Number(productId);
@@ -386,12 +386,10 @@ class ProductService {
         const sortKey = opts.sort; // 'popularity' | 'rating' | 'newest' | 'price_asc' | 'price_desc'
 
         // ==== [A] Build điều kiện WHERE cho MySQL JSON ====
-        // gom các điều kiện vào AND
         const andConds = [];
 
         // SIZES: mảng JSON các chuỗi
         if (sizesArr?.length) {
-            // JSON_OVERLAPS(sizes, ['S','M']) — nếu không khả dụng sẽ fallback OR JSON_CONTAINS phía dưới
             andConds.push(
                 fn(
                     "IF",
@@ -409,7 +407,6 @@ class ProductService {
                 )
             );
 
-            // Fallback: (JSON_CONTAINS(sizes, '"S"') OR JSON_CONTAINS(sizes, '"M"') ...)
             const sizeOr = {
                 [Op.or]: sizesArr.map((s) => ({
                     [Op.and]: [
@@ -422,7 +419,6 @@ class ProductService {
 
         // COLORS: mảng JSON các object { name, class }
         if (colorsArr?.length) {
-            // JSON_SEARCH(colors, 'one', 'Red', NULL, '$[*].name') IS NOT NULL
             const colorOr = {
                 [Op.or]: colorsArr.map((c) => ({
                     [Op.and]: [
@@ -439,9 +435,6 @@ class ProductService {
             return Number.isFinite(n) && n >= 0 ? n : null;
         };
 
-        // Hỗ trợ:
-        // - opts.priceMin / opts.priceMax (số)
-        // - opts.priceRange: "min-max" hoặc ["min-max", "min-max", ...]
         let priceCond = null;
 
         if (opts?.priceRange) {
@@ -451,7 +444,6 @@ class ProductService {
                     if (typeof r !== "string") return null;
                     const [a, b] = r.split("-").map((x) => sanitizeNumber(x?.trim()));
                     if (a === null && b === null) return null;
-                    // Chuẩn hóa min/max
                     let min = a ?? 0;
                     let max = b ?? Number.MAX_SAFE_INTEGER;
                     if (min > max) [min, max] = [max, min];
@@ -460,7 +452,6 @@ class ProductService {
                 .filter(Boolean);
 
             if (ranges.length) {
-                // (price BETWEEN min AND max) OR ...
                 priceCond = {
                     [Op.or]: ranges.map(({ min, max }) => ({
                         price: { [Op.between]: [min, max] }
@@ -480,13 +471,10 @@ class ProductService {
 
         if (priceCond) andConds.push(priceCond);
 
-        // ==== END PRICE FILTER ====
-
         const productWhere = andConds.length ? { [Op.and]: andConds } : {};
 
         // ==== [B] Map sort → order ====
         let order = [];
-        let useRatingGroup = false;
         switch (sortKey) {
             case "price_asc":
                 order = [["price", "ASC"]];
@@ -508,64 +496,27 @@ class ProductService {
             attributes: ["id", "name", "slug"],
         };
 
-        // Chỉ filter khi slug có giá trị thực sự và KHÔNG phải 'all'
         if (slug && slug !== "all") {
             categoryInclude.where = { slug };
-            categoryInclude.required = true; // inner join khi lọc theo danh mục
+            categoryInclude.required = true;
         }
 
-        const baseIncludes = [
-            categoryInclude,
-            {
-                model: ProductImage,
-                as: "images",
-                attributes: ["id", "url", "alt", "sort_order"],
-                order: [["sort_order", "ASC"]],
-            },
-            {
-                model: Inventory,
-                as: "inventory",
-                attributes: ["stock", "reserved"],
-            },
-        ];
-
-        if (useRatingGroup) {
-            const { rows: products, count } = await Product.findAndCountAll({
-                where: productWhere,
-                include: [
-                    ...baseIncludes,
-                    { model: Review, as: "reviews", attributes: [] },
-                ],
-                attributes: {
-                    include: [
-                        [fn("AVG", col("reviews.rating")), "avg_rating"],
-                        [fn("COUNT", col("reviews.id")), "review_count"],
-                    ],
-                },
-                group: ["Product.id"],
-                order: [[fn("AVG", col("reviews.rating")), "DESC"], ["created_at", "DESC"]],
-                limit,
-                offset,
-                subQuery: false,
-                distinct: true,
-            });
-            const totalItems = Array.isArray(count) ? count.length : count;
-            return {
-                products,
-                pagination: {
-                    totalItems,
-                    totalPages: Math.ceil(totalItems / limit),
-                    currentPage: page,
-                    pageSize: limit,
-                },
-            };
-        }
-
+        // ==== LẤY PRODUCTS (KHÔNG CÓ RATING) ====
         const { rows: products, count: totalItems } = await Product.findAndCountAll({
             where: productWhere,
             include: [
-                ...baseIncludes,
-                { model: Review, as: "reviews", attributes: ["id", "rating", "text", "created_at"] },
+                categoryInclude,
+                {
+                    model: ProductImage,
+                    as: "images",
+                    attributes: ["id", "url", "alt", "sort_order"],
+                    order: [["sort_order", "ASC"]],
+                },
+                {
+                    model: Inventory,
+                    as: "inventory",
+                    attributes: ["stock", "reserved"],
+                },
             ],
             order,
             limit,
@@ -573,8 +524,45 @@ class ProductService {
             distinct: true,
         });
 
+        // ==== LẤY RATING CHO TỪNG PRODUCT ====
+        const productIds = products.map(product => product.id);
+
+        const ratings = await Review.findAll({
+            attributes: [
+                'product_id',
+                [fn('AVG', col('rating')), 'avg_rating'],
+                [fn('COUNT', col('id')), 'review_count']
+            ],
+            where: {
+                product_id: productIds
+            },
+            group: ['product_id'],
+            raw: true
+        });
+
+        // Map rating vào products
+        const ratingMap = {};
+        ratings.forEach(rating => {
+            ratingMap[rating.product_id] = {
+                avg_rating: parseFloat(rating.avg_rating) || 0,
+                review_count: parseInt(rating.review_count) || 0
+            };
+        });
+
+        // Thêm rating data vào từng product
+        const productsWithRating = products.map(product => {
+            const productData = product.toJSON();
+            const productRating = ratingMap[product.id] || { avg_rating: 0, review_count: 0 };
+
+            return {
+                ...productData,
+                avg_rating: productRating.avg_rating,
+                review_count: productRating.review_count
+            };
+        });
+
         return {
-            products,
+            products: productsWithRating,
             pagination: {
                 totalItems,
                 totalPages: Math.ceil(totalItems / limit),
