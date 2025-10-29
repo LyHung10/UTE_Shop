@@ -140,7 +140,8 @@ const ShoppingCart = () => {
 
     const discount = Number(cart?.discount ?? 0);
     const fee = Number(shippingFee ?? 0);
-    const tax = subtotal > 0 ? 40000 : 0;
+    const tax = subtotal > 0 ? Math.floor(subtotal * 0.05) : 0;
+
 
     const total = subtotal - discount + fee + tax;
 
@@ -491,7 +492,7 @@ const ShoppingCart = () => {
                                 </div>
 
                                 <div className="flex justify-between text-gray-700">
-                                    <span>Thuế</span>
+                                    <span>Thuế VAT (5%)</span>
                                     <span className="font-semibold">{tax.toLocaleString()}đ</span>
                                 </div>
 
