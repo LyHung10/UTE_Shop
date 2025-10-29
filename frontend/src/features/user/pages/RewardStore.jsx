@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Gift, TicketPercent, Loader2, Star } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -158,6 +158,10 @@ const RewardStore = () => {
             setLoadingSlug(null);
         }
     };
+
+    useEffect(() => {
+        fetchUser();
+    }, []);
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="max-w-6xl my-10 mx-auto px-6 space-y-8">
