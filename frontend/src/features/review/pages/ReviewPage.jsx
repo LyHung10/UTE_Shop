@@ -4,6 +4,7 @@ import { Star, ArrowLeft, CheckCircle, AlertCircle, Send, PackageCheck, Sparkles
 import { getOrderDetail } from "@/services/orderService.jsx";
 import { createReview } from "@/services/reviewService.jsx";
 import { formatPrice } from "@/utils/format.jsx";
+import {fetchUser} from "@/redux/action/userAction.jsx";
 
 export default function ReviewPage() {
     const { orderId } = useParams();
@@ -150,7 +151,6 @@ export default function ReviewPage() {
                         points: result.points_earned
                     }));
                 }
-
                 setTimeout(() => {
                     navigate(`/user/my-orders`);
                 }, 2000);
