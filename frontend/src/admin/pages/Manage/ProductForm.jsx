@@ -20,6 +20,7 @@ import { UploadOutlined, PlusOutlined, ArrowLeftOutlined } from '@ant-design/ico
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import adminProductService from '@/services/adminProductService';
 import { toast } from 'react-toastify';
+import {getCategories} from "@/services/categoryService.jsx";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -31,14 +32,6 @@ const colorOptions = [
 
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
-const categoryOptions = [
-    { id: 1, name: 'Thời trang nam' },
-    { id: 2, name: 'Thời trang nữ' },
-    { id: 3, name: 'Áo thun' },
-    { id: 4, name: 'Quần' },
-    { id: 5, name: 'Đầm/Váy' },
-    { id: 6, name: 'Áo khoác' },
-];
 
 const ProductForm = () => {
     const [form] = Form.useForm();
@@ -46,7 +39,7 @@ const ProductForm = () => {
     const [fetching, setFetching] = useState(false);
     const [existingFileList, setExistingFileList] = useState([]);
     const [newFileList, setNewFileList] = useState([]);
-
+    const [categoryOptions, setCategoryOptions] = useState([]);
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = !!id;
@@ -119,7 +112,7 @@ const ProductForm = () => {
 
         return true;
     };
-
+    console.log(categoryOptions);
     const validateImages = () => {
         for (const file of newFileList) {
             if (file.originFileObj) {
@@ -161,7 +154,13 @@ const ProductForm = () => {
         message.info('Đã điền dữ liệu test!');
     };
 
+    const fetchCategoryOptions = async () => {
+        const res = await getCategories();
+        setCategoryOptions(res);
+    }
+
     useEffect(() => {
+        fetchCategoryOptions();
         if (isEdit) {
             fetchProductDetail();
         } else {
@@ -175,7 +174,6 @@ const ProductForm = () => {
         setFetching(true);
         try {
             const response = await adminProductService.getProductById(id);
-
             if (response && (response.data || response.id)) {
                 const product = response.data || response;
 
@@ -540,7 +538,7 @@ const ProductForm = () => {
                                 rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
                             >
                                 <Select placeholder="Chọn danh mục" size="large">
-                                    {categoryOptions.map(category => (
+                                    {categoryOptions?.map(category => (
                                         <Option key={category.id} value={category.id}>
                                             {category.name}
                                         </Option>

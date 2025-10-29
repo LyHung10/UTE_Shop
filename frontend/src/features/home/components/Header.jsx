@@ -175,24 +175,35 @@ const Header = () => {
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                                 </PopoverButton>
 
-                                <PopoverPanel className="absolute top-full left-0 mt-2 w-96 glass rounded-xl shadow-2xl border border-blue-500/20 overflow-hidden">
+                                <PopoverPanel className="absolute top-full left-0 mt-2 w-150 glass rounded-xl shadow-2xl border border-blue-500/20 overflow-hidden">
                                     <div className="p-6">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {listCategories && listCategories.length > 0 ? (
-                                                listCategories.map((item) => (
-                                                    <motion.button
-                                                        key={item.id}
-                                                        onClick={() => navigate(`category/${item.slug}`)}
-                                                        className="text-left p-3 rounded-lg hover:bg-blue-500/20 text-white hover:text-blue-300 transition-all duration-200"
-                                                        whileHover={{ scale: 1.02, x: 5 }}
-                                                    >
-                                                        <div className="font-medium">{item.name}</div>
-                                                        <div className="text-xs text-blue-300 mt-1">Xem tất cả</div>
-                                                    </motion.button>
-                                                ))
-                                            ) : (
-                                                <span className="text-gray-400">Đang tải...</span>
-                                            )}
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <motion.button
+                                                onClick={() => navigate(`category/qua-luu-niem`)}
+                                                className="text-left p-3 rounded-lg hover:bg-blue-500/20 text-white hover:text-blue-300 transition-all duration-200"
+                                                whileHover={{ scale: 1.02, x: 5 }}
+                                            >
+                                                <div className="font-medium">Quà lưu niệm</div>
+                                                <div className="text-xs text-blue-300 mt-1">Xem tất cả</div>
+                                            </motion.button>
+
+                                            <motion.button
+                                                onClick={() => navigate(`category/van-phong-pham`)}
+                                                className="text-left p-3 rounded-lg hover:bg-blue-500/20 text-white hover:text-blue-300 transition-all duration-200"
+                                                whileHover={{ scale: 1.02, x: 5 }}
+                                            >
+                                                <div className="font-medium">Văn phòng phẩm</div>
+                                                <div className="text-xs text-blue-300 mt-1">Xem tất cả</div>
+                                            </motion.button>
+
+                                            <motion.button
+                                                onClick={() => navigate(`category/thoi-trang-ute`)}
+                                                className="text-left p-3 rounded-lg hover:bg-blue-500/20 text-white hover:text-blue-300 transition-all duration-200"
+                                                whileHover={{ scale: 1.02, x: 5 }}
+                                            >
+                                                <div className="font-medium">Thời trang UTE</div>
+                                                <div className="text-xs text-blue-300 mt-1">Xem tất cả</div>
+                                            </motion.button>
                                         </div>
                                     </div>
                                 </PopoverPanel>
@@ -251,17 +262,17 @@ const Header = () => {
                                                     <p className="font-medium text-white">ÁO</p>
                                                     <ul className="mt-4 space-y-3 text-blue-200">
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=ao-nam')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/ao-thun')} className="hover:text-blue-300">
                                                                 Áo thun
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=quan-nam')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/ao-so-mi')} className="hover:text-blue-300">
                                                                 Áo sơ mi
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=ao-thun-nam')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/ao-khoac')} className="hover:text-blue-300">
                                                                 Áo khoác
                                                             </button>
                                                         </li>
@@ -272,17 +283,17 @@ const Header = () => {
                                                     <p className="font-medium text-white">QUẦN</p>
                                                     <ul className="mt-4 space-y-3 text-blue-200">
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=ao-nu')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/quan-short')} className="hover:text-blue-300">
                                                                 Quần Short
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=dam-vay')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/quan-dai')} className="hover:text-blue-300">
                                                                 Quần dài
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=quan-nu')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/quan-jeans')} className="hover:text-blue-300">
                                                                 Quần Jeans
                                                             </button>
                                                         </li>
@@ -293,22 +304,17 @@ const Header = () => {
                                                     <p className="font-medium text-white">PHỤ KIỆN</p>
                                                     <ul className="mt-4 space-y-3 text-blue-200">
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=dong-ho')} className="hover:text-blue-300">
-                                                                Nón
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button onClick={() => navigate('/search?q=vi-bop')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/vi-bop')} className="hover:text-blue-300">
                                                                 Ví & Bóp
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=tui-xach')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/tui-xach')} className="hover:text-blue-300">
                                                                 Túi xách
                                                             </button>
                                                         </li>
                                                         <li>
-                                                            <button onClick={() => navigate('/search?q=non-that-lung')} className="hover:text-blue-300">
+                                                            <button onClick={() => navigate('/category/non-that-lung')} className="hover:text-blue-300">
                                                                 Nón & Thắt lưng
                                                             </button>
                                                         </li>
