@@ -37,9 +37,8 @@ const ProductDetail = () => {
     const [isHovered, setIsHovered] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    //sản phẩm yêu thích
-    // const favoriteMap = useSelector(state => state.favorite.favoriteMap);
-    // const isFavorite = favoriteMap[product?.id] || false;
+    const [sortBy, setSortBy] = useState('latest')
+    const [isSortOpen, setIsSortOpen] = useState(false)
     const loading = useSelector((state) => state.favorite.loading);
     // Hàm kiểm tra số lượng hợp lệ
     const validateQuantity = (qty) => {
@@ -264,6 +263,34 @@ const ProductDetail = () => {
         fetchSimilarProducts()
     }, [id])
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isSortOpen && !event.target.closest('.sort-dropdown')) {
+                setIsSortOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [isSortOpen])
+    const getSortedReviews = () => {
+        const sorted = [...reviews]
+
+        switch (sortBy) {
+            case 'latest':
+                return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            case 'oldest':
+                return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+            case 'highest':
+                return sorted.sort((a, b) => b.rating - a.rating)
+            case 'lowest':
+                return sorted.sort((a, b) => a.rating - b.rating)
+            default:
+                return sorted
+        }
+    }
+
+    const sortedReviews = getSortedReviews()
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm shadow-sm">
@@ -724,14 +751,48 @@ const ProductDetail = () => {
                         <div className="p-8">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-2xl font-bold text-gray-900">All Reviews ({reviews.length})</h3>
-                                <div className="flex gap-3">
-                                    <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition-colors">
-                                        <span>Latest</span>
-                                        <ChevronDown className="w-4 h-4" />
-                                    </button>
-                                    <button className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:from-orange-600 hover:to-pink-600 transition-all duration-300 shadow-lg">
-                                        Write a Review
-                                    </button>
+                                <div className="relative sort-dropdown">
+                                    {/* Dropdown Sorting */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsSortOpen(!isSortOpen)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition-colors min-w-[120px] justify-between"
+                                        >
+                                            <span>
+                                                {sortBy === 'latest' && 'Mới nhất'}
+                                                {sortBy === 'oldest' && 'Cũ nhất'}
+                                                {sortBy === 'highest' && 'Đánh giá cao'}
+                                                {sortBy === 'lowest' && 'Đánh giá thấp'}
+                                            </span>
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {/* Dropdown Menu */}
+                                        {isSortOpen && (
+                                            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-10">
+                                                {[
+                                                    { value: 'latest', label: 'Mới nhất' },
+                                                    { value: 'oldest', label: 'Cũ nhất' },
+                                                    { value: 'highest', label: 'Đánh giá cao' },
+                                                    { value: 'lowest', label: 'Đánh giá thấp' }
+                                                ].map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSortBy(option.value)
+                                                            setIsSortOpen(false)
+                                                        }}
+                                                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === option.value
+                                                            ? 'bg-orange-50 text-orange-600 font-medium'
+                                                            : 'text-gray-600 hover:bg-gray-50'
+                                                            } first:rounded-t-xl last:rounded-b-xl`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -750,7 +811,7 @@ const ProductDetail = () => {
                             ) : (
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {reviews.slice(0, visibleCount).map((review) => (
+                                        {sortedReviews.slice(0, visibleCount).map((review) => (
                                             <div
                                                 key={review.id}
                                                 className="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:bg-gray-100 transition-all duration-300"
