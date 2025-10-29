@@ -12,10 +12,10 @@ import userRoutes from './routes/user.routes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRouter.js';
 import categoryRoutes from './routes/categoryRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import reviewRoutes from './routes/reviewRoutes.js';
-import voucherRoutes from "./routes/voucherRoutes";
+import voucherRoutes from "./routes/voucherRoutes.js";
 import favoriteProductRoute from "./routes/favoriteProductRoute.js";
 import chatRoutes from './routes/chatRoutes.js';
 import SocketService from './services/socketService.js';
@@ -26,6 +26,10 @@ import adminRoutes from './routes/adminRoutes.js';
 import productSearchRoutes from './routes/productSearchRoutes.js';
 import flashSaleRoutes from './routes/flashSaleRoutes.js';
 import { initializeNotificationSocket } from './socket/notificationHandlers.js';
+
+// ⬇️ Thêm 2 import này
+import productSearchController from './controllers/productSearchController.js';
+import elasticClient from './config/elasticsearch.js';
 
 dotenv.config();
 
@@ -41,7 +45,7 @@ const notificationNamespace = initializeNotificationSocket(io);
 // Middleware to attach io và notificationNamespace to req
 app.use((req, res, next) => {
   req.io = io;
-  req.notificationNamespace = notificationNamespace; // THÊM DÒNG NÀY
+  req.notificationNamespace = notificationNamespace;
   next();
 });
 
@@ -53,8 +57,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// ... rest of your middleware and routes
-
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
@@ -71,11 +74,27 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', productSearchRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
+
 // Error handler
 app.use(errorHandler);
 
-// EXPORT CÁC BIẾN CẦN THIẾTa
+// EXPORT CÁC BIẾN CẦN THIẾT
 export { io, notificationNamespace };
+
+// 🔁 Helper: chờ Elasticsearch sẵn sàng với retry
+async function waitForElasticsearch(retries = 10, delayMs = 1000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await elasticClient.ping();
+      console.log('✅ Elasticsearch is up.');
+      return true;
+    } catch (e) {
+      console.warn(`Elasticsearch not ready (attempt ${i}/${retries}). Retrying in ${delayMs}ms...`);
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return false;
+}
 
 // Start server
 (async () => {
@@ -83,6 +102,20 @@ export { io, notificationNamespace };
     await sequelize.authenticate();
     console.log('✅ Database connected!');
     await sequelize.sync();
+
+    // ⬇️ INIT ELASTICSEARCH MẶC ĐỊNH KHI START
+    const esReady = await waitForElasticsearch(10, 1000);
+    if (esReady) {
+      const ok = await productSearchController.initElasticsearch();
+      if (ok) {
+        console.log('🚀 Search index [products] ready (initialized + synced).');
+      } else {
+        console.warn('⚠️ Could not initialize Elasticsearch. Search will fallback to MySQL.');
+      }
+    } else {
+      console.warn('⚠️ Elasticsearch is unreachable. Search will fallback to MySQL.');
+    }
+
     const PORT = process.env.PORT || 4000;
     server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
   } catch (err) {

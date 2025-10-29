@@ -1,12 +1,37 @@
+// controllers/productSearchController.js
 import elasticClient from '../config/elasticsearch.js';
 import { Product, Category, ProductImage, Review } from '../models/index.js';
 import { Op, fn, col } from 'sequelize';
-class ProductSearchController {
 
+class ProductSearchController {
+    buildSuggestionLikeBoolQuery(q, opts = {}) {
+        const { category } = opts;
+        const should = [
+            // Ưu tiên cụm đúng trong name
+            { match_phrase: { name: { query: q, boost: 5 } } },
+            // Mở rộng tiền tố trong name (autocomplete)
+            { match_phrase_prefix: { name: { query: q, max_expansions: 20, boost: 3 } } },
+            // Thêm 1 match "AND" để nhặt các sắp xếp từ khóa gần nhau
+            { match: { name: { query: q, operator: 'and', fuzziness: 0, boost: 1.5 } } },
+        ];
+
+        const filter = [{ term: { is_active: true } }];
+        if (category) {
+            // category_name đã là keyword → KHÔNG dùng .keyword
+            filter.push({ term: { category_name: category } });
+        }
+
+        return {
+            bool: {
+                should,
+                filter,
+                minimum_should_match: 1,
+            },
+        };
+    }
     // Khởi tạo Elasticsearch
     async initElasticsearch() {
         try {
-
             // Test connection
             await elasticClient.ping();
 
@@ -18,72 +43,94 @@ class ProductSearchController {
 
             return true;
         } catch (error) {
+            console.error('initElasticsearch error:', error?.message || error);
             return false;
         }
     }
 
-    // Tạo index với cấu hình fuzzy search
+    // Tạo index với mapping đầy đủ (bao gồm is_active)
     async createProductIndex() {
         try {
-            const indexExists = await elasticClient.indices.exists({
-                index: 'products'
-            });
+            const { body: exists } = await elasticClient.indices.exists({ index: 'products' });
+            if (exists) {
+                console.log('ℹ️ Index [products] already exists — skipping creation.');
+                return;
+            }
 
-            if (!indexExists) {
-                await elasticClient.indices.create({
-                    index: 'products',
-                    body: {
-                        settings: {
-                            index: {
-                                number_of_shards: 1,
-                                number_of_replicas: 0,
-                                refresh_interval: '30s'
+            await elasticClient.indices.create({
+                index: 'products',
+                body: {
+                    settings: {
+                        analysis: {
+                            filter: {
+                                edge_ngram_filter: {
+                                    type: 'edge_ngram',
+                                    min_gram: 2,
+                                    max_gram: 15
+                                }
+                            },
+                            analyzer: {
+                                vn_text: {
+                                    tokenizer: 'standard',
+                                    filter: ['lowercase', 'asciifolding'] // bỏ dấu + lowercase
+                                },
+                                vn_edge_ngram: {
+                                    tokenizer: 'standard',
+                                    filter: ['lowercase', 'asciifolding', 'edge_ngram_filter']
+                                }
                             }
                         },
-                        mappings: {
-                            properties: {
-                                id: { type: 'keyword' },
-                                name: {
-                                    type: 'text',
-                                    fields: {
-                                        keyword: {
-                                            type: 'keyword',
-                                            ignore_above: 256
-                                        }
-                                    }
-                                },
-                                slug: { type: 'keyword' },
-                                price: { type: 'float' },
-                                description: { type: 'text' },
-                                category_name: { type: 'keyword' },
-                                images: { type: 'keyword' }
-                            }
+                        index: {
+                            number_of_shards: 1,
+                            number_of_replicas: 0,
+                            refresh_interval: '30s'
+                        }
+                    },
+                    mappings: {
+                        properties: {
+                            id: { type: 'keyword' },
+                            is_active: { type: 'boolean' },
+                            name: {
+                                type: 'text',
+                                analyzer: 'vn_text',
+                                search_analyzer: 'vn_text',
+                                fields: {
+                                    keyword: { type: 'keyword', ignore_above: 256 },
+                                    ngram: { type: 'text', analyzer: 'vn_edge_ngram', search_analyzer: 'vn_text' } // cho gợi ý/prefix
+                                }
+                            },
+                            slug: { type: 'keyword' },
+                            price: { type: 'float' },
+                            original_price: { type: 'float' },
+                            discount_percent: { type: 'float' },
+                            description: { type: 'text', analyzer: 'vn_text', search_analyzer: 'vn_text' },
+                            category_name: { type: 'keyword' },
+                            images: { type: 'keyword' }
                         }
                     }
-                });            }
+                }
+            });
+
+            console.log('✅ Created index [products] with VN analyzers');
         } catch (error) {
-            console.error('Error creating index:', error.message);
+            if (error?.meta?.body?.error?.type === 'resource_already_exists_exception') {
+                console.log('ℹ️ Index [products] already exists — skipping creation.');
+                return;
+            }
+            console.error('❌ Error creating index:', error.message);
+            throw error;
         }
     }
 
-    // Đồng bộ dữ liệu
+    // Đồng bộ dữ liệu từ MySQL sang Elasticsearch (bulk)
     async syncProductsToElasticsearch() {
         try {
             const products = await Product.findAll({
                 where: { is_active: true },
                 include: [
-                    {
-                        model: Category,
-                        as: 'category',
-                        attributes: ['name']
-                    },
-                    {
-                        model: ProductImage,
-                        as: 'images',
-                        attributes: ['url'],
-                        limit: 1
-                    }
-                ]
+                    { model: Category, as: 'category', attributes: ['name'] },
+                    { model: ProductImage, as: 'images', attributes: ['url'], limit: 1 },
+                ],
             });
 
             const operations = [];
@@ -91,6 +138,7 @@ class ProductSearchController {
             for (const product of products) {
                 const doc = {
                     id: product.id,
+                    is_active: product.is_active === true,
                     name: product.name,
                     slug: product.slug,
                     price: parseFloat(product.price),
@@ -98,7 +146,7 @@ class ProductSearchController {
                     discount_percent: parseFloat(product.discount_percent),
                     description: product.description,
                     category_name: product.category?.name,
-                    images: product.images?.map(img => img.url) || []
+                    images: product.images?.map((img) => img.url) || [],
                 };
 
                 operations.push(
@@ -108,21 +156,23 @@ class ProductSearchController {
             }
 
             if (operations.length > 0) {
-                await elasticClient.bulk({
-                    refresh: true,
-                    operations
-                });
+                const { body: bulkRes } = await elasticClient.bulk({ refresh: true, operations });
+                if (bulkRes?.errors) {
+                    const firstErr = bulkRes.items?.find((i) => i.index && i.index.error)?.index?.error;
+                    console.error('Bulk indexing had errors:', firstErr || 'Unknown error');
+                } else {
+                    console.log(`✅ Synced ${products.length} products to Elasticsearch`);
+                }
             }
-
         } catch (error) {
             console.error('Error syncing products:', error.message);
+            throw error;
         }
     }
 
-    // Gợi ý tìm kiếm - TỐI ƯU TỐC ĐỘ
+    // Gợi ý tìm kiếm - tối ưu tốc độ, ưu tiên name
     async getSearchSuggestions(req, res) {
         const startTime = Date.now();
-
         try {
             const { q } = req.query;
 
@@ -131,84 +181,60 @@ class ProductSearchController {
                 return res.json({
                     success: true,
                     suggestions: [],
-                    response_time: Date.now() - startTime
+                    response_time: Date.now() - startTime,
                 });
             }
 
-
-            // ƯU TIÊN: Elasticsearch với timeout
+            // Thử Elasticsearch với timeout 300ms
             try {
                 const elasticsearchPromise = elasticClient.search({
                     index: 'products',
-                    body: {
-                        query: {
-                            bool: {
-                                should: [
-                                    // 1. Prefix match - nhanh nhất
-                                    {
-                                        prefix: {
-                                            "name.keyword": {
-                                                value: q.toLowerCase(),
-                                                boost: 3.0
-                                            }
-                                        }
-                                    },
-                                    // 2. Match phrase prefix - nhanh
-                                    {
-                                        match_phrase_prefix: {
-                                            "name": {
-                                                query: q,
-                                                max_expansions: 5,
-                                                boost: 2.0
-                                            }
-                                        }
-                                    }
-                                ],
-                                minimum_should_match: 1
-                            }
+                    query: {
+                        bool: {
+                            should: [
+                                { match_phrase_prefix: { name: { query: q, max_expansions: 5, boost: 3.0 } } },
+                                { match: { name: { query: q, operator: 'and', fuzziness: 0, boost: 1.5 } } },
+                            ],
+                            filter: [{ term: { is_active: true } }],
+                            minimum_should_match: 1,
                         },
-                        size: 6,
-                        _source: ['id', 'name', 'slug', 'price', 'images'],
-                        track_scores: false,
-                        track_total_hits: false
-                    }
+                    },
+                    size: 6,
+                    _source: ['id', 'name', 'slug', 'price', 'images'],
+                    track_scores: false,
+                    track_total_hits: false,
                 });
 
-                // Timeout cho Elasticsearch: 300ms
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Elasticsearch timeout')), 300);
-                });
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Elasticsearch timeout')), 300)
+                );
 
-                const result = await Promise.race([elasticsearchPromise, timeoutPromise]);
+                const { body: result } = await Promise.race([elasticsearchPromise, timeoutPromise]);
 
-                const suggestions = result.hits.hits.map(hit => ({
+                const suggestions = (result.hits?.hits || []).map((hit) => ({
                     id: hit._source.id,
                     name: hit._source.name,
                     slug: hit._source.slug,
                     price: hit._source.price,
-                    image: hit._source.images?.[0] || null
+                    image: hit._source.images?.[0] || null,
                 }));
 
-                const responseTime = Date.now() - startTime;
                 return res.json({
                     success: true,
                     suggestions,
                     source: 'elasticsearch',
-                    response_time: responseTime
+                    response_time: Date.now() - startTime,
                 });
-
             } catch (esError) {
+                // Fallback MySQL
                 return this.mysqlSearchSuggestions(req, res, startTime);
             }
-
         } catch (error) {
             console.error('Search suggestions error:', error);
-            const responseTime = Date.now() - startTime;
-
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 message: 'Lỗi khi tìm kiếm gợi ý',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
         }
     }
@@ -218,15 +244,10 @@ class ProductSearchController {
         try {
             const { q } = req.query;
 
-            const { Op } = await import('sequelize');
-
-            // Query đơn giản và nhanh
             const products = await Product.findAll({
                 where: {
                     is_active: true,
-                    name: {
-                        [Op.like]: `${q}%`
-                    }
+                    name: { [Op.like]: `${q}%` },
                 },
                 attributes: ['id', 'name', 'slug', 'price'],
                 include: [
@@ -235,94 +256,65 @@ class ProductSearchController {
                         as: 'images',
                         attributes: ['url'],
                         limit: 1,
-                        required: false
-                    }
+                        required: false,
+                    },
                 ],
                 limit: 6,
                 order: [['name', 'ASC']],
-                subQuery: false
+                subQuery: false,
             });
 
-            const suggestions = products.map(product => ({
-                id: product.id,
-                name: product.name,
-                slug: product.slug,
-                price: product.price,
-                image: product.images?.[0]?.url || null
+            const suggestions = products.map((p) => ({
+                id: p.id,
+                name: p.name,
+                slug: p.slug,
+                price: p.price,
+                image: p.images?.[0]?.url || null,
             }));
 
-            const responseTime = Date.now() - startTime;
-
-            res.json({
+            return res.json({
                 success: true,
                 suggestions,
                 source: 'mysql',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
-
         } catch (mysqlError) {
-            const responseTime = Date.now() - startTime;
             console.error('MySQL fallback failed:', mysqlError);
-
-            // Trả về kết quả rỗng thay vì lỗi
-            res.json({
+            return res.json({
                 success: true,
                 suggestions: [],
                 source: 'fallback',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
         }
     }
 
-    // TÌM KIẾM TOÀN DIỆN - CHỈ MỘT PHƯƠNG THỨC DUY NHẤT
+    // TÌM KIẾM TOÀN DIỆN
+// controllers/productSearchController.js
     async searchProducts(req, res) {
         const start = Date.now();
-        const { q, page = 1, limit = 20, fuzzy = "true" } = req.query;
+        const { q, page = 1, limit = 20, category } = req.query;
 
         if (!q) {
-            return res.status(400).json({
-                success: false,
-                message: "Vui lòng nhập từ khóa tìm kiếm",
-            });
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập từ khóa tìm kiếm' });
         }
 
         const from = (page - 1) * limit;
 
         try {
-            // ✅ Query Elasticsearch
-            const query = {
-                bool: {
-                    must: [
-                        {
-                            multi_match: {
-                                query: q,
-                                fields: ["name^2", "description"],
-                                fuzziness: fuzzy === "true" ? "AUTO" : 0,
-                                operator: "or",
-                            },
-                        },
-                    ],
-                    filter: [{ term: { is_active: true } }],
-                },
-            };
-
-            const result = await elasticClient.search({
-                index: "products",
+            const { body: result } = await elasticClient.search({
+                index: 'products',
                 from,
                 size: parseInt(limit),
-                query,
-                sort: [
-                    { _score: { order: "desc" } },
-                    { "name.keyword": { order: "asc" } },
-                ],
+                query: this.buildSuggestionLikeBoolQuery(q, { category }),
+                // Giữ sort giống gợi ý: chủ yếu dựa vào _score; sau đó sort name tăng dần
+                sort: [{ _score: { order: 'desc' } }, { 'name.keyword': { order: 'asc' } }],
                 track_total_hits: true,
+                _source: true, // nếu bạn muốn trả full fields từ ES; hoặc chỉ chọn vài field như ở suggestions
             });
 
-            const products = result.hits.hits.map((hit) => hit._source);
+            const products = (result.hits?.hits ?? []).map(hit => hit._source);
 
-            const responseTime = Date.now() - start;
-
-            // Nếu Elasticsearch có kết quả
             if (products.length > 0) {
                 return res.json({
                     success: true,
@@ -334,70 +326,71 @@ class ProductSearchController {
                             total_products: result.hits.total.value,
                         },
                     },
-                    source: "elasticsearch",
-                    response_time: responseTime,
+                    source: 'elasticsearch',
+                    response_time: Date.now() - start,
                 });
             }
 
-            // Nếu ES không có kết quả → fallback MySQL
+            // Nếu ES không có kết quả → fallback MySQL (prefix như suggestions)
             return await this.mysqlSearchProducts(req, res, start);
         } catch (err) {
-            console.error("❌ Elasticsearch error:", err.message);
+            console.error('❌ Elasticsearch error:', err?.message || err);
             return await this.mysqlSearchProducts(req, res, start);
         }
     }
 
-
+// controllers/productSearchController.js
     async mysqlSearchProducts(req, res, start) {
-        const { q, page = 1, limit = 20 } = req.query;
+        const { q, page = 1, limit = 20, category } = req.query;
         const offset = (page - 1) * limit;
 
         try {
+            const include = [
+                {
+                    model: Category,
+                    as: 'category',
+                    attributes: ['id', 'name'],
+                    where: category ? { name: { [Op.like]: category } } : undefined,
+                },
+                {
+                    model: ProductImage,
+                    as: 'images',
+                    attributes: ['id', 'url', 'alt', 'sort_order'],
+                    separate: true,
+                    order: [['sort_order', 'ASC']],
+                    limit: 3,
+                },
+                {
+                    model: Review,
+                    as: 'reviews',
+                    attributes: [],
+                },
+            ];
+
+            // GIỐNG GỢI Ý: chỉ prefix name, không quét description
+            const whereText = {
+                name: { [Op.like]: `${q}%` },
+            };
+
             const { count, rows: products } = await Product.findAndCountAll({
                 where: {
                     is_active: true,
-                    [Op.or]: [
-                        { name: { [Op.like]: `%${q}%` } },
-                        { description: { [Op.like]: `%${q}%` } },
-                    ],
+                    ...whereText,
                 },
                 attributes: {
                     include: [
-                        // ⭐ Trung bình rating
-                        [fn("ROUND", fn("AVG", col("reviews.rating")), 2), "avg_rating"],
-                        // ⭐ Tổng số lượt đánh giá
-                        [fn("COUNT", col("reviews.id")), "review_count"],
+                        [fn('ROUND', fn('AVG', col('reviews.rating')), 2), 'avg_rating'],
+                        [fn('COUNT', col('reviews.id')), 'review_count'],
                     ],
                 },
-                include: [
-                    {
-                        model: Category,
-                        as: "category",
-                        attributes: ["id", "name"],
-                    },
-                    {
-                        model: ProductImage,
-                        as: "images",
-                        attributes: ["id", "url", "alt", "sort_order"],
-                        separate: true, // cần thiết khi có group
-                        order: [["sort_order", "ASC"]],
-                        limit: 3,
-                    },
-                    {
-                        model: Review,
-                        as: "reviews",
-                        attributes: [], // chỉ dùng để tính trung bình, không lấy chi tiết
-                    },
-                ],
-                order: [["name", "ASC"]],
+                include,
+                order: [['name', 'ASC']],
                 offset,
                 limit: +limit,
                 subQuery: false,
-                group: ["Product.id", "category.id"], // quan trọng để tránh lỗi COUNT sai
+                group: ['Product.id', 'category.id'],
                 distinct: true,
             });
-
-            const responseTime = Date.now() - start;
 
             return res.json({
                 success: true,
@@ -409,21 +402,19 @@ class ProductSearchController {
                         total_products: count,
                     },
                 },
-                source: "mysql",
-                response_time: responseTime,
+                source: 'mysql',
+                response_time: Date.now() - start,
             });
         } catch (err) {
-            const responseTime = Date.now() - start;
-            console.error("❌ MySQL search failed:", err.message);
-
+            console.error('❌ MySQL search failed:', err?.message || err);
             return res.status(500).json({
                 success: false,
-                message: "Không thể tìm kiếm sản phẩm",
-                response_time: responseTime,
+                message: 'Không thể tìm kiếm sản phẩm',
+                response_time: Date.now() - start,
             });
         }
-
     }
+
     // Tìm kiếm nâng cao
     async advancedSearch(req, res) {
         const startTime = Date.now();
@@ -435,68 +426,55 @@ class ProductSearchController {
                 min_price,
                 max_price,
                 page = 1,
-                limit = 20
+                limit = 20,
             } = req.query;
 
             const from = (page - 1) * limit;
 
-            // Thử Elasticsearch
             try {
                 const boolQuery = {
                     must: [],
-                    filter: [{ term: { is_active: true } }]
+                    filter: [{ term: { is_active: true } }],
                 };
 
-                // Text search
                 if (q) {
                     boolQuery.must.push({
                         multi_match: {
                             query: q,
                             fields: ['name^2', 'description'],
-                            fuzziness: 'AUTO'
-                        }
+                            fuzziness: 'AUTO',
+                        },
                     });
                 }
 
-                // Category filter
                 if (category) {
-                    boolQuery.filter.push({
-                        term: { 'category_name.keyword': category }
-                    });
+                    // category_name đã là keyword → KHÔNG dùng .keyword
+                    boolQuery.filter.push({ term: { category_name: category } });
                 }
 
-                // Price range filter
                 if (min_price || max_price) {
                     const priceRange = {};
                     if (min_price) priceRange.gte = parseFloat(min_price);
                     if (max_price) priceRange.lte = parseFloat(max_price);
-
-                    boolQuery.filter.push({
-                        range: { price: priceRange }
-                    });
+                    boolQuery.filter.push({ range: { price: priceRange } });
                 }
 
-                const elasticsearchPromise = elasticClient.search({
+                const esPromise = elasticClient.search({
                     index: 'products',
-                    body: {
-                        query: {
-                            bool: boolQuery
-                        },
-                        from,
-                        size: parseInt(limit),
-                        timeout: '1s'
-                    }
+                    query: { bool: boolQuery },
+                    from,
+                    size: parseInt(limit),
+                    timeout: '1s',
+                    track_total_hits: true,
                 });
 
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Elasticsearch timeout')), 1000);
-                });
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Elasticsearch timeout')), 1000)
+                );
 
-                const result = await Promise.race([elasticsearchPromise, timeoutPromise]);
+                const { body: result } = await Promise.race([esPromise, timeoutPromise]);
 
-                const products = result.hits.hits.map(hit => hit._source);
-
-                const responseTime = Date.now() - startTime;
+                const products = (result.hits?.hits || []).map((hit) => hit._source);
 
                 return res.json({
                     success: true,
@@ -505,26 +483,22 @@ class ProductSearchController {
                         pagination: {
                             current_page: parseInt(page),
                             total_pages: Math.ceil(result.hits.total.value / limit),
-                            total_products: result.hits.total.value
-                        }
+                            total_products: result.hits.total.value,
+                        },
                     },
                     source: 'elasticsearch',
-                    response_time: responseTime
+                    response_time: Date.now() - startTime,
                 });
-
             } catch (esError) {
                 console.log(`❌ ES advanced search failed: ${esError.message}`);
                 return this.mysqlAdvancedSearch(req, res, startTime);
             }
-
         } catch (error) {
-            const responseTime = Date.now() - startTime;
             console.error('Advanced search error:', error);
-
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 message: 'Lỗi khi tìm kiếm nâng cao',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
         }
     }
@@ -538,25 +512,20 @@ class ProductSearchController {
                 min_price,
                 max_price,
                 page = 1,
-                limit = 20
+                limit = 20,
             } = req.query;
 
-            const { Op } = await import('sequelize');
             const offset = (page - 1) * limit;
 
-            let whereConditions = {
-                is_active: true
-            };
+            let whereConditions = { is_active: true };
 
-            // Text search
             if (q) {
                 whereConditions[Op.or] = [
                     { name: { [Op.like]: `%${q}%` } },
-                    { description: { [Op.like]: `%${q}%` } }
+                    { description: { [Op.like]: `%${q}%` } },
                 ];
             }
 
-            // Price range
             if (min_price || max_price) {
                 whereConditions.price = {};
                 if (min_price) whereConditions.price[Op.gte] = parseFloat(min_price);
@@ -568,53 +537,42 @@ class ProductSearchController {
                     model: Category,
                     as: 'category',
                     attributes: ['name'],
-                    where: category ? { name: { [Op.like]: `%${category}%` } } : undefined
+                    where: category ? { name: { [Op.like]: `%${category}%` } } : undefined,
                 },
-                {
-                    model: ProductImage,
-                    as: 'images',
-                    attributes: ['url'],
-                    limit: 3
-                }
+                { model: ProductImage, as: 'images', attributes: ['url'], limit: 3 },
             ];
 
             const { count, rows: products } = await Product.findAndCountAll({
                 where: whereConditions,
                 attributes: ['id', 'name', 'slug', 'price', 'description'],
-                include: include.filter(inc => !inc.where || (inc.where && Object.keys(inc.where).length > 0)),
+                include: include.filter((inc) => !inc.where || (inc.where && Object.keys(inc.where).length > 0)),
                 offset,
-                limit: parseInt(limit)
+                limit: parseInt(limit),
             });
 
-            const responseTime = Date.now() - startTime;
-
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     products,
                     pagination: {
                         current_page: parseInt(page),
                         total_pages: Math.ceil(count / limit),
-                        total_products: count
-                    }
+                        total_products: count,
+                    },
                 },
                 source: 'mysql',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
-
         } catch (mysqlError) {
-            const responseTime = Date.now() - startTime;
             console.error('MySQL advanced search failed:', mysqlError);
-
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 message: 'Lỗi khi tìm kiếm nâng cao',
-                response_time: responseTime
+                response_time: Date.now() - startTime,
             });
         }
     }
 }
-
 
 const controller = new ProductSearchController();
 
