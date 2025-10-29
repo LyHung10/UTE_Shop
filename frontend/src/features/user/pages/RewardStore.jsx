@@ -1,9 +1,9 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { Gift, TicketPercent, Loader2, Star } from "lucide-react";
-import {useDispatch, useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import {addGiftVoucher} from "@/services/voucherService.jsx";
-import {fetchUser} from "@/redux/action/userAction.jsx";
+import { addGiftVoucher } from "@/services/voucherService.jsx";
+import { fetchUser } from "@/redux/action/userAction.jsx";
 
 const GIFT_VOUCHERS = [
     {
@@ -144,13 +144,11 @@ const RewardStore = () => {
 
         try {
             const res = await addGiftVoucher(payload);
-            if (res.success)
-            {
+            if (res.success) {
                 toast.success(`🎉 Đổi thành công voucher`);
                 dispatch(fetchUser());
             }
-            else
-            {
+            else {
                 toast.info(res.message);
             }
         } catch (err) {
@@ -161,7 +159,7 @@ const RewardStore = () => {
         }
     };
     return (
-        <div className="w-full bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="max-w-6xl my-10 mx-auto px-6 space-y-8">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -211,29 +209,28 @@ const RewardStore = () => {
                                 <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
                                     <span>Tối thiểu: {v.min_order_value.toLocaleString()}đ</span>
                                     <span className="text-indigo-600 font-semibold">
-                    {v.discount_type === "percent"
-                        ? `-${v.discount_value}%`
-                        : `-${v.discount_value.toLocaleString()}đ`}
-                  </span>
+                                        {v.discount_type === "percent"
+                                            ? `-${v.discount_value}%`
+                                            : `-${v.discount_value.toLocaleString()}đ`}
+                                    </span>
                                 </div>
 
                                 <div className="mt-4 flex items-center justify-between">
                                     <div className="text-sm text-gray-500">
                                         Cần{" "}
                                         <span className="font-bold text-indigo-600">
-                      {v.points_required}
-                    </span>{" "}
+                                            {v.points_required}
+                                        </span>{" "}
                                         điểm
                                     </div>
 
                                     <button
                                         onClick={() => handleRedeem(v)}
                                         disabled={!canRedeem || loading}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${
-                                            canRedeem
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${canRedeem
                                                 ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-md"
                                                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                        }`}
+                                            }`}
                                     >
                                         {loading ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />

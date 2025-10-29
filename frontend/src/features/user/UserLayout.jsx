@@ -10,7 +10,7 @@ const UserLayout = () => {
         dispatch(fetchUser());
     }, []);
     return(
-        <div className="bg-[#f3f4f6]">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <section aria-labelledby="products-heading" className="pt-6 pb-24">
                     <h2 id="products-heading" className="sr-only">Products</h2>

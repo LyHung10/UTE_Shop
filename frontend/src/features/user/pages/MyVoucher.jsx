@@ -35,7 +35,7 @@ const MyVoucher = () => {
     }, []);
 
     return (
-        <div className="w-full bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="max-w-6xl my-10 mx-auto px-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">

@@ -265,16 +265,16 @@ const ProductDetail = () => {
     }, [id])
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <div className="flex items-center text-sm text-gray-600">
                         <span className="hover:text-blue-600 transition-colors cursor-pointer"
-                              onClick={() => navigate("/")}
+                            onClick={() => navigate("/")}
                         >Home</span>
                         <span className="mx-2 text-gray-400">/</span>
                         <span className="hover:text-blue-600 transition-colors cursor-pointer"
-                              onClick={() => navigate(`/category/${product?.category?.slug}`)}
+                            onClick={() => navigate(`/category/${product?.category?.slug}`)}
                         >{product?.category.name}</span>
                         <span className="mx-2 text-gray-400">/</span>
                         <span className="text-orange-500 font-medium">{product?.name}</span>
@@ -500,7 +500,7 @@ const ProductDetail = () => {
 
                                 {/* ⭐ Số điểm trung bình */}
                                 <span className="text-gray-700 font-medium">
-                                        {(product?.avg_rating || 0).toFixed(1)}/5
+                                    {(product?.avg_rating || 0).toFixed(1)}/5
                                 </span>
                                 {/* 📊 Số lượng đánh giá */}
                                 <span className="text-gray-500">({product?.review_count || 0} đánh giá)

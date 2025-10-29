@@ -1,10 +1,10 @@
-import {Fragment, useEffect, useState} from "react";
+import { Fragment, useEffect, useState } from "react";
 import Sort from "@/features/product/components/Sort.jsx";
 import Filter from "@/features/product/components/Filter.jsx";
 import ListProducts from "@/features/product/components/ListProducts.jsx";
-import {useParams} from "react-router-dom";
-import {getDistinctSizesAndColors, getProductsByCategorySlug} from "@/services/productService.jsx";
-import {Pagination} from "antd";
+import { useParams } from "react-router-dom";
+import { getDistinctSizesAndColors, getProductsByCategorySlug } from "@/services/productService.jsx";
+import { Pagination } from "antd";
 const ProductCategories = () => {
     const { category } = useParams();
 
@@ -93,7 +93,7 @@ const ProductCategories = () => {
 
         setListCategoryProducts(res.data.products);
         if (res?.data?.products.length > 0) {
-            if (category==="all") setCategoryName("Tất cả sản phẩm");
+            if (category === "all") setCategoryName("Tất cả sản phẩm");
             else setCategoryName(res?.data?.products[0].category.name);
         }
         setPagination({
@@ -115,7 +115,7 @@ const ProductCategories = () => {
 
     return (
         <>
-            <div className="bg-[#f3f4f6]">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex items-baseline justify-between border-b border-gray-200 pt-18 pb-6">
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">{categoryName}</h1>

@@ -1,8 +1,8 @@
-import {useEffect, useRef, useState} from "react";
-import {useDispatch, useSelector} from "react-redux";
-import {updateAvatar, updateProfile} from "@/services/userService.jsx";
-import {fetchUser} from "@/redux/action/userAction.jsx";
-import {toast} from "react-toastify";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateAvatar, updateProfile } from "@/services/userService.jsx";
+import { fetchUser } from "@/redux/action/userAction.jsx";
+import { toast } from "react-toastify";
 
 export default function ProfilePage() {
     const user = useSelector((state) => state.user);
@@ -111,7 +111,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="w-full bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             {/* Header */}
             <div className="relative w-full h-18 bg-gradient-to-r" />
 
@@ -133,8 +133,8 @@ export default function ProfilePage() {
                                     />
                                 </div>
                                 <span className="absolute inset-0 hidden group-hover:flex items-center justify-center rounded-full bg-black/35 text-white text-xs font-medium">
-                  Đổi ảnh
-                </span>
+                                    Đổi ảnh
+                                </span>
                             </button>
 
                             {/* Khi có file mới */}
@@ -194,7 +194,7 @@ export default function ProfilePage() {
                         <Field label="First Name" value={user?.first_name} />
                         <Field label="Last Name" value={user?.last_name} />
                         <Field label="Phone" value={user?.phone_number} />
-                        <Field  label="Email" value={user?.email} />
+                        <Field label="Email" value={user?.email} />
                     </div>
                 </section>
             </main>
@@ -207,7 +207,7 @@ export default function ProfilePage() {
                         <LabeledInput label="First Name" value={form.first_name} onChange={onChange("first_name")} />
                         <LabeledInput label="Last Name" value={form.last_name} onChange={onChange("last_name")} />
                         <LabeledInput label="Phone" value={form.phone} onChange={onChange("phone")} />
-                        <LabeledInput disabled label="Email" value={form.email}/>
+                        <LabeledInput disabled label="Email" value={form.email} />
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <button
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                             Close
                         </button>
                         <button
-                            onClick = {()=>onSave()}
+                            onClick={() => onSave()}
                             className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-black disabled:opacity-60"
                             disabled={savingInfo}
                         >
