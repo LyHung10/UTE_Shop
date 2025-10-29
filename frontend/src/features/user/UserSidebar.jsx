@@ -56,7 +56,7 @@ const UserSidebar = () => {
                     </div>
                     <div>
                         <p className="text-sm text-gray-500">Xin chào,</p>
-                        <p className="text-sm font-semibold text-gray-900">{user.first_name}</p>
+                        <p className="text-sm font-semibold text-gray-900">{user.first_name + " " + user.last_name}</p>
                     </div>
                 </div>
             </div>

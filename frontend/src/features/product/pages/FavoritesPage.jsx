@@ -38,7 +38,7 @@ const FavoritesPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-100">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             {favorites.length > 0 ? (
                 <ListProducts listProducts={favorites} />
             ) : (

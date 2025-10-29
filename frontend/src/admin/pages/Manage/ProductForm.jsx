@@ -300,7 +300,7 @@ const ProductForm = () => {
             }
 
             if (response && response.success) {
-                toast.success(isEdit ? '✅ Cập nhật sản phẩm thành công!' : '✅ Thêm sản phẩm mới thành công!');
+                toast.success(isEdit ? ' Cập nhật sản phẩm thành công!' : ' Thêm sản phẩm mới thành công!');
                 navigate('/admin/manage-products');
             } else {
                 toast.error(response?.message || 'Có lỗi xảy ra khi xử lý sản phẩm');

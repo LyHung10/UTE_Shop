@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import {postChangePassword} from "@/services/userService.jsx";
+import { postChangePassword } from "@/services/userService.jsx";
 // import { changePassword } from "@/services/userService.jsx"; // TODO: nối API thật khi backend sẵn
 
 export default function ChangePassword() {
@@ -47,9 +47,8 @@ export default function ChangePassword() {
         e.preventDefault();
         if (!validate()) return;
         try {
-            const res = await postChangePassword(form.current,form.confirm);
-            if (res.success===true)
-            {
+            const res = await postChangePassword(form.current, form.confirm);
+            if (res.success === true) {
                 toast.success(res.message);
                 setForm({
                     current: "",
@@ -70,7 +69,7 @@ export default function ChangePassword() {
     };
 
     return (
-        <div className="w-full bg-gray-50 min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
             {/* Header gradient nhẹ */}
             <div className="relative w-full h-20 bg-gradient-to-r" />
 
@@ -188,9 +187,8 @@ function StrengthBar({ password }) {
             {[0, 1, 2, 3].map((i) => (
                 <div
                     key={i}
-                    className={`h-1 flex-1 rounded ${
-                        i < bars ? "bg-gray-900" : "bg-gray-200"
-                    }`}
+                    className={`h-1 flex-1 rounded ${i < bars ? "bg-gray-900" : "bg-gray-200"
+                        }`}
                 />
             ))}
         </div>
