@@ -1,123 +1,238 @@
-import React, { useState } from "react";
-import { FaMoneyBillWave } from "react-icons/fa";
-import { SiMoneygram } from "react-icons/si";
-import { RiSecurePaymentLine } from "react-icons/ri";
-import { ImSpinner8 } from "react-icons/im";
-import {checkoutCOD, checkoutVnpay, confirmCODPayment, fetchCart} from "@/redux/action/cartAction.jsx"; // COD còn dùng
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { 
+    FaMoneyBillWave, 
+    FaShieldAlt,
+    FaCreditCard,
+    FaMobileAlt
+} from "react-icons/fa";
+import { 
+    RiSecurePaymentLine
+} from "react-icons/ri";
+import { 
+    ImSpinner8 
+} from "react-icons/im";
+import { 
+    checkoutCOD, 
+    checkoutVnpay, 
+    fetchCart 
+} from "@/redux/action/cartAction.jsx";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import axios from "../../../utils/axiosCustomize.jsx";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 const PaymentMethodPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    
     const cart = useSelector(state => state.cart);
 
     const [selectedMethod, setSelectedMethod] = useState("");
-    const [error, setError] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
 
     const paymentMethods = [
         {
-            id: "momo",
-            name: "MoMo",
-            icon: <SiMoneygram className="w-8 h-8 text-pink-500" />,
-            description: "Pay securely using MoMo digital wallet"
-        },
-        {
             id: "vnpay",
-            name: "VNPAY",
+            name: "VNPAY QR",
             icon: <RiSecurePaymentLine className="w-8 h-8 text-blue-500" />,
-            description: "Fast and secure payment with VNPAY"
+            description: "Quét mã QR qua ứng dụng ngân hàng",
+            badge: "Đề xuất",
+            features: ["Hỗ trợ 40+ ngân hàng", "Giao dịch an toàn", "Xử lý ngay lập tức"],
+            available: true
         },
         {
             id: "cod",
-            name: "Cash on Delivery",
+            name: "Thanh toán khi nhận hàng",
             icon: <FaMoneyBillWave className="w-8 h-8 text-green-500" />,
-            description: "Pay when you receive your order"
+            description: "Kiểm tra hàng trước khi thanh toán",
+            badge: "Tiện lợi",
+            features: ["Không cần thanh toán trước", "Kiểm tra hàng trước", "An tâm mua sắm"],
+            available: true
+        },
+        {
+            id: "momo",
+            name: "Ví MoMo",
+            icon: <FaMobileAlt className="w-8 h-8 text-gray-400" />,
+            description: "Thanh toán nhanh chóng qua ví điện tử MoMo",
+            badge: "Sắp ra mắt",
+            features: ["Xác thực nhanh", "Bảo mật cao", "Khuyến mãi"],
+            available: false
+        },
+        {
+            id: "card",
+            name: "Thẻ Visa/Mastercard",
+            icon: <FaCreditCard className="w-8 h-8 text-gray-400" />,
+            description: "Thanh toán quốc tế với thẻ tín dụng/ghi nợ",
+            badge: "Sắp ra mắt",
+            features: ["Chấp nhận thẻ quốc tế", "Bảo mật 3D Secure", "Tỷ giá cạnh tranh"],
+            available: false
         }
     ];
 
     const handleMethodSelect = (methodId) => {
-        setError("");
+        const method = paymentMethods.find(m => m.id === methodId);
+        if (!method.available) {
+            toast.info("Phương thức thanh toán này sẽ sớm được cập nhật!");
+            return;
+        }
         setSelectedMethod(methodId);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
         if (!selectedMethod) {
-            setError("Please select a payment method");
+            toast.warning("Vui lòng chọn phương thức thanh toán");
             return;
         }
 
         setIsProcessing(true);
 
         try {
+            const voucher = cart.appliedVoucher;
+            const addressId = cart.addressId;
+            const shippingFee = cart.shippingFee || 0;
+
             if (selectedMethod === "cod") {
-                // ---------------- COD ----------------
-                const res = await dispatch(checkoutCOD(cart.appliedVoucher, cart.addressId, cart.shippingFee));
-                if (res.success)
-                {
+                const res = await dispatch(checkoutCOD(voucher, addressId, shippingFee));
+                if (res.success) {
                     const orderId = res.data?.order?.id;
-                    toast.success(`Đặt hàng COD thành công! Mã đơn: #${orderId}`);
-                    dispatch(fetchCart(cart.appliedVoucher, cart.addressId, cart.shippingFee));
-                    navigate("/payment/completed");
+                    toast.success(`🎉 Đặt hàng thành công! Mã đơn hàng: #${orderId}`);
+                    dispatch(fetchCart());
+                    navigate("/payment/completed", { 
+                        state: { 
+                            orderId,
+                            paymentMethod: "cod"
+                        }
+                    });
+                } else {
+                    toast.error(res.message || "Có lỗi xảy ra khi đặt hàng COD");
                 }
-                else{
-                    toast.info(res.message);
-                }
-            }
-            else if (selectedMethod === "vnpay") {
-                // ---------------- VNPay ----------------
-                const res = await dispatch(checkoutVnpay(cart.appliedVoucher, cart.addressId, cart.shippingFee));
-                if (res.success)
-                {
-                    window.location.href = res.data?.paymentUrl;
-                    dispatch(fetchCart(cart.appliedVoucher, cart.addressId, cart.shippingFee));
-                }
-                else {
-                    toast.info(res.message);
+            } else if (selectedMethod === "vnpay") {
+                const res = await dispatch(checkoutVnpay(voucher, addressId, shippingFee));
+                if (res.success) {
+                    toast.info("Đang chuyển hướng đến cổng thanh toán VNPAY...");
+                    setTimeout(() => {
+                        window.location.href = res.data?.paymentUrl;
+                    }, 1000);
+                    dispatch(fetchCart());
+                } else {
+                    toast.error(res.message || "Có lỗi xảy ra khi khởi tạo thanh toán VNPAY");
                 }
             }
         } catch (err) {
             console.error("Checkout error:", err);
-            alert("Thanh toán thất bại!");
+            toast.error("Thanh toán thất bại! Vui lòng thử lại.");
         } finally {
-            setIsProcessing(false);
+            if (selectedMethod !== "vnpay") {
+                setTimeout(() => setIsProcessing(false), 2000);
+            }
         }
     };
 
+    const handleBackToCart = () => {
+        navigate('/cart');
+    };
+
+    if (!cart?.items || cart.items.length === 0) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 flex items-center justify-center">
+                <div className="max-w-md w-full text-center">
+                    <div className="bg-white rounded-2xl shadow-xl p-8">
+                        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FaShieldAlt className="w-8 h-8 text-yellow-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Giỏ hàng trống</h2>
+                        <p className="text-gray-600 mb-6">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
+                        <button
+                            onClick={() => navigate('/')}
+                            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
+                        >
+                            Tiếp tục mua sắm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md mx-auto">
-                <div className="text-center">
-                    <h2 className="text-3xl font-extrabold text-gray-900">Choose Payment Method</h2>
-                    <p className="mt-2 text-sm text-gray-600">Select your preferred payment option</p>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+            <div className="max-w-2xl mx-auto">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="flex items-center justify-center mb-4">
+                        <div className="bg-white p-3 rounded-2xl shadow-lg">
+                            <RiSecurePaymentLine className="w-8 h-8 text-indigo-600" />
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                        Chọn Phương Thức Thanh Toán
+                    </h1>
+                    <p className="text-gray-600">
+                        Chọn cách thức thanh toán phù hợp cho đơn hàng của bạn
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {/* Payment Methods */}
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                            <FaShieldAlt className="w-5 h-5 text-green-500 mr-2" />
+                            Phương thức thanh toán
+                        </h2>
+                        <button
+                            onClick={handleBackToCart}
+                            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                            ← Quay lại giỏ hàng
+                        </button>
+                    </div>
+                    
                     <div className="space-y-4">
                         {paymentMethods.map((method) => (
                             <div
                                 key={method.id}
-                                onClick={() => handleMethodSelect(method.id)}
-                                tabIndex="0"
-                                role="radio"
-                                aria-checked={selectedMethod === method.id}
-                                className={`relative bg-white p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${selectedMethod === method.id ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"
-                                    }`}
+                                onClick={() => method.available && handleMethodSelect(method.id)}
+                                className={`relative p-5 rounded-xl border-2 transition-all duration-300 ${
+                                    method.available 
+                                        ? selectedMethod === method.id 
+                                            ? "border-indigo-500 ring-2 ring-indigo-100 shadow-md cursor-pointer" 
+                                            : "border-gray-200 hover:border-indigo-300 hover:shadow-md cursor-pointer"
+                                        : "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                                }`}
                             >
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-start justify-between">
                                     <div className="flex items-center">
-                                        {method.icon}
+                                        <div className={method.available ? "" : "opacity-50"}>
+                                            {method.icon}
+                                        </div>
                                         <div className="ml-4">
-                                            <h3 className="text-lg font-medium text-gray-900">{method.name}</h3>
-                                            <p className="text-sm text-gray-500">{method.description}</p>
+                                            <h3 className={`text-lg font-semibold ${
+                                                method.available ? "text-gray-900" : "text-gray-500"
+                                            }`}>
+                                                {method.name}
+                                            </h3>
+                                            <p className={`text-sm mt-1 ${
+                                                method.available ? "text-gray-600" : "text-gray-400"
+                                            }`}>
+                                                {method.description}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                {method.badge && (
+                                                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                                                        method.badge === "Đề xuất" ? "bg-blue-100 text-blue-800" :
+                                                        method.badge === "Tiện lợi" ? "bg-green-100 text-green-800" :
+                                                        "bg-gray-100 text-gray-800"
+                                                    } ${!method.available ? "opacity-50" : ""}`}>
+                                                        {method.badge}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    {selectedMethod === method.id && (
-                                        <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    {method.available && selectedMethod === method.id && (
+                                        <div className="h-6 w-6 bg-indigo-500 rounded-full flex items-center justify-center">
                                             <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 12 12">
                                                 <path d="M3.707 5.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414L5 6.586 3.707 5.293z" />
                                             </svg>
@@ -128,18 +243,34 @@ const PaymentMethodPage = () => {
                         ))}
                     </div>
 
-                    {error && <div className="text-red-500 text-sm mt-2" role="alert">{error}</div>}
+                    {/* Submit Button */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isProcessing || !selectedMethod}
+                        className={`w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 ${
+                            isProcessing || !selectedMethod
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+                        }`}
+                    >
+                        {isProcessing ? (
+                            <span className="flex items-center justify-center">
+                                <ImSpinner8 className="animate-spin h-5 w-5 mr-3" />
+                                Đang xử lý...
+                            </span>
+                        ) : (
+                            'Xác nhận thanh toán'
+                        )}
+                    </button>
+                </div>
 
-                    <div>
-                        <button
-                            type="submit"
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                            disabled={isProcessing}
-                        >
-                            {isProcessing ? <ImSpinner8 className="animate-spin h-5 w-5" /> : "Proceed to Payment"}
-                        </button>
+                {/* Security Info */}
+                <div className="bg-white rounded-2xl shadow-xl p-6 text-center">
+                    <div className="flex items-center justify-center mb-4">
+                        <FaShieldAlt className="w-5 h-5 text-green-500 mr-2" />
+                        <span className="text-sm font-medium text-gray-700">Giao dịch được bảo mật và mã hóa</span>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );
