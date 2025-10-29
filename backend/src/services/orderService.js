@@ -529,7 +529,7 @@ class OrderService {
     }
 
     static async checkoutCOD(userId, voucherCode, addressId, shippingFee) {
-        const tax = 40000;
+        let tax;
         const fee = Number(shippingFee ?? 0);
         console.log('🚀 Bắt đầu checkout COD');
 
@@ -734,7 +734,7 @@ class OrderService {
                 (sum, i) => sum + parseFloat(i.price) * i.qty,
                 0
             );
-
+            tax = total > 0 ? Math.floor(total * 0.05) : 0;
             console.log('💰 Order total calculation:', {
                 subtotal: total,
                 tax: tax,
@@ -891,9 +891,8 @@ class OrderService {
     }
 
     static async checkoutVNPay(userId, voucherCode, addressId, shippingFee) {
-        const tax = 40000;
         const fee = Number(shippingFee ?? 0);
-
+        console.log(fee)
         // ĐẢM BẢO OP ĐƯỢC IMPORT ĐÚNG (giống COD)
         const { Op } = require('sequelize');
 
@@ -1079,6 +1078,8 @@ class OrderService {
 
             // 4) Tính tổng, thuế/phí, voucher (y hệt COD)
             const subtotal = order.OrderItems.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
+            const tax = subtotal > 0 ? Math.floor(subtotal * 0.05) : 0; // 5% và làm tròn xuống
+
             console.log('💰 Order total calculation:', {
                 subtotal,
                 tax,

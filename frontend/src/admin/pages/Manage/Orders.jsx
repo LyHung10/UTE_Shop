@@ -101,7 +101,7 @@ const Orders = () => {
     );
     const grandTotal = preview?.record?.order?.total_amount;
     const voucher = preview?.record?.order?.discount;
-    const tax = 40000;
+    const tax = subtotal > 0 ? Math.floor(subtotal * 0.05) : 0;
     console.log(preview);
     return (
         <>

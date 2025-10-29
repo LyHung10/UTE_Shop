@@ -95,6 +95,7 @@ function App() {
               <Route path="manage-flashsales/create" element={<CreateFlashSale />} />
               <Route path="manage-flashsales/:id/products" element={<AddFlashSaleProducts />} />
               <Route path="manage-products" element={<ProductList />} />
+              <Route path="manage-vouchers" element={<Vouchers />} />
               <Route path="manage-products/add" element={<ProductForm />} />
               <Route path="manage-products/edit/:id" element={<ProductForm />} />
             </Route>

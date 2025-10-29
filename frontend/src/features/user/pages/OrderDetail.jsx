@@ -10,7 +10,7 @@ import EnhancedOrderProgress from "@/features/user/components/EnhancedOrderProgr
 import { getOrderDetail } from "@/services/orderService.jsx";
 import { formatDateTime, formatPrice, normalizeStatus } from "@/utils/format.jsx";
 
-const tax = 40000;
+
 // Map trạng thái -> badge + icon + step index cho progress
 const STATUS_MAP = {
     NEW: { key: "PENDING", label: "Mới tạo", icon: Clock, step: 1 },
@@ -94,6 +94,7 @@ export default function OrderDetail() {
         (sum, it) => sum + Number(it.price) * Number(it.qty),
         0
     );
+    const tax = subtotal > 0 ? Math.floor(subtotal * 0.05) : 0;
 
     const shipping = Number(data.shipping_fee || 0);
 
