@@ -139,7 +139,7 @@ const RewardStore = () => {
             min_order_value: voucher.min_order_value,
             status: "active",
             image: voucher.image,
-            point: voucher.points_required
+            points: voucher.points_required
         };
 
         try {

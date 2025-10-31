@@ -46,12 +46,10 @@ class VoucherController {
                 status,
                 points,
             } = req.body;
-
             const userId = req.user?.sub;
 
             const result = await voucherService.redeemVoucherForUser({
                 userId,
-                points,
                 voucherPayload: {
                     name,
                     slug,
@@ -65,6 +63,7 @@ class VoucherController {
                     end_date,
                     status,
                 },
+                points,
             });
 
             return res.status(201).json(result);
