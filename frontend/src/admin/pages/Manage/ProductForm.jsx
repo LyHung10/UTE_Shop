@@ -471,25 +471,6 @@ const ProductForm = () => {
                 }}
             />
 
-
-
-            {/* Debug Info */}
-            <div style={{
-                background: '#f0f0f0',
-                padding: '10px',
-                marginBottom: '10px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontFamily: 'monospace'
-            }}>
-                <div>🔍 Debug Info:</div>
-                <div>- ID: {id || 'null'}</div>
-                <div>- Edit Mode: {isEdit ? 'YES' : 'NO'}</div>
-                <div>- Fetching: {fetching ? 'YES' : 'NO'}</div>
-                <div>- Existing Images: {existingFileList.length}</div>
-                <div>- New Images: {newFileList.length}</div>
-            </div>
-
             <Card className="mt-6" loading={fetching}>
                 <Form
                     form={form}

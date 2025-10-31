@@ -4,7 +4,6 @@ import { sendNotificationToUser, sendNotificationToUsers } from '../socket/notif
 
 class NotificationController {
     // Tạo notification mới (cho admin) - THÊM REAL-TIME
-    // Tạo notification mới (cho admin) - THÊM REAL-TIME
     async createNotification(req, res) {
         try {
             const notificationData = req.body;
