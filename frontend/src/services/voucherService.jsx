@@ -9,6 +9,7 @@ const getUserVouchers = (page = 1) => {
 };
 
 const addGiftVoucher =  (voucherData) => {
+    console.log(voucherData.points)
     return axios.post("api/vouchers/gift", {
         name: voucherData.name,
         slug: voucherData.slug,

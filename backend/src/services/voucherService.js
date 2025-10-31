@@ -202,7 +202,6 @@ class VoucherService {
 
             if (spend > 0) {
                 const currentPoints = Number(user.loyalty_points ?? 0);
-                console.log(currentPoints,"Restastf");
                 if (currentPoints < spend) {
                     throw Object.assign(new Error('Điểm tích lũy không đủ để đổi voucher'), { statusCode: 400 });
                 }

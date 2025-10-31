@@ -5,6 +5,7 @@ import { getOrderDetail } from "@/services/orderService.jsx";
 import { createReview } from "@/services/reviewService.jsx";
 import { formatPrice } from "@/utils/format.jsx";
 import {fetchUser} from "@/redux/action/userAction.jsx";
+import {useDispatch} from "react-redux";
 
 export default function ReviewPage() {
     const { orderId } = useParams();
@@ -19,6 +20,7 @@ export default function ReviewPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [pointsInfo, setPointsInfo] = useState({ points: 0, totalProducts: 0 });
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (!orderId || orderId === "undefined") {
@@ -129,6 +131,7 @@ export default function ReviewPage() {
             });
 
             if (result.success) {
+                dispatch(fetchUser());
                 setSuccess(result.message);
 
                 const successfulProductIds = result.data.success.map(item => item.product_id);

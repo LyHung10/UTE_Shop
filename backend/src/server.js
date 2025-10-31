@@ -81,21 +81,6 @@ app.use(errorHandler);
 // EXPORT CÁC BIẾN CẦN THIẾT
 export { io, notificationNamespace };
 
-// 🔁 Helper: chờ Elasticsearch sẵn sàng với retry
-async function waitForElasticsearch(retries = 10, delayMs = 1000) {
-  for (let i = 1; i <= retries; i++) {
-    try {
-      await elasticClient.ping();
-      console.log('✅ Elasticsearch is up.');
-      return true;
-    } catch (e) {
-      console.warn(`Elasticsearch not ready (attempt ${i}/${retries}). Retrying in ${delayMs}ms...`);
-      await new Promise(r => setTimeout(r, delayMs));
-    }
-  }
-  return false;
-}
-
 // Start server
 (async () => {
   try {
@@ -103,21 +88,24 @@ async function waitForElasticsearch(retries = 10, delayMs = 1000) {
     console.log('✅ Database connected!');
     await sequelize.sync();
 
-    // ⬇️ INIT ELASTICSEARCH MẶC ĐỊNH KHI START
-    const esReady = await waitForElasticsearch(10, 1000);
-    if (esReady) {
-      const ok = await productSearchController.initElasticsearch();
-      if (ok) {
-        console.log('🚀 Search index [products] ready (initialized + synced).');
-      } else {
-        console.warn('⚠️ Could not initialize Elasticsearch. Search will fallback to MySQL.');
-      }
-    } else {
-      console.warn('⚠️ Elasticsearch is unreachable. Search will fallback to MySQL.');
-    }
-
     const PORT = process.env.PORT || 4000;
     server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+
+    // 🔍 Kiểm tra Elasticsearch song song (không chặn server)
+    elasticClient.ping()
+        .then(async () => {
+          console.log('✅ Elasticsearch is up.');
+          const ok = await productSearchController.initElasticsearch();
+          if (ok) {
+            console.log('🚀 Search index [products] ready (initialized + synced).');
+          } else {
+            console.warn('⚠️ Could not initialize Elasticsearch. Search will fallback to MySQL.');
+          }
+        })
+        .catch(() => {
+          console.warn('⚠️ Elasticsearch unreachable or not running. Using MySQL search fallback.');
+        });
+
   } catch (err) {
     console.error('❌ Failed to start server:', err);
   }
