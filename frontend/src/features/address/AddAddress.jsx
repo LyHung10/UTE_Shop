@@ -30,7 +30,7 @@ const AddAddress = () => {
 
     const fetchProvinces = async () => {
         try {
-            const response = await fetch('https://provinces.open-api.vn/api/v1/?depth=2');
+            const response = await fetch('http://provinces.open-api.vn/api/v1/?depth=2');
             const data = await response.json();
             setProvinces(data);
         } catch (error) {
@@ -51,7 +51,7 @@ const AddAddress = () => {
 
     const fetchDistricts = async (provinceCode) => {
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+            const response = await fetch(`http://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
             const data = await response.json();
             setDistricts(data.districts || []);
             setWards([]);
@@ -62,7 +62,7 @@ const AddAddress = () => {
 
     const fetchWards = async (districtCode) => {
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+            const response = await fetch(`http://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
             const data = await response.json();
             setWards(data.wards || []);
         } catch (error) {

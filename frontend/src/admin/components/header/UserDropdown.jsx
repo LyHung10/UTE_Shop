@@ -3,10 +3,10 @@ import { DropdownItem } from "../../ui/dropdown/DropdownItem.jsx";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { Link } from "react-router-dom";
 import logoUser from "@/assets/owner.jpg"
-import {useSelector} from "react-redux";
+import { useSelector } from "react-redux";
 export default function UserDropdown() {
     const [isOpen, setIsOpen] = useState(false);
-    const user = useSelector((state)=>state.user)
+    const user = useSelector((state) => state.user)
     function toggleDropdown() {
         setIsOpen(!isOpen);
     }
@@ -21,21 +21,20 @@ export default function UserDropdown() {
                 onClick={toggleDropdown}
                 className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
             >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-                <div className="relative h-10 w-10">
-                    <img
-                        src={user?.image ? user.image : logoUser}
-                        alt="Avatar"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-        </span>
+                <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
+                    <div className="relative h-10 w-10">
+                        <img
+                            src={user?.image ? user.image : logoUser}
+                            alt="Avatar"
+                            className="h-full w-full rounded-full object-cover"
+                        />
+                    </div>
+                </span>
 
-                <span className="block mr-1 font-medium text-theme-sm">{`${user.last_name} ${user.first_name}`}</span>
+                <span className="block mr-1 font-medium text-theme-sm">{`${user.first_name} ${user.last_name}`}</span>
                 <svg
-                    className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                    }`}
+                    className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                        }`}
                     width="18"
                     height="20"
                     viewBox="0 0 18 20"
@@ -58,12 +57,12 @@ export default function UserDropdown() {
                 className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
             >
                 <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {`${user.last_name} ${user.first_name}`}
-          </span>
+                    <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
+                        {`${user.last_name} ${user.first_name}`}
+                    </span>
                     <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user.email}
-          </span>
+                        {user.email}
+                    </span>
                 </div>
 
                 <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
