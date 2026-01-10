@@ -679,6 +679,7 @@ class OrderService {
                     const userFlashOrders = await Order.findAll({
                         where: {
                             user_id: userId,
+                            id: { [Op.ne]: order.id },
                             status: { [Op.notIn]: ['CANCELLED', 'FAILED'] }
                         },
                         include: [{
@@ -1034,6 +1035,7 @@ class OrderService {
                     const userFlashOrders = await Order.findAll({
                         where: {
                             user_id: userId,
+                            id: { [Op.ne]: order.id },
                             status: { [Op.notIn]: ['CANCELLED', 'FAILED'] }
                         },
                         include: [{ model: OrderItem, where: { product_id: item.product_id } }],

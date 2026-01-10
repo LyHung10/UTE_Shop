@@ -420,42 +420,6 @@ const AdminNotificationSender = () => {
                     ))}
                   </select>
                 </div>
-
-                {/* Related Entity */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Liên kết đến (tùy chọn)
-                  </label>
-                  <select
-                    name="related_entity"
-                    value={formData.related_entity}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                  >
-                    <option value="">Không liên kết</option>
-                    <option value="order">Đơn hàng</option>
-                    <option value="promotion">Khuyến mãi</option>
-                    <option value="system">Hệ thống</option>
-                    <option value="review">Đánh giá</option>
-                  </select>
-                </div>
-
-                {/* Entity ID */}
-                {formData.related_entity && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ID {formData.related_entity} (tùy chọn)
-                    </label>
-                    <input
-                      type="number"
-                      name="entity_id"
-                      value={formData.entity_id}
-                      onChange={handleChange}
-                      placeholder={`Nhập ID ${formData.related_entity}...`}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Preview */}

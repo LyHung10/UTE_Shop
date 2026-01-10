@@ -489,7 +489,7 @@ const AddFlashSaleProducts = () => {
                                 {loading && (
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                 )}
-                                {loading ? "Đang xử lý..." : `✅ Thêm ${products.length} sản phẩm`}
+                                {loading ? "Đang xử lý..." : `Thêm ${products.length} sản phẩm`}
                             </button>
                         </div>
                     </div>
