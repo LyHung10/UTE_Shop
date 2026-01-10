@@ -10,6 +10,8 @@ import { getCategories } from "@/services/categoryService.jsx"
 import { fetchCart } from "@/redux/action/cartAction.jsx"
 import { getSearchSuggestions } from "@/services/searchService.jsx"
 import NotificationBell from "./NotificationBell"
+import {initFCM} from "@/features/message/firebase.js";
+import notificationService from "@/services/notificationService.jsx";
 
 export const cartRef = React.createRef()
 const Header = () => {
@@ -141,6 +143,16 @@ const Header = () => {
         setSuggestions([])
         searchInputRef.current?.focus()
     }
+
+    useEffect(() => {
+        (async () => {
+            const fcmToken = await initFCM();
+
+            if (fcmToken) {
+                console.log("🔥 FCM TOKEN (auto):", fcmToken);
+            }
+        })();
+    }, [isAuthenticated]);
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-blue-500/20">

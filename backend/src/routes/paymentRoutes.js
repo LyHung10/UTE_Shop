@@ -1,11 +1,10 @@
 import { Router } from "express";
-import {createPayment, checkPayment, vnpayReturn} from "../controllers/paymentController.js";
-import OrderController from '../controllers/orderController';
-import { authenticateToken } from '../middleware/auth';
+import {createPayment, checkPayment, checkout, createPayPal} from "../controllers/paymentController.js";
 
 const router = Router();
 
-router.post("/create", createPayment);
-// router.get("/return", checkPayment);
 router.get("/check-payment-vnpay", checkPayment);
+
+router.post("/paypal/create", createPayPal);
+router.post("/paypal/checkout", checkout);
 export default router;

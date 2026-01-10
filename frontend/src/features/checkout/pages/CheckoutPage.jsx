@@ -1,35 +1,49 @@
 import React, { useState, useEffect } from "react";
-import { 
-    FaMoneyBillWave, 
+import {
+    FaMoneyBillWave,
     FaShieldAlt,
-    FaCreditCard,
+    FaPaypal,
     FaMobileAlt
 } from "react-icons/fa";
-import { 
+import {
     RiSecurePaymentLine
 } from "react-icons/ri";
-import { 
-    ImSpinner8 
+import {
+    ImSpinner8
 } from "react-icons/im";
-import { 
-    checkoutCOD, 
-    checkoutVnpay, 
-    fetchCart 
+import {
+    checkoutCOD,
+    checkoutVnpay,
+    fetchCart
 } from "@/redux/action/cartAction.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
+// ✅ Thêm: PayPal React SDK
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import {
+    confirmPaypalPayment,
+    createOrderPaypal,
+    postCheckoutPayPal,
+    postCreatePayPal
+} from "@/services/cartService.jsx";
+
 const PaymentMethodPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const cart = useSelector(state => state.cart);
 
     const [selectedMethod, setSelectedMethod] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
+    const [orderId, setOrderId] = useState(false);
+    // ✅ Thêm: bật/tắt modal PayPal
+    const [showPayPal, setShowPayPal] = useState(false);
 
+    // ✅ Thêm: lấy client id từ env (Vite)
+    const PAYPAL_CLIENT_ID = "Ael-pqC0i8rJ1F9yIrTX9hyIlPNqTTG-IjyIX4X3cpOBev8omBokIo9biIy6p0_chfBBjzE5qyjp9omH";
     const paymentMethods = [
         {
             id: "vnpay",
@@ -49,6 +63,16 @@ const PaymentMethodPage = () => {
             features: ["Không cần thanh toán trước", "Kiểm tra hàng trước", "An tâm mua sắm"],
             available: true
         },
+        // Giữ nguyên id: "card" như bạn đang dùng
+        {
+            id: "card",
+            name: "PayPal",
+            icon: <FaPaypal className="w-8 h-8 text-blue-600" />,
+            description: "Thanh toán quốc tế với thẻ tín dụng/ghi nợ",
+            badge: "Quốc tế",
+            features: ["Chấp nhận thẻ quốc tế", "Bảo mật 3D Secure", "Tỷ giá cạnh tranh"],
+            available: true
+        },
         {
             id: "momo",
             name: "Ví MoMo",
@@ -58,15 +82,6 @@ const PaymentMethodPage = () => {
             features: ["Xác thực nhanh", "Bảo mật cao", "Khuyến mãi"],
             available: false
         },
-        {
-            id: "card",
-            name: "Thẻ Visa/Mastercard",
-            icon: <FaCreditCard className="w-8 h-8 text-gray-400" />,
-            description: "Thanh toán quốc tế với thẻ tín dụng/ghi nợ",
-            badge: "Sắp ra mắt",
-            features: ["Chấp nhận thẻ quốc tế", "Bảo mật 3D Secure", "Tỷ giá cạnh tranh"],
-            available: false
-        }
     ];
 
     const handleMethodSelect = (methodId) => {
@@ -80,7 +95,7 @@ const PaymentMethodPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!selectedMethod) {
             toast.warning("Vui lòng chọn phương thức thanh toán");
             return;
@@ -99,8 +114,8 @@ const PaymentMethodPage = () => {
                     const orderId = res.data?.order?.id;
                     toast.success(`🎉 Đặt hàng thành công! Mã đơn hàng: #${orderId}`);
                     dispatch(fetchCart());
-                    navigate("/payment/completed", { 
-                        state: { 
+                    navigate("/payment/completed", {
+                        state: {
                             orderId,
                             paymentMethod: "cod"
                         }
@@ -119,6 +134,18 @@ const PaymentMethodPage = () => {
                 } else {
                     toast.error(res.message || "Có lỗi xảy ra khi khởi tạo thanh toán VNPAY");
                 }
+            }
+            // ✅ Thêm: PayPal (xử lý cho cả id "card" hoặc "paypal")
+            else if (selectedMethod === "card" || selectedMethod === "paypal") {
+                const res = await createOrderPaypal(voucher, addressId, shippingFee);
+                if (res.success) {
+                    setOrderId(res.data?.order?.id);
+                    setShowPayPal(true);
+                } else {
+                    toast.error(res.message || "Có lỗi xảy ra khi đặt hàng Paypal");
+                }
+                setIsProcessing(false);
+                return;
             }
         } catch (err) {
             console.error("Checkout error:", err);
@@ -156,8 +183,23 @@ const PaymentMethodPage = () => {
         );
     }
 
+    // ✅ Chuẩn bị options cho PayPal SDK
+    const paypalOptions = {
+        "client-id": PAYPAL_CLIENT_ID,
+        currency: "USD",   // Nếu bạn giữ giá VND, server sẽ quy đổi → USD khi tạo order
+        intent: "capture",
+    };
+
+    // ✅ Build items theo USD (ví dụ). Nếu bạn giữ VND: vẫn gửi items, server tự quy đổi nhờ fx.
+    const cartItems = cart.items.map(it => ({
+        name: it.name,
+        price: it.priceUSD ?? it.price,   // tuỳ bạn lưu
+        quantity: it.quantity || 1,
+    }));
+    console.log(orderId);
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+        <>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -188,16 +230,16 @@ const PaymentMethodPage = () => {
                             ← Quay lại giỏ hàng
                         </button>
                     </div>
-                    
+
                     <div className="space-y-4">
                         {paymentMethods.map((method) => (
                             <div
                                 key={method.id}
                                 onClick={() => method.available && handleMethodSelect(method.id)}
                                 className={`relative p-5 rounded-xl border-2 transition-all duration-300 ${
-                                    method.available 
-                                        ? selectedMethod === method.id 
-                                            ? "border-indigo-500 ring-2 ring-indigo-100 shadow-md cursor-pointer" 
+                                    method.available
+                                        ? selectedMethod === method.id
+                                            ? "border-indigo-500 ring-2 ring-indigo-100 shadow-md cursor-pointer"
                                             : "border-gray-200 hover:border-indigo-300 hover:shadow-md cursor-pointer"
                                         : "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
                                 }`}
@@ -222,8 +264,9 @@ const PaymentMethodPage = () => {
                                                 {method.badge && (
                                                     <span className={`inline-block px-2 py-1 text-xs rounded-full ${
                                                         method.badge === "Đề xuất" ? "bg-blue-100 text-blue-800" :
-                                                        method.badge === "Tiện lợi" ? "bg-green-100 text-green-800" :
-                                                        "bg-gray-100 text-gray-800"
+                                                            method.badge === "Tiện lợi" ? "bg-green-100 text-green-800" :
+                                                                method.badge === "Quốc tế" ? "bg-teal-100 text-teal-800" :
+                                                                    "bg-gray-100 text-gray-800"
                                                     } ${!method.available ? "opacity-50" : ""}`}>
                                                         {method.badge}
                                                     </span>
@@ -272,7 +315,73 @@ const PaymentMethodPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* ✅ Modal PayPal */}
+            {showPayPal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative">
+                        <button
+                            onClick={() => setShowPayPal(false)}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                            aria-label="Close"
+                        >
+                            ✕
+                        </button>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Thanh toán với PayPal
+                        </h3>
+                        <PayPalScriptProvider options={paypalOptions}>
+                            <PayPalButtons
+                                style={{ layout: "vertical", shape: "rect", label: "paypal" }}
+                                // Tạo order qua backend của bạn
+                                createOrder={async () => {
+                                    try {
+                                        const res = await postCreatePayPal(cartItems, 26000, "Thanh toán đơn hàng");
+                                        return res.id;
+                                    } catch (e) {
+                                        console.error(e);
+                                        toast.error("Không tạo được PayPal order");
+                                        throw e;
+                                    }
+                                }}
+                                // Sau khi người dùng approve → gọi checkout để capture
+                                onApprove={async (data) => {
+                                    try {
+                                        const res = await postCheckoutPayPal(data.orderID);
+                                        if (res?.capture?.status === "COMPLETED") {
+                                            const result = await confirmPaypalPayment(orderId);
+                                            if (result.success) {
+                                                toast.success("🎉 Thanh toán thành công!");
+                                                setShowPayPal(false);
+                                                dispatch(fetchCart());
+                                                navigate("/payment/completed", {
+                                                    state: { paymentMethod: "paypal" },
+                                                });
+                                            } else {
+                                                toast.error(res.message || "Có lỗi xảy ra khi đặt hàng COD");
+                                            }
+                                        } else {
+                                            toast.error("Không thể xác nhận thanh toán.");
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        toast.error("Có lỗi khi xác nhận thanh toán.");
+                                    }
+                                }}
+                                onCancel={() => {
+                                    toast.info("Bạn đã huỷ thanh toán PayPal.");
+                                }}
+                                onError={(err) => {
+                                    console.error(err);
+                                    toast.error("Lỗi PayPal. Vui lòng thử lại.");
+                                }}
+                            />
+                        </PayPalScriptProvider>
+                    </div>
+                </div>
+            )}
         </div>
+        </>
     );
 };
 

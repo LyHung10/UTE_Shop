@@ -15,6 +15,10 @@ router.put('/cart',OrderController.updateQuantity);
 router.delete('/cart/:itemId',OrderController.removeItem);
 router.delete('/cart',OrderController.clearCart);
 router.post("/checkout/cod",OrderController.checkoutCOD);
+
 router.put("/:orderId/confirm-completed",OrderController.confirmOrderCompleted);
+router.post("/confirm-paypal",OrderController.confirmPaypalPayment);
+
 router.post("/checkout/vnpay",OrderController.checkoutVNPay);
+router.post("/create/paypal",OrderController.createOrderPaypal);
 export default router;

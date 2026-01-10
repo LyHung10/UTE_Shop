@@ -12,6 +12,7 @@ const getOrderDetail = (id) => {
 const postCancelOrder = (orderId) => {
     return axios.post(`api/orders/cancel`,{orderId});
 };
+
 export {
     getUserOrders, getOrderDetail, postCancelOrder
 };

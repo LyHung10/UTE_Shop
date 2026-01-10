@@ -43,6 +43,7 @@ import Vouchers from "@/admin/pages/Manage/Vouchers.jsx";
 import ProductList from "./admin/pages/Manage/ProductList.jsx";
 import ProductForm from "./admin/pages/Manage/ProductForm.jsx";
 import MyVoucher from "@/features/user/pages/MyVoucher.jsx";
+import Message from "@/features/message/Message.jsx";
 
 function App() {
   return (
@@ -104,6 +105,7 @@ function App() {
 
 
         {/* ===== AUTH (ngoài Layout) ===== */}
+        <Route path="/message-firebase" element={<Message/>} />
         <Route path="/login" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<AuthOtp />} />

@@ -174,12 +174,37 @@ class OrderController {
             res.status(400).json({ error: err.message });
         }
     }
+
+    static async confirmPaypalPayment(req, res) {
+        try {
+            const { orderId } = req.body;
+            const result = await OrderService.confirmVNPayPayment(orderId);
+            res.status(201).json(result);
+        } catch (err) {
+            console.error(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
+
     ////////////////////
     static async checkoutVNPay(req, res) {
         try {
             const userId = req.user.sub;
             const { voucherCode, addressId, shippingFee} = req.body;
             const result = await OrderService.checkoutVNPay(userId, voucherCode, addressId, shippingFee);
+            res.status(201).json(result);
+        } catch (err) {
+            return res.status(400).json({
+                error: err.message || "Checkout Vnpay thất bại."
+            });
+        }
+    }
+
+    static async createOrderPaypal(req, res) {
+        try {
+            const userId = req.user.sub;
+            const { voucherCode, addressId, shippingFee} = req.body;
+            const result = await OrderService.createOrderPaypal(userId, voucherCode, addressId, shippingFee);
             res.status(201).json(result);
         } catch (err) {
             return res.status(400).json({

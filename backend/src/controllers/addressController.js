@@ -49,7 +49,7 @@ export const createAddress = async (req, res) => {
 export const getUserAddresses = async (req, res) => {
     try {
         const userId = req.user.sub; // Lấy từ token thay vì params
-        const addresses = await db.Address.findAll({ 
+        const addresses = await db.Address.findAll({
             where: { user_id: userId },
             order: [['is_default', 'DESC']] // Sắp xếp địa chỉ mặc định lên đầu
         });
